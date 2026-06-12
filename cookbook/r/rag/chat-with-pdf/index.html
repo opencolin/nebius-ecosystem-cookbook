@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat with PDF Documents · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/rag/chat-with-pdf" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="chat-with-pdf-documents">Chat with PDF Documents</h1>
+<p><img alt="demo" src="./assets/demo.gif" /></p>
+<p>A powerful RAG (Retrieval-Augmented Generation) chat application built with Streamlit, LlamaIndex, and Nebius AI's Qwen3 model. This application allows users to upload PDF documents and interact with them through an AI-powered chat interface.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>📄 PDF Document Upload and Preview</li>
+<li>💬 Interactive Chat Interface</li>
+<li>🤖 Powered by Qwen3-235B-A22B Model</li>
+<li>🔍 Advanced RAG Implementation using LlamaIndex</li>
+<li>🎯 High-quality Embeddings with BAAI/bge-en-icl</li>
+<li>🔄 Real-time Document Processing</li>
+<li>💭 Transparent AI Reasoning Display</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.10</li>
+<li>Nebius AI <a href="https://tokenfactory.nebius.com/?modals=create-api-key">API Keys</a></li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p><strong>1. Clone the repository</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w"> </span>rag/chat-with-pdf
+</code></pre></div>
+
+<p><strong>2. Install the required packages:</strong></p>
+<p>If using <code>uv</code></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+</code></pre></div>
+
+<p>If using <code>pip</code></p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+
+<p><strong>3. Set up your environment variables:</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="running">Running</h2>
+<ol>
+<li>Run the Streamlit application:</li>
+</ol>
+<p>If using uv</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>streamlit<span class="w">  </span>run<span class="w"> </span>main.py
+</code></pre></div>
+
+<p>If using pip</p>
+<div class="codehilite"><pre><span></span><code>streamlit<span class="w"> </span>run<span class="w"> </span>main.py
+</code></pre></div>
+
+<ol start="2">
+<li>
+<p>Open your web browser and navigate to the provided local URL (typically http://localhost:8501)</p>
+</li>
+<li>
+<p>Upload a PDF document using the sidebar</p>
+</li>
+<li>
+<p>Start chatting with your document!</p>
+</li>
+</ol>
+<h2 id="features-in-detail">Features in Detail</h2>
+<h3 id="document-processing">Document Processing</h3>
+<ul>
+<li>Supports PDF file uploads</li>
+<li>Real-time document preview in the sidebar</li>
+<li>Automatic document indexing using LlamaIndex</li>
+</ul>
+<h3 id="chat-interface">Chat Interface</h3>
+<ul>
+<li>Clean and intuitive chat UI</li>
+<li>Support for multiple message types</li>
+<li>Clear chat history functionality</li>
+<li>Expandable AI reasoning display</li>
+</ul>
+<h3 id="model-options">Model Options</h3>
+<ul>
+<li>Primary: Qwen3-235B-A22B</li>
+<li>Alternative: DeepSeek-V3</li>
+<li>Embedding Model: BAAI/bge-en-icl</li>
+</ul>
+<h2 id="architecture">Architecture</h2>
+<p>The application uses a combination of:</p>
+<ul>
+<li>Streamlit for the web interface</li>
+<li>LlamaIndex for document processing and RAG implementation</li>
+<li>Nebius AI's models for embeddings and generation</li>
+<li>PyPDF2 for PDF handling</li>
+</ul>
+<h2 id="contributing">Contributing</h2>
+<p>Feel free to submit issues and enhancement requests!</p>
+<h2 id="credits">Credits</h2>
+<p>This example is adopted with thanks from <a href="https://github.com/Arindam200/awesome-ai-apps/tree/main/rag_apps/qwen3_rag">here</a></p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

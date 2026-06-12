@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenClaw + Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/openclaw" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="openclaw-nebius-token-factory">OpenClaw + Nebius Token Factory</h1>
+<p><a href="https://openclaw.ai/">OpenClaw</a> is a self-hosted AI assistant that connects chat apps (WhatsApp, Telegram, Discord, and more) to LLM providers. Because <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> serves open models through an <strong>OpenAI-compatible API</strong>, you can point OpenClaw at Token Factory and run your agents on models like Qwen3, Llama, and DeepSeek.</p>
+<h2 id="why-token-factory">Why Token Factory?</h2>
+<ul>
+<li><strong>OpenAI-compatible</strong> — no special SDK, OpenClaw's built-in OpenAI provider works as-is.</li>
+<li><strong>Open models</strong> — Qwen3, Kimi, DeepSeek, GLM and more, all behind one API key.</li>
+<li><strong>Cost control</strong> — usage-based pricing with no infra to manage.</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A running <a href="https://docs.openclaw.ai/">OpenClaw</a> instance.</li>
+<li>A Nebius Token Factory API key — see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/getting-started.md" target="_blank" rel="noopener">Getting Started</a> for how to create one.</li>
+</ul>
+<h2 id="1-get-your-api-key">1. Get your API key</h2>
+<p>Grab a key from <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a></p>
+<h2 id="2-add-token-factory-as-a-provider">2. Add Token Factory as a provider</h2>
+<div class="codehilite"><pre><span></span><code>openclaw<span class="w"> </span>--configure
+</code></pre></div>
+
+<ul>
+<li>Choose '<strong>Configure Models</strong>'</li>
+<li>choose '<strong>Custom provider</strong>'</li>
+<li>base url = <code>https://api.tokenfactory.nebius.com/v1</code></li>
+<li>API KEY = <code>paste your nebius API key</code></li>
+<li>Select <strong>OpenAI comptible</strong></li>
+<li>model id =  <code>moonshotai/Kimi-K2.6</code>  (or any model id from Token Factory)</li>
+<li>End point id = <strong>nebius-token-factory</strong></li>
+<li>model alias : leave blank</li>
+</ul>
+<h3 id="model-selection">Model Selection</h3>
+<p>Model IDs use the <code>org/model</code> form. A few options:</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>ID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kimi-K2.6</td>
+<td><code>moonshotai/Kimi-K2.6</code></td>
+</tr>
+<tr>
+<td>DeepSeek-V4-Pro</td>
+<td><code>deepseek-ai/DeepSeek-V4-Pro</code></td>
+</tr>
+<tr>
+<td>GLM-5.1</td>
+<td><code>zai-org/GLM-5.1</code></td>
+</tr>
+</tbody>
+</table>
+<p>See the full catalog at <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a> or the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/models/" target="_blank" rel="noopener">Models guides</a> in this cookbook.</p>
+<p>That's it!</p>
+<h2 id="3-restart-openclaw">3. Restart OpenClaw</h2>
+<p>Be sure to restart the openclaw gateway for changes to take effect.</p>
+<div class="codehilite"><pre><span></span><code>openclaw<span class="w">  </span>gateway<span class="w"> </span>run
+<span class="c1"># or </span>
+openclaw<span class="w">  </span>gateway<span class="w"> </span>restart
+</code></pre></div>
+
+<p>Then launch openclaw as </p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># web based UI</span>
+openclaw<span class="w">  </span>dashboard
+
+<span class="c1"># Terminal based ui</span>
+openclaw<span class="w">  </span>tui
+</code></pre></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>401 Unauthorized</strong> — check that <code>NEBIUS_API_KEY</code> is set and the provider config references it correctly.</li>
+<li><strong>404 / model not found</strong> — verify the model ID (<code>org/model</code>, case-sensitive) and that it's available on your account.</li>
+<li><strong>Wrong endpoint</strong> — the <code>base_url</code> must end in <code>/v1</code>; do not append <code>/chat/completions</code> yourself.</li>
+</ul>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://docs.openclaw.ai/">OpenClaw docs</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/">Token Factory docs</a></li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/getting-started.md" target="_blank" rel="noopener">Cookbook: Getting Started</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

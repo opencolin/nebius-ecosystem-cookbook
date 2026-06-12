@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CAMEL-AI Model Comparison Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/camel-ai-model-comparison-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><img alt="Banner" src="./assets/banner.png" /></p>
+<h1 id="camel-ai-model-comparison-agent">CAMEL-AI Model Comparison Agent</h1>
+<p>A benchmarking tool built with the CAMEL framework that compares the performance of various AI models, including OpenAI and Nebius models. This tool measures and visualizes the speed of different models in terms of tokens processed per second.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Performance benchmarking of multiple AI models</li>
+<li>Visual comparison of model speeds</li>
+<li>Compare any two providers (OpenAI and Nebius models)</li>
+<li>Easy-to-interpret visualizations</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.11+</li>
+<li><a href="https://github.com/astral-sh/uv">uv</a> - an extremely fast Python package installer and resolver</li>
+<li><a href="https://dub.sh/nebius">Nebius API key</a> and <a href="https://platform.openai.com/api-keys">OpenAI API key</a> for the models you want to test</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<ol>
+<li>Clone the repository:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/token-factory-cookbook/.git
+<span class="nb">cd</span><span class="w"> </span>agents/camel-ai-model-comparison-agent
+</code></pre></div>
+
+<ol start="2">
+<li>Create a virtual environment and install dependencies using <code>uv</code>:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Create a virtual environment</span>
+uv<span class="w"> </span>venv
+
+<span class="c1"># Activate the virtual environment</span>
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+
+<span class="c1"># Install dependencies </span>
+uv<span class="w"> </span>sync
+</code></pre></div>
+
+<ol start="3">
+<li>Create a <code>.env</code> file and add your <code>OPENAI_API_KEY</code> and <code>NEBIUS_API_KEY</code>.</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="nv">OPENAI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-openai-api-key&quot;</span>
+<span class="nv">NEBIUS_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-nebius-api-key&quot;</span>
+</code></pre></div>
+
+<h2 id="usage">Usage</h2>
+<p>Run the main script:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>agent.py
+</code></pre></div>
+
+<p>The script will:</p>
+<ul>
+<li>Initialize multiple AI models (OpenAI and Nebius)</li>
+<li>Send a test prompt to each model</li>
+<li>Measure the response time and calculate tokens per second</li>
+<li>Generate a visualization comparing the performance</li>
+</ul>
+<h3 id="current-models">Current Models</h3>
+<p>OpenAI
+- GPT-4O Mini
+- GPT-4O</p>
+<p>Nebius
+- Kimi-K2-Instruct
+- Qwen3-Coder-480B-A35B-Instruct
+- GLM-4.5-Air</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

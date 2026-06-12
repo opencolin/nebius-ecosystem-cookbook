@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VoyageCompass Travel Planner · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/nebius_travel_planner" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="voyagecompass-travel-planner">VoyageCompass Travel Planner</h1>
+<p>A Streamlit travel planning app built with LangChain and Nebius. It is inspired
+by AI travel-agent demos, but it uses a different app structure and planning
+flow:</p>
+<ul>
+<li>Nebius <code>ChatNebius</code> through the <code>langchain-nebius</code> package</li>
+<li>Streamlit trip brief plus follow-up chat</li>
+<li>No OpenAI API key or ChatOpenAI usage</li>
+<li>No required search or weather API keys beyond <code>NEBIUS_API_KEY</code></li>
+<li>Tools for geocoding, near-term weather, web research, currency conversion,
+  budget estimates, and packing prep</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>agents/nebius_travel_planner
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Edit <code>.env</code> and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your-nebius-api-key
+<span class="nv">NEBIUS_MODEL</span><span class="o">=</span>Qwen/Qwen3-30B-A3B
+</code></pre></div>
+
+<p>You can also paste the API key into the Streamlit sidebar or configure it in
+Streamlit secrets.</p>
+<h2 id="run">Run</h2>
+<div class="codehilite"><pre><span></span><code>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
+</code></pre></div>
+
+<h2 id="how-it-works">How It Works</h2>
+<p>The app creates a LangChain agent with:</p>
+<ul>
+<li><code>ChatNebius</code> from <code>langchain_nebius</code></li>
+<li><code>create_agent</code> from LangChain</li>
+<li>Tool calling for travel research and calculations</li>
+<li>A system prompt that requires grounded weather, search, and budget output</li>
+</ul>
+<p>The LangChain Nebius provider docs are here:
+https://docs.langchain.com/oss/python/integrations/providers/nebius</p>
+<h2 id="files">Files</h2>
+<ul>
+<li><code>app.py</code> - Streamlit UI</li>
+<li><code>agent.py</code> - Nebius LangChain agent setup</li>
+<li><code>tools.py</code> - Travel tools</li>
+<li><code>main.py</code> - Optional CLI check</li>
+<li><code>env.example</code> - Environment template</li>
+</ul>
+<h2 id="notes">Notes</h2>
+<p>Weather uses Open-Meteo's no-key forecast APIs. Forecasts are limited to the
+near-term forecast window, so plans for dates far in the future should treat
+weather guidance as seasonal planning context rather than a live forecast.</p>
+<p>Currency conversion uses Frankfurter's public exchange-rate API. Budget output
+starts with transparent estimates and should be refined with destination search
+results for current prices.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

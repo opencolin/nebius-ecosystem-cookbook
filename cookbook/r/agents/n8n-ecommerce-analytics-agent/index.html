@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Data Analyst Chatbot for E-Commerce Analytics · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/n8n-ecommerce-analytics-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="ai-data-analyst-chatbot-for-e-commerce-analytics">AI Data Analyst Chatbot for E-Commerce Analytics</h1>
+<p>A production-grade AI Data Analyst Chatbot workflow for n8n, leveraging Nebius Token Factory's DeepSeek-V3-0324-fast LLM for advanced, structured data analysis and Google Workspace automation.</p>
+<p>This repository demonstrates a generic e-commerce analytics agent use case—no brand-specific logic or data is included. The workflow can be adapted to any e-commerce or transactional business scenario.</p>
+<p><img alt="Workflow Diagram" src="assets/workflow-diagram.png" /></p>
+<hr />
+<h2 id="architecture-overview">🛠️ Architecture Overview</h2>
+<ul>
+<li><strong>Workflow Orchestration:</strong> Built in <a href="https://n8n.io/">n8n</a>, using modular nodes for event-driven automation and data transformation.</li>
+<li><strong>LLM Integration:</strong> Utilizes <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> DeepSeek-V3-0324-fast for high-performance, context-aware reasoning and structured output.</li>
+<li><strong>Google Workspace Integration:</strong> Secure OAuth2 connections to Google Sheets and Google Docs for real-time data retrieval and document updates.</li>
+<li><strong>Memory &amp; State:</strong> Implements buffer memory for short-term context retention (last 5 messages) to enable coherent, multi-turn conversations.</li>
+<li><strong>Structured Output Parsing:</strong> Enforces strict JSON schema validation for LLM responses, ensuring reliable downstream automation.</li>
+</ul>
+<hr />
+<h2 id="workflow-deep-dive">⚙️ Workflow Deep Dive</h2>
+<p>This solution is designed for e-commerce analytics, but can be adapted to any transactional data scenario. The workflow includes:
+- Chat message trigger (<code>When chat message received</code>)
+- LLM-powered agent for structured reasoning (<code>AI Agent</code>)
+- Google Sheets/Docs integration for data and reporting (<code>Get transactions by status</code>, <code>Get transactions by product name</code>, <code>Get all transactions</code>, <code>Document Strategy</code>)
+- Memory and output parsing for robust automation (<code>Buffer Memory</code>, <code>Structured Output Parser</code>)
+- Decision and routing logic (<code>If</code>, <code>If1</code>, <code>If2</code>, <code>Merge</code>, <code>Set</code>)</p>
+<p>For technical implementation, node configuration, and code examples, see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/n8n-ecommerce-analytics-agent/Cookbook.md" target="_blank" rel="noopener">Cookbook.md</a>.</p>
+<hr />
+<h2 id="example-use-cases">🧩 Example Use Cases</h2>
+<ul>
+<li>Automated financial and sales analysis for e-commerce</li>
+<li>Real-time lead generation and outreach</li>
+<li>Instant database chatbots for internal knowledge</li>
+<li>Competitive intelligence with live document updates</li>
+</ul>
+<hr />
+<h2 id="model-security-details">🧑‍💻 Model &amp; Security Details</h2>
+<ul>
+<li><strong>Model:</strong> Nebius DeepSeek-V3-0324-fast (Open-source, EU-hosted, zero data retention)</li>
+<li><strong>Security:</strong></li>
+<li>All API credentials managed via n8n's encrypted credential store</li>
+<li>OAuth2 for Google integrations</li>
+<li>No data is stored or logged outside your infrastructure</li>
+<li><strong>Performance:</strong></li>
+<li>Hosted on NVIDIA GPUs for low-latency inference</li>
+<li>Cost-effective, scalable, and GDPR-compliant</li>
+</ul>
+<hr />
+<h2 id="quick-start">🚀 Quick Start</h2>
+<ol>
+<li>Import <code>ecommerce-analytics-agent-workflow.json</code> into n8n.</li>
+<li>Configure Nebius and Google credentials as described in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/n8n-ecommerce-analytics-agent/Cookbook.md" target="_blank" rel="noopener">Cookbook.md</a>.</li>
+<li>Replace the Google Sheets/Docs URLs with your own.</li>
+<li>Activate the workflow and interact via the n8n chat interface or webhook.</li>
+</ol>
+<hr />
+<h2 id="resources">📚 Resources</h2>
+<ul>
+<li><a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a></li>
+<li><a href="https://docs.n8n.io/">n8n Documentation</a></li>
+<li><a href="https://docs.n8n.io/integrations/builtin/credentials/Google/">Google OAuth n8n Setup Guide</a></li>
+</ul>
+<hr />
+<p>Contributions welcome! </p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

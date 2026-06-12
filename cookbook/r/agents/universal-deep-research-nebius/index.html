@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Universal Deep Research (Nebius Token Factory) — Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/universal-deep-research-nebius" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="universal-deep-research-nebius-token-factory-agent">Universal Deep Research (Nebius Token Factory) — Agent</h1>
+<p>This agent demonstrates a multi‑step research pipeline powered by Nebius Token Factory models (OpenAI‑compatible) with a FastAPI backend and a Next.js frontend. It uses the model <code>moonshotai/Kimi-K2-Instruct</code> by default.</p>
+<ul>
+<li>Source app: https://github.com/demianarc/nebiusaistudiodeepresearch</li>
+<li>Cookbook context: add this folder under <code>agents/</code>.</li>
+<li>Nebius Token Factory Cookbook: https://github.com/nebius/token-factory-cookbook</li>
+</ul>
+<h2 id="what-it-does">What it does</h2>
+<ul>
+<li>Plans search queries, fetches web results (Tavily), analyzes content, and generates a structured Markdown report using Nebius LLMs.</li>
+<li>Streams progress and a final report to the UI.</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Nebius Token Factory account and API key (<code>NEBIUS_API_KEY</code>)</li>
+<li>Python 3.9+ (3.10+ recommended)</li>
+<li>Node.js 18+</li>
+</ul>
+<h2 id="quickstart">Quickstart</h2>
+<p>1) Clone the app</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/demianarc/nebiusaistudiodeepresearch<span class="w"> </span>udr-nebius
+<span class="nb">cd</span><span class="w"> </span>udr-nebius
+</code></pre></div>
+
+<p>2) Backend setup</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>backend
+python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>.<span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+cp<span class="w"> </span>env.example<span class="w"> </span>.env
+<span class="c1"># Required (no quotes):</span>
+<span class="c1"># NEBIUS_API_KEY=your-nebius-api-key</span>
+<span class="c1"># DEFAULT_MODEL=nebius-kimi-k2</span>
+<span class="c1"># Optional (CORS for frontend):</span>
+<span class="c1"># FRONTEND_URL=http://localhost:3004</span>
+<span class="c1"># OpenAI-compatible Nebius base URL + model (already defaulted in this edition):</span>
+<span class="c1"># FRAME_BASE_URL=https://api.tokenfactory.nebius.com/v1/</span>
+<span class="c1"># FRAME_MODEL=moonshotai/Kimi-K2-Instruct</span>
+<span class="c1"># Optional (web search):</span>
+<span class="c1"># echo &quot;&lt;your-tavily-key&gt;&quot; &gt; tavily_api.txt</span>
+./launch_server.sh
+</code></pre></div>
+
+<p>3) Frontend setup</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../frontend
+cp<span class="w"> </span>env.example<span class="w"> </span>.env.local
+<span class="c1"># Connect to backend and use v1 endpoint</span>
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_BACKEND_BASE_URL=.*#NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost#&#39;</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_BACKEND_PORT=.*#NEXT_PUBLIC_BACKEND_PORT=8000#&#39;</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_API_VERSION=.*#NEXT_PUBLIC_API_VERSION=v1#&#39;</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_ENABLE_V2_API=.*#NEXT_PUBLIC_ENABLE_V2_API=false#&#39;</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_DRY_RUN=.*#NEXT_PUBLIC_DRY_RUN=false#&#39;</span><span class="w"> </span>.env.local
+npm<span class="w"> </span>install
+npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w"> </span>--<span class="w"> </span>-p<span class="w"> </span><span class="m">3004</span>
+</code></pre></div>
+
+<p>4) Use the UI
+Open http://localhost:3004 and enter a prompt (e.g., “Tell me everything about Nebius Token Factory”).</p>
+<h2 id="notes">Notes</h2>
+<ul>
+<li>The backend uses an OpenAI‑compatible client pointed to <code>https://api.tokenfactory.nebius.com/v1/</code>.</li>
+<li>Default model is <code>moonshotai/Kimi-K2-Instruct</code>.</li>
+<li>No secrets are committed; <code>.env*</code> and <code>*_api.txt</code> files are ignored.</li>
+<li>This integrates the original NVIDIA research prototype with Nebius models; credits retained.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>Nebius Token Factory Cookbook: https://github.com/nebius/token-factory-cookbook</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

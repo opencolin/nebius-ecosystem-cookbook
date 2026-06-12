@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Create Fun images Using LORA Adapters on Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/lora/lora-1" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="create-fun-images-using-lora-adapters-on-token-factory">Create Fun images Using LORA Adapters on Token Factory</h1>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#pre-requisites">Pre-Requisites</a></li>
+<li><a href="#quick-start">Quick start</a></li>
+<li><a href="#example-2">Example 2</a></li>
+<li><a href="#dev-notes">Dev Notes</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>You can use LoRA adapters directly in the <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> UI.  This guide shows how to plug in a LoRA and make cool, themed images.</p>
+<p><strong>Watch the video</strong></p>
+<p><a href="https://www.youtube.com/watch?v=f060_TGIeMg"><img alt="LORA images" src="https://img.youtube.com/vi/f060_TGIeMg/maxresdefault.jpg" /></a></p>
+<h2 id="pre-requisites">Pre-Requisites</h2>
+<ul>
+<li>Nebius Token Factory account.  Get a free one <a href="https://tokenfactory.nebius.com/">here</a></li>
+</ul>
+<h2 id="quick-start">Quick start</h2>
+<h3 id="1-select-a-model">1 - Select a model</h3>
+<ul>
+<li>Open <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a></li>
+<li>Go to 'Text to image' section</li>
+<li>select the model <strong><code>FLUX.1-schnell</code></strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/select-model-1.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<!-- ### 2 - Create a base image
+
+Prompt:
+
+> create a birthday card of a kid saying "happy birthday" 
+
+And here the image
+
+![](images/image-1-base.png) -->
+
+<h3 id="2-using-a-lora-adapter">2 - Using a LORA Adapter</h3>
+<p>A great place to find LoRA adapters is <a href="https://civitai.com/">civitai.com</a></p>
+<p>To use a LORA adapter, you’ll need two things:</p>
+<ul>
+<li>The <strong>adapter URL</strong></li>
+<li>The <strong>trigger word</strong> (must be included in your prompt)</li>
+</ul>
+<p>If the trigger word is <strong>XYZ</strong>, your prompt might look like:</p>
+<blockquote>
+<p><strong>XYZ</strong> a cat wearing sun glasses</p>
+</blockquote>
+<p>See the screenshot below for where to find the URL and trigger word on Civitai.</p>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/lora-1.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Some fun adapters to try:</p>
+<ul>
+<li><a href="https://civitai.com/models/1658853/lego-minifigures?modelVersionId=1877566">lego minifugures</a></li>
+<li><a href="https://civitai.com/models/1257887?modelVersionId=1548033">Simpsons</a></li>
+<li><a href="https://civitai.com/models/32047?modelVersionId=1093173">Star Wars jedi outfit</a></li>
+<li><a href="https://civitai.com/models/1541606?modelVersionId=1745171">Tom and Jerry style</a></li>
+</ul>
+<h3 id="3-example-star-wars-jedi-theme">3 - Example: <strong>Star wars JEDI</strong> theme.</h3>
+<ul>
+<li>LORA adapter: <a href="https://civitai.com/models/32047?modelVersionId=1093173">jedi outfit</a></li>
+<li>Trigger word: <strong>Jedioutfit</strong></li>
+</ul>
+<p>Prompt:</p>
+<blockquote>
+<p><strong>Jedioutfit</strong> create a birthday card of a kid saying "happy birthday" </p>
+</blockquote>
+<p>Here is how we plug in the values:</p>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/image-1-jedi-1.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Here are the generated image.</p>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/image-1-jedi-2.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Pretty cool, eh?!</p>
+<h3 id="4-example-simpsons-style">4 - Example: 'simpsons' style</h3>
+<ul>
+<li>LORA Adapter: <a href="https://civitai.com/models/1257887?modelVersionId=1548033">Simpsons</a></li>
+<li>Trigger word (one of many): <strong>bart_simpsons</strong></li>
+</ul>
+<p>Prompt:</p>
+<blockquote>
+<p><strong>bart_simpsons</strong>  create a birthday card of a kid saying "happy birthday" </p>
+</blockquote>
+<p>And here are couple of images generated:</p>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/image-1-simpsons-1.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/image-1-simpsons-2.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="example-2">Example 2</h2>
+<p><strong>1 - Start with a simple prompt.</strong></p>
+<p>Prompt:</p>
+<blockquote>
+<p>an orange cat with a surf board  </p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/image-3-base.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>2 - Lego LORA</strong></p>
+<ul>
+<li>LORA: <a href="https://civitai.com/models/1658853/lego-minifigures?modelVersionId=1877566">Lego minifigures</a></li>
+<li>Trigger words: <strong>lego_minifigure</strong></li>
+</ul>
+<p>Prompt:</p>
+<blockquote>
+<p><strong>lego_minifigure</strong> an orange cat with a surf board  </p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th><img alt="" src="images/image-3-lego-1.png" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Have fun!</p>
+<h2 id="dev-notes">Dev Notes</h2>
+<p>Combine multiple images with ImageMagick (convert):</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">## side by side</span>
+convert<span class="w"> </span>image1.jpg<span class="w"> </span>image2.jpg<span class="w"> </span>image3.jpg<span class="w"> </span>+append<span class="w"> </span>combined_horizontal.jpg
+
+<span class="c1">## vertically</span>
+convert<span class="w"> </span>image1.jpg<span class="w"> </span>image2.jpg<span class="w"> </span>image3.jpg<span class="w"> </span>-append<span class="w"> </span>combined_vertical.jpg
+
+<span class="c1">## Grid layout (2x2 example)</span>
+convert<span class="w"> </span>image1.jpg<span class="w"> </span>image2.jpg<span class="w"> </span>image3.jpg<span class="w"> </span>image4.jpg<span class="w"> </span>-resize<span class="w"> </span>500x500<span class="w"> </span><span class="se">\(</span><span class="w"> </span>image1.jpg<span class="w"> </span>image2.jpg<span class="w"> </span>+append<span class="w"> </span><span class="se">\)</span><span class="w"> </span><span class="se">\(</span><span class="w"> </span>image3.jpg<span class="w"> </span>image4.jpg<span class="w"> </span>+append<span class="w"> </span><span class="se">\)</span><span class="w"> </span>-append<span class="w"> </span>grid.jpg
+</code></pre></div>
+
+<p>Tip: If convert isn’t found, install ImageMagick first (e.g., brew install imagemagick on macOS).</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

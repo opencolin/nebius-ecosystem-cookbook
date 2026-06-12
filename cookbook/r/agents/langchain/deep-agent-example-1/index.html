@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LangChain deepagents + Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/deep-agent-example-1" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="langchain-deepagents-nebius-token-factory">LangChain <code>deepagents</code> + Nebius Token Factory</h1>
+<p>Two starter examples of a <a href="https://github.com/langchain-ai/deepagents">LangChain Deep Agent</a>
+powered by an LLM served by <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a>.</p>
+<p>Deep agents extend a regular tool-calling agent with:</p>
+<ul>
+<li><strong>Planning</strong> via a <code>write_todos</code> tool</li>
+<li><strong>A virtual file system</strong> (<code>write_file</code> / <code>read_file</code> / <code>ls</code>) for notes</li>
+<li><strong>Sub-agents</strong> the lead agent can delegate bounded tasks to</li>
+</ul>
+<h2 id="the-two-agents">The two agents</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+<th>Tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>research_agent_1.py</code></td>
+<td>Bare deep agent — planning, virtual FS, and a default <code>general-purpose</code> sub-agent. No external tools.</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>tavily_agent.py</code></td>
+<td>Same deep-agent loop, but with real web search via Tavily.</td>
+<td><code>tavily_search</code>, <code>think_tool</code></td>
+</tr>
+</tbody>
+</table>
+<p>Both use the <code>moonshotai/Kimi-K2.5</code> model on Nebius; swap it for any tool-calling capable Nebius model in the source.</p>
+<h2 id="setup">Setup</h2>
+<p>This project uses <a href="https://docs.astral.sh/uv/">uv</a> for dependency management.</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>agents/langchain/deep-agent-example-1
+uv<span class="w"> </span>sync
+</code></pre></div>
+
+<p>Create a <code>.env</code> file from the template and fill in your API keys:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Edit <code>.env</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># https://tokenfactory.nebius.com/</span>
+<span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your-nebius-api-key
+
+<span class="c1"># https://tavily.com/  (only needed for tavily_agent.py)</span>
+<span class="nv">TAVILY_API_KEY</span><span class="o">=</span>your-tavily-api-key<span class="w">   </span>
+</code></pre></div>
+
+<h2 id="run">Run</h2>
+<p>Bare deep agent (no external tools):</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>research_agent_1.py
+</code></pre></div>
+
+<p>Deep agent with Tavily web search:</p>
+<p>(Make sure you have <code>TAVILY_API_KEY</code> defined in <code>.env</code>)</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>tavily_agent.py
+</code></pre></div>
+
+<p>Each script prints the full message trace (including planning steps,
+sub-agent calls, and the final report) as JSON.</p>
+<h2 id="files">Files</h2>
+<ul>
+<li><code>research_agent_1.py</code> — minimal deep agent on a Nebius LLM</li>
+<li><code>tavily_agent.py</code> — deep agent with Tavily web search + a <code>think_tool</code></li>
+<li><code>pyproject.toml</code> / <code>uv.lock</code> — dependencies (managed by uv)</li>
+<li><code>env.example</code> — environment template</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>LangChain Deep Agents: <a href="https://github.com/langchain-ai/deepagents">https://github.com/langchain-ai/deepagents</a></li>
+<li>LangChain Nebius provider: <a href="https://docs.langchain.com/oss/python/integrations/providers/nebius">https://docs.langchain.com/oss/python/integrations/providers/nebius</a></li>
+<li>Nebius Token Factory: <a href="https://studio.nebius.com/">https://studio.nebius.com/</a></li>
+<li>Tavily: <a href="https://tavily.com/">https://tavily.com/</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

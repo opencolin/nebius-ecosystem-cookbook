@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simple Tool Calling Agent with Google ADK (Agent Development Kit) + Nebius AI · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/google-adk-tool-calling" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="simple-tool-calling-agent-with-google-adk-agent-development-kit-nebius-ai">Simple Tool Calling Agent with Google ADK (Agent Development Kit) + Nebius AI</h1>
+<p><img alt="banner" src="./banner.png" /></p>
+<p>This example shows a sample 'tool calling' agent, built using Google's Agent Development Kit (ADK) framework.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://google.github.io/adk-docs/">Google Agent Development Kit (ADK)</a></li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Nebius API key (get it from <a href="http://tokenfactory.nebius.com/">Nebius Token Factory</a>)</li>
+<li>Python 3.10 or higher dev environment.</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<p><strong>1 - get the code</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">  </span>agents/google-adk-tool-calling
+</code></pre></div>
+
+<p><strong>2 - Install dependencies</strong></p>
+<p>using <code>uv</code></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># create a venv and install dependencies</span>
+uv<span class="w">  </span>sync
+<span class="nb">source</span><span class="w">   </span>.venv/bin/activate
+
+<span class="c1"># Verify ADK installation</span>
+adk<span class="w"> </span>--version
+</code></pre></div>
+
+<p>Or install using python pip</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+
+<span class="c1"># Verify ADK installation</span>
+adk<span class="w"> </span>--version
+</code></pre></div>
+
+<p><strong>3 - Create .env file</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="running-the-agent-in-cli">Running the agent in CLI</h2>
+<p>Switch to project dir:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w">  </span>agents/google-adk-tool-calling
+</code></pre></div>
+
+<p><strong>Using <code>uv</code></strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w">  </span>sync
+uv<span class="w">  </span>run<span class="w">   </span>adk<span class="w"> </span>run<span class="w"> </span>.
+</code></pre></div>
+
+<p>or </p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+<span class="nb">source</span><span class="w">   </span>.venv/bin/activate
+adk<span class="w"> </span>run<span class="w"> </span>.
+</code></pre></div>
+
+<p><strong>Using python pip</strong></p>
+<div class="codehilite"><pre><span></span><code>adk<span class="w"> </span>run<span class="w"> </span>.
+</code></pre></div>
+
+<h2 id="interacting-with-the-agent">Interacting with the Agent</h2>
+<p>Once the agent is running, we can try the following:</p>
+<p><strong>Find out what the agent can do</strong></p>
+<blockquote>
+<p>What are your capabilities?</p>
+<p>What can you do?</p>
+</blockquote>
+<p><strong>Ask the agent questions</strong></p>
+<blockquote>
+<p>What is $100 in EUR?</p>
+</blockquote>
+<p>You should get answer like </p>
+<p><code>The converted amount is 200 EUR</code></p>
+<p>Ask another:</p>
+<blockquote>
+<p>Convert $100 into AUD</p>
+</blockquote>
+<p>Since the agent can only convert from USD --&gt; EUR, you may get an answer like this</p>
+<p><code>I currently only support converting USD to EUR (Euro). Conversion to AUD (Australian Dollar) isn't available yet</code></p>
+<h2 id="adk-ui-runner">ADK UI Runner</h2>
+<p>ADK has a <a href="https://google.github.io/adk-docs/get-started/quickstart/#dev-ui-adk-web">web ui</a> that can show you details of agent's inner working.  This is a great tool for debugging.</p>
+<p><img alt="" src="adk-web-1.png" /></p>
+<p>Here is how to run the web ui.</p>
+<p><strong>Go to parent dir</strong> (This is important!)</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># go project&#39;s parent directory</span>
+<span class="nb">cd</span><span class="w"> </span>..<span class="w">  </span>
+
+<span class="c1"># and run</span>
+adk<span class="w"> </span>web
+</code></pre></div>
+
+<p>Go to URL : <a href="http://localhost:8000/">localhost:8000</a></p>
+<p><strong>Select the agent from drop down list</strong></p>
+<p><strong>And interact with the agent</strong></p>
+<p><strong>Look at <code>Trace</code> and <code>Events</code> tabs</strong></p>
+<h2 id="dev-notes">Dev Notes</h2>
+<p><strong>Preparing the dev env using UV</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>google-adk-tool-calling
+uv<span class="w"> </span>init<span class="w"> </span>.
+mv<span class="w"> </span>main.py<span class="w">   </span>agent.py
+uv<span class="w">  </span>add<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+uv<span class="w"> </span>sync
+</code></pre></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LangChain Data Agent PoC · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/langchain_data_agent_poc" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="langchain-data-agent-poc">LangChain Data Agent PoC</h1>
+<p>This is a small natural-language-to-SQL data agent inspired by the architecture of
+<code>eosho/langchain_data_agent</code>, but implemented from scratch for this cookbook.</p>
+<p>The goal is a compact PoC, not a full data platform. It keeps the useful shape:</p>
+<ol>
+<li>Rewrite follow-up questions into standalone questions.</li>
+<li>Route the question to a specialized data domain.</li>
+<li>Generate SQL for the selected schema.</li>
+<li>Validate that the SQL is read-only and scoped to allowed tables.</li>
+<li>Execute against a local sample dataset.</li>
+<li>Summarize the result and suggest a simple chart.</li>
+</ol>
+<p>It uses <strong>Nebius Token Factory</strong> through LangChain's OpenAI-compatible client,
+plus <strong>LangGraph</strong> for the pipeline and <strong>Streamlit</strong> for the UI.</p>
+<h2 id="what-is-included">What is included</h2>
+<ul>
+<li>Two data domains:</li>
+<li><code>sales</code>: orders, products, customers, revenue, inventory</li>
+<li><code>support</code>: support tickets, priorities, status, resolution time</li>
+<li>Local CSV sample data loaded into an in-memory SQLite database.</li>
+<li>A read-only SQL guard that blocks writes, multiple statements, comments, and
+  tables outside the selected domain.</li>
+<li>Streamlit UI with sample questions, generated SQL, result tables, and charts.</li>
+<li>CLI for quick terminal testing.</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>agents/langchain_data_agent_poc
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Edit <code>.env</code> and add your Nebius key:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your-nebius-token-factory-key
+<span class="nv">NEBIUS_MODEL</span><span class="o">=</span>Qwen/Qwen3-30B-A3B
+</code></pre></div>
+
+<h2 id="run-the-streamlit-ui">Run the Streamlit UI</h2>
+<div class="codehilite"><pre><span></span><code>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
+</code></pre></div>
+
+<h2 id="run-the-cli">Run the CLI</h2>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>main.py
+</code></pre></div>
+
+<h2 id="sample-questions">Sample questions</h2>
+<p>Sales:</p>
+<ul>
+<li>What is revenue by region?</li>
+<li>Which products generated the most revenue?</li>
+<li>Show monthly revenue by channel.</li>
+<li>Which products are below reorder level?</li>
+</ul>
+<p>Support:</p>
+<ul>
+<li>How many open support tickets are there by priority?</li>
+<li>What is the average resolution time by ticket category?</li>
+<li>Which customer segments have the most urgent tickets?</li>
+<li>Show support tickets by status.</li>
+</ul>
+<h2 id="project-structure">Project structure</h2>
+<div class="codehilite"><pre><span></span><code>langchain_data_agent_poc/
+├── agent.py          # LangGraph pipeline and Nebius LLM calls
+├── app.py            # Streamlit UI
+├── config.py         # Domain definitions and sample prompts
+├── dataset.py        # CSV to in-memory SQLite loader
+├── main.py           # CLI entrypoint
+├── sql_safety.py     # Read-only SQL validation
+├── visualization.py  # Simple chart suggestion logic
+├── data/
+│   ├── customers.csv
+│   ├── orders.csv
+│   ├── products.csv
+│   └── support_tickets.csv
+├── env.example
+└── pyproject.toml
+</code></pre></div>
+
+<h2 id="notes">Notes</h2>
+<p>This example deliberately avoids external database ingestion, cloud warehouse
+connectors, auth adapters, A2A protocol, and production config loaders. Those are
+valuable in a full platform, but they obscure the core data-agent loop for a
+cookbook PoC.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

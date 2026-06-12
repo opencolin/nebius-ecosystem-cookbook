@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🧪 End‑to‑End Guide ▸ Evaluating Nebius Token Factory Models with OpenBench · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/community/openbench-evaluation-guide" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="endtoend-guide-evaluating-nebius-token-factory-models-with-openbench">🧪 End‑to‑End Guide ▸ Evaluating Nebius Token Factory Models with OpenBench</h1>
+<p>OpenBench is a fast, standardized evaluation framework built by <a href="https://github.com/groq">@groqinc</a> for reproducible LLM benchmarking.</p>
+<p>This guide shows how to evaluate <strong>Nebius Token Factory-hosted open models</strong> (like Meta Llama 3 and Qwen) on benchmarks like <strong>MMLU</strong>, using OpenBench and a single terminal command.</p>
+<hr />
+<h2 id="what-is-model-benchmarking">🧠 What is Model Benchmarking?</h2>
+<blockquote>
+<p>Benchmarking lets you measure how well a language model performs on tasks like logic, math, code, or knowledge recall.<br />
+It’s how we compare models like Llama 3, GPT-4, Claude, or Qwen using standardized tests (e.g. MMLU, GPQA, HumanEval).</p>
+</blockquote>
+<hr />
+<h2 id="quick-preview">⚡ Quick Preview</h2>
+<p>We'll run a short evaluation on <code>Llama-3.3-70B-Instruct-fast</code> hosted by Nebius Token Factory:</p>
+<div class="codehilite"><pre><span></span><code>bench<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>mmlu<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>openai/meta-llama/Llama-3.3-70B-Instruct-fast<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--limit<span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--temperature<span class="w"> </span><span class="m">0</span>.6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--timeout<span class="w"> </span><span class="m">30000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-connections<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--logfile<span class="w"> </span>logs/mmlu_sample.jsonl
+</code></pre></div>
+
+<p>You'll get back accuracy, token counts, and logs in under 15 seconds.</p>
+<hr />
+<h2 id="full-setup-step-by-step">🛠️ Full Setup (Step-by-Step)</h2>
+<h3 id="1-install-uv">1. Install <code>uv</code></h3>
+<p>Install the <code>uv</code> Python environment manager:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.local/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
+</code></pre></div>
+
+<h3 id="2-clone-and-install-openbench">2. Clone and install OpenBench</h3>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/groq/openbench.git
+<span class="nb">cd</span><span class="w"> </span>openbench
+uv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+
+<h3 id="3-get-your-nebius-api-key">3. Get your Nebius API key</h3>
+<ul>
+<li>Visit <a href="https://tokenfactory.nebius.com">tokenfactory.nebius.com</a></li>
+<li>Sign in with GitHub or Google</li>
+<li>Go to <strong>Account Settings → API Keys</strong> and generate one</li>
+</ul>
+<p>Then set the following environment variables:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>your_nebius_api_key_here
+<span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_BASE_URL</span><span class="o">=</span>https://api.tokenfactory.nebius.com/v1
+<span class="nb">export</span><span class="w"> </span><span class="nv">INSPECT_MAX_CONNECTIONS</span><span class="o">=</span><span class="m">40</span>
+</code></pre></div>
+
+<blockquote>
+<p>⚠️ Note: OpenBench uses the OpenAI-compatible SDK. The Nebius API works seamlessly using <code>OPENAI_API_KEY</code>.</p>
+</blockquote>
+<hr />
+<h2 id="run-the-benchmark-example-mmlu">✅ Run the Benchmark (Example: MMLU)</h2>
+<p>Run a short MMLU benchmark on <code>Llama-3.3-70B-Instruct-fast</code>:</p>
+<div class="codehilite"><pre><span></span><code>bench<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>mmlu<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>openai/meta-llama/Llama-3.3-70B-Instruct-fast<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--limit<span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--temperature<span class="w"> </span><span class="m">0</span>.6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--timeout<span class="w"> </span><span class="m">30000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-connections<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--logfile<span class="w"> </span>logs/mmlu_sample.jsonl
+</code></pre></div>
+
+<p>This evaluates the model on 12 academic-style questions (from philosophy to physics).</p>
+<hr />
+<h2 id="view-results">📊 View Results</h2>
+<p>You can view results via log file:</p>
+<div class="codehilite"><pre><span></span><code>cat<span class="w"> </span>logs/mmlu_sample.jsonl
+</code></pre></div>
+
+<p>Or launch the local results viewer:</p>
+<div class="codehilite"><pre><span></span><code>bench<span class="w"> </span>view
+</code></pre></div>
+
+<p>Then visit <code>http://localhost:7575</code> in your browser (if not blocked by firewall settings).</p>
+<hr />
+<h2 id="what-models-can-i-test">🤔 What Models Can I Test?</h2>
+<p>Any Nebius-hosted model available in <a href="https://tokenfactory.nebius.com/models">Token Factory</a> will work.<br />
+You can try:</p>
+<ul>
+<li><code>openai/meta-llama/Meta-Llama-3.1-70B-Instruct</code></li>
+<li><code>openai/meta-llama/Llama-3.3-70B-Instruct-fast</code></li>
+<li>and others…</li>
+</ul>
+<p>Just make sure the model ID you pass matches Nebius’s naming format.</p>
+<hr />
+<h2 id="try-other-benchmarks">🧪 Try Other Benchmarks</h2>
+<p>To list all available tests:</p>
+<div class="codehilite"><pre><span></span><code>bench<span class="w"> </span>list
+</code></pre></div>
+
+<p>Some great quick ones:</p>
+<ul>
+<li><code>humaneval</code> – for code generation</li>
+<li><code>openbookqa</code> – elementary science</li>
+<li><code>gpqa_diamond</code> – graduate-level biology/chem/physics</li>
+<li><code>simpleqa</code> – short factual answers</li>
+</ul>
+<hr />
+<h2 id="credits">🙌 Credits</h2>
+<p>Huge shoutout to:</p>
+<ul>
+<li><a href="https://x.com/AarushSah_">@AarushSah_</a> and the <a href="https://github.com/groq/openbench">Groq</a> team for building OpenBench</li>
+<li><a href="https://github.com/uk-ai/inspect">Inspect</a> from the UK AI Safety Institute, which powers OpenBench's adapter layer</li>
+</ul>
+<hr />
+<h2 id="why-this-matters">💡 Why This Matters</h2>
+<p>Running evaluations directly against <strong>production models</strong> — using <em>the exact same APIs your apps will call</em> — is the only way to know how your model will behave in the real world.</p>
+<p>This is invaluable for:</p>
+<ul>
+<li>Comparing model variants</li>
+<li>Tracking regressions over time</li>
+<li>Validating fine-tuned versions</li>
+<li>Reporting scores externally</li>
+</ul>
+<hr />
+<h2 id="nebius-token-factory">🔗 Nebius Token Factory</h2>
+<p>Nebius Token Factory provides hosted inference for top OSS models, fast startup, and zero-retention API usage — all from Europe.</p>
+<ul>
+<li><a href="https://tokenfactory.nebius.com/models">Explore models</a></li>
+<li><a href="https://tokenfactory.nebius.com">Start testing</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Token Factory Cookbook · Nebius</title>
+<meta name="description" content="Every recipe from the Nebius Token Factory Cookbook — agents, RAG, fine-tuning, tool-calling, models, and more — rendered and browsable." />
+<link rel="stylesheet" href="../assets/css/main.css" />
+<link rel="stylesheet" href="../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../index.html">Ecosystem</a>
+      <a href="index.html" class="active">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<header class="hero">
+  <div class="container">
+    <span class="hero-eyebrow">Runnable reference · the Token Factory Cookbook</span>
+    <h1>Every recipe, rendered and browsable.</h1>
+    <p class="lede">The full <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Token Factory Cookbook</a> — 50 recipes across 17 categories, 27 notebooks rendered with their outputs. The runnable backing for the <a href="../index.html#partners">reference architectures</a> on the ecosystem page. Built on open models through one OpenAI-compatible <code>base_url</code>.</p>
+    <div class="cb-controls">
+      <input class="cb-search" type="search" placeholder="Search recipes… (framework, task, model)" aria-label="Search recipes" />
+    </div>
+    <div class="cb-chips"><button class="cb-chip cb-chip-on" data-cat="all">All</button><button class="cb-chip" data-cat="_root">Essentials</button><button class="cb-chip" data-cat="api">API Quickstarts</button><button class="cb-chip" data-cat="agents">Agents</button><button class="cb-chip" data-cat="tool-calling">Tool Calling</button><button class="cb-chip" data-cat="rag">RAG</button><button class="cb-chip" data-cat="lora">LoRA Fine-tuning</button><button class="cb-chip" data-cat="post-training">Fine-tuning &amp; Post-training</button><button class="cb-chip" data-cat="distillation">Distillation</button><button class="cb-chip" data-cat="models">Models</button><button class="cb-chip" data-cat="integrations">Integrations</button><button class="cb-chip" data-cat="apps">Apps</button><button class="cb-chip" data-cat="coding">Coding</button><button class="cb-chip" data-cat="workshops">Workshops</button><button class="cb-chip" data-cat="builder-hour">Builder Hour</button><button class="cb-chip" data-cat="articles">Articles</button><button class="cb-chip" data-cat="community">Community</button><button class="cb-chip" data-cat="fun">Fun</button></div>
+  </div>
+</header>
+<div class="container cb-index">
+  <section class="cb-cat" data-cat="_root"><div class="section-eyebrow">Essentials · 5</div><p class="section-lede">Core Token Factory notebooks — adding a LoRA, batch inference, guided JSON, image LoRA.</p><div class="cb-grid"><a class="cb-card" href="r/AddLora.html" data-search="addlora notebook · core essentials">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">essentials</span><span class="pill coral">1 nb</span></div>
+    <h3>Addlora</h3>
+    <p>Notebook · core</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/AddLora.ipynb','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/batch.html" data-search="batch notebook · core essentials">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">essentials</span><span class="pill coral">1 nb</span></div>
+    <h3>Batch</h3>
+    <p>Notebook · core</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/batch.ipynb','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/guided_json.html" data-search="guided json notebook · core essentials">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">essentials</span><span class="pill coral">1 nb</span></div>
+    <h3>Guided Json</h3>
+    <p>Notebook · core</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/guided_json.ipynb','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/image_lora.html" data-search="image lora notebook · core essentials">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">essentials</span><span class="pill coral">1 nb</span></div>
+    <h3>Image Lora</h3>
+    <p>Notebook · core</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/image_lora.ipynb','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/image2video_higgsfield.html" data-search="image2video higgsfield notebook · core essentials">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">essentials</span><span class="pill coral">1 nb</span></div>
+    <h3>Image2Video Higgsfield</h3>
+    <p>Notebook · core</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/image2video_higgsfield.ipynb','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="api"><div class="section-eyebrow">API Quickstarts · 1</div><p class="section-lede">Point one base_url at Token Factory — the OpenAI-compatible on-ramp, plus aisuite, LiteLLM, and LlamaIndex SDKs.</p><div class="cb-grid"><a class="cb-card" href="r/api/index.html" data-search="run models on nebius token factory using apis this guide shows how to run models using various python apis. api">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">api</span><span class="pill coral">4 nb</span></div>
+    <h3>Run Models on Nebius Token Factory using APIs</h3>
+    <p>This guide shows how to run models using various python APIs.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/api','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="agents"><div class="section-eyebrow">Agents · 21</div><p class="section-lede">Production agents across every major framework — LangChain, CrewAI, Agno, AWS Strands, Google ADK, LlamaIndex, Pydantic, and more.</p><div class="cb-grid"><a class="cb-card" href="r/agents/agno-agents-examples/index.html" data-search="agno agents this folder has the following agents: agents">
+  <div class="cb-thumb" style="background-image:url(r/agents/agno-agents-examples/banner.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill coral">3 nb</span></div>
+    <h3>Agno Agents</h3>
+    <p>This folder has the following agents:</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/agno-agents-examples','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/n8n-ecommerce-analytics-agent/index.html" data-search="ai data analyst chatbot for e-commerce analytics a production-grade ai data analyst chatbot workflow for n8n, leveraging nebius token factory&#x27;s deepseek-v3-0324-fast llm for advanced, structured data analysis and google workspace automation. agents">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span></div>
+    <h3>AI Data Analyst Chatbot for E-Commerce Analytics</h3>
+    <p>A production-grade AI Data Analyst Chatbot workflow for n8n, leveraging Nebius Token Factory&#x27;s DeepSeek-V3-0324-fast LLM for advanced, structured data analysis and Google Workspace automation.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/n8n-ecommerce-analytics-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/aws-strands-weather-agent/index.html" data-search="aws strands starter agent a simple demonstration of using the strands library with nebius token factory&#x27;s api to create an ai assistant that can fetch weather information. agents">
+  <div class="cb-thumb" style="background-image:url(r/agents/aws-strands-weather-agent/banner.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span></div>
+    <h3>AWS Strands Starter Agent</h3>
+    <p>A simple demonstration of using the Strands library with Nebius Token Factory&#x27;s API to create an AI assistant that can fetch weather information.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/aws-strands-weather-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/camel-ai-model-comparison-agent/index.html" data-search="camel-ai model comparison agent a benchmarking tool built with the camel framework that compares the performance of various ai models, including openai and nebius models. this tool measures and visualizes the speed of different models in terms of tokens processed per seco agents">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span></div>
+    <h3>CAMEL-AI Model Comparison Agent</h3>
+    <p>A benchmarking tool built with the CAMEL framework that compares the performance of various AI models, including OpenAI and Nebius models. This tool measures and visualizes the speed of different models in terms of tokens processed per seco</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/camel-ai-model-comparison-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/competitive-intelligence-agent/index.html" data-search="competitive intelligence agent a langchain deep agent that produces decision-grade competitive briefs, powered by an llm served by nebius token factory, and real-time web research via tavily. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>Competitive Intelligence Agent</h3>
+    <p>A LangChain Deep Agent that produces decision-grade competitive briefs, powered by an LLM served by Nebius Token Factory, and real-time web research via Tavily.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/competitive-intelligence-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/crewai-research-agent/index.html" data-search="crewai starter agent a simple yet powerful ai research crew built with crewai that leverages multiple specialized agents to discover and analyze groundbreaking technologies. agents">
+  <div class="cb-thumb" style="background-image:url(r/agents/crewai-research-agent/banner.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill coral">1 nb</span></div>
+    <h3>CrewAI Starter Agent</h3>
+    <p>A simple yet powerful AI research crew built with CrewAI that leverages multiple specialized agents to discover and analyze groundbreaking technologies.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/crewai-research-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/customer-support-resolution-agent/index.html" data-search="customer support resolution agent production use case: support teams need agents that combine ticket text, order state, policies, and safe workflow recommendations. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>Customer Support Resolution Agent</h3>
+    <p>Production use case: support teams need agents that combine ticket text, order state, policies, and safe workflow recommendations.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/customer-support-resolution-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/customer_support_resolution_agent/index.html" data-search="customer support resolution agent a saas-style customer support agent that answers product questions,  looks up real order status, and escalates to a human ticket when it  can&#x27;t confidently resolve the issue. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>Customer Support Resolution Agent</h3>
+    <p>A SaaS-style customer support agent that answers product questions,  looks up real order status, and escalates to a human ticket when it  can&#x27;t confidently resolve the issue.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/customer_support_resolution_agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/data-quality-ops-agent/index.html" data-search="data quality operations agent production use case: data teams need read-only agents that can inspect pipelines, query governed datasets, and recommend next actions when metrics break. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>Data Quality Operations Agent</h3>
+    <p>Production use case: data teams need read-only agents that can inspect pipelines, query governed datasets, and recommend next actions when metrics break.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/data-quality-ops-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/agno-hacker-news-agent/index.html" data-search="hackernews analysis agent a powerful ai agent built with agno that analyzes and provides insights about hackernews content. this agent uses the nebius ai model to deliver intelligent analysis of tech news, trends, and discussions. agents">
+  <div class="cb-thumb" style="background-image:url(r/agents/agno-hacker-news-agent/banner.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill coral">1 nb</span></div>
+    <h3>HackerNews Analysis Agent</h3>
+    <p>A powerful AI agent built with Agno that analyzes and provides insights about HackerNews content. This agent uses the Nebius AI model to deliver intelligent analysis of tech news, trends, and discussions.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/agno-hacker-news-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/incident-response-agent/index.html" data-search="incident response commander agent production use case: sre teams need fast, evidence-backed triage during incidents without giving an llm the ability to mutate infrastructure directly. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>Incident Response Commander Agent</h3>
+    <p>Production use case: SRE teams need fast, evidence-backed triage during incidents without giving an LLM the ability to mutate infrastructure directly.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/incident-response-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/langchain_data_agent_poc/index.html" data-search="langchain data agent poc this is a small natural-language-to-sql data agent inspired by the architecture of eosho/langchaindataagent, but implemented from scratch for this cookbook. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>LangChain Data Agent PoC</h3>
+    <p>This is a small natural-language-to-SQL data agent inspired by the architecture of eosho/langchaindataagent, but implemented from scratch for this cookbook.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/langchain_data_agent_poc','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/deep-agent-example-1/index.html" data-search="langchain deepagents + nebius token factory two starter examples of a langchain deep agent powered by an llm served by nebius token factory. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>LangChain deepagents + Nebius Token Factory</h3>
+    <p>Two starter examples of a LangChain Deep Agent powered by an LLM served by Nebius Token Factory.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/deep-agent-example-1','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/archived/index.html" data-search="langchain examples for nebius token factory this folder contains production-oriented langchain examples powered by nebius token factory. each example is self-contained with its own requirements.txt, .env.example, source files, and sample data. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>LangChain examples for Nebius Token Factory</h3>
+    <p>This folder contains production-oriented LangChain examples powered by Nebius Token Factory. Each example is self-contained with its own requirements.txt, .env.example, source files, and sample data.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/archived','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/llamaindex-task-timer/index.html" data-search="llamaindex starter agent a powerful ai agent template built with llamaindex that demonstrates how to create intelligent agents using the llamaindex framework. this starter project implements a task management assistant using the nebius ai model to showcase llamaind agents">
+  <div class="cb-thumb" style="background-image:url(r/agents/llamaindex-task-timer/banner.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span></div>
+    <h3>LlamaIndex Starter Agent</h3>
+    <p>A powerful AI agent template built with LlamaIndex that demonstrates how to create intelligent agents using the LlamaIndex framework. This starter project implements a Task Management Assistant using the Nebius AI model to showcase LlamaInd</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/llamaindex-task-timer','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/voice-agent-gradium-nebius-langchain/index.html" data-search="pitchloop voice coach pitchloop is a conversational voice-agent example powered by gradium, nebius token factory, and langchain. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>PitchLoop Voice Coach</h3>
+    <p>PitchLoop is a conversational voice-agent example powered by Gradium, Nebius Token Factory, and LangChain.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/voice-agent-gradium-nebius-langchain','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/pydantic-weather-agent/index.html" data-search="pydanticai starter agent a powerful ai agent built with pydanticai that provides real-time weather information for any city. this agent uses the nebius ai model to deliver accurate weather forecasts and insights. agents">
+  <div class="cb-thumb" style="background-image:url(r/agents/pydantic-weather-agent/banner.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill coral">1 nb</span></div>
+    <h3>PydanticAI Starter Agent</h3>
+    <p>A powerful AI agent built with PydanticAI that provides real-time weather information for any city. This agent uses the Nebius AI model to deliver accurate weather forecasts and insights.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/pydantic-weather-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/google-adk-tool-calling/index.html" data-search="simple tool calling agent with google adk (agent development kit) + nebius ai this example shows a sample &#x27;tool calling&#x27; agent, built using google&#x27;s agent development kit (adk) framework. agents">
+  <div class="cb-thumb" style="background-image:url(r/agents/google-adk-tool-calling/banner.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span></div>
+    <h3>Simple Tool Calling Agent with Google ADK (Agent Development Kit) + Nebius AI</h3>
+    <p>This example shows a sample &#x27;tool calling&#x27; agent, built using Google&#x27;s Agent Development Kit (ADK) framework.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/google-adk-tool-calling','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/universal-deep-research-nebius/index.html" data-search="universal deep research (nebius token factory) — agent this agent demonstrates a multi‑step research pipeline powered by nebius token factory models (openai‑compatible) with a fastapi backend and a next.js frontend. it uses the model moonshotai/kimi-k2-instruct by default. agents">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span></div>
+    <h3>Universal Deep Research (Nebius Token Factory) — Agent</h3>
+    <p>This agent demonstrates a multi‑step research pipeline powered by Nebius Token Factory models (OpenAI‑compatible) with a FastAPI backend and a Next.js frontend. It uses the model moonshotai/Kimi-K2-Instruct by default.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/universal-deep-research-nebius','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/vendor-risk-compliance-agent/index.html" data-search="vendor risk compliance agent production use case: security, privacy, and procurement teams need fast vendor reviews grounded in internal controls and contract evidence. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>Vendor Risk Compliance Agent</h3>
+    <p>Production use case: security, privacy, and procurement teams need fast vendor reviews grounded in internal controls and contract evidence.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/vendor-risk-compliance-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/langchain/nebius_travel_planner/index.html" data-search="voyagecompass travel planner a streamlit travel planning app built with langchain and nebius. it is inspired by ai travel-agent demos, but it uses a different app structure and planning flow: agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>VoyageCompass Travel Planner</h3>
+    <p>A Streamlit travel planning app built with LangChain and Nebius. It is inspired by AI travel-agent demos, but it uses a different app structure and planning flow:</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/nebius_travel_planner','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="tool-calling"><div class="section-eyebrow">Tool Calling · 1</div><p class="section-lede">Function calling and live web tools (Tavily) on open models.</p><div class="cb-grid"><a class="cb-card" href="r/tool-calling/index.html" data-search="function / tool calling examples some examples showing how to do function/tool calling in nebius token factory tool-calling">
+  <div class="cb-thumb" style="background-image:url(r/tool-calling/function-calling-1.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">tool-calling</span><span class="pill coral">2 nb</span></div>
+    <h3>Function / Tool Calling Examples</h3>
+    <p>Some examples showing how to do function/tool calling in Nebius Token Factory</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/tool-calling','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="rag"><div class="section-eyebrow">RAG · 5</div><p class="section-lede">Retrieval-augmented generation over PDFs and vector stores — Milvus, Qdrant, Weaviate, LlamaIndex.</p><div class="cb-grid"><a class="cb-card" href="r/rag/chat-with-pdf/index.html" data-search="chat with pdf documents a powerful rag (retrieval-augmented generation) chat application built with streamlit, llamaindex, and nebius ai&#x27;s qwen3 model. this application allows users to upload pdf documents and interact with them through an ai-powered chat interfac rag">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">rag</span></div>
+    <h3>Chat with PDF Documents</h3>
+    <p>A powerful RAG (Retrieval-Augmented Generation) chat application built with Streamlit, LlamaIndex, and Nebius AI&#x27;s Qwen3 model. This application allows users to upload PDF documents and interact with them through an AI-powered chat interfac</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/rag/chat-with-pdf','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/rag/rag-milvus-1/index.html" data-search="end to end rag pipeline with open source stack this example demonstrates how to build a end-to-end rag pipeline using open source stack. rag">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">rag</span><span class="pill coral">2 nb</span></div>
+    <h3>End to End RAG Pipeline with Open Source Stack</h3>
+    <p>This example demonstrates how to build a end-to-end RAG pipeline using open source stack.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/rag/rag-milvus-1','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/rag/support-agent-weaviate/index.html" data-search="macos/linux internal support agent is a retrieval-augmented generation (rag) assistant combining web search, document processing, vector retrieval, and intelligent support tools. it features multi‑agent orchestration, automatic support assessment, and  rag">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">rag</span></div>
+    <h3>macOS/Linux</h3>
+    <p>Internal Support Agent is a Retrieval-Augmented Generation (RAG) assistant combining web search, document processing, vector retrieval, and intelligent support tools. It features multi‑agent orchestration, automatic support assessment, and </p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/rag/support-agent-weaviate','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/rag/content-gen-pipeline-qdrant/index.html" data-search="nebius-qdrant content generation platform an ai-powered content generation platform that helps in creating social media posts, articles, and demo applications using a rag pipeline built with nebius and qdrant cloud vector database. !qdrant-nebius rag rag">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">rag</span></div>
+    <h3>Nebius-Qdrant Content Generation Platform</h3>
+    <p>An AI-powered content generation platform that helps in creating social media posts, articles, and demo applications using a RAG pipeline built with Nebius and Qdrant Cloud vector database. !Qdrant-Nebius RAG</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/rag/content-gen-pipeline-qdrant','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/rag/rag-pdf-llama-index/index.html" data-search="rag example with llama-index + nebius this example shows querying a pdf using  llama index framework and running llm on nebius token factory rag">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">rag</span><span class="pill coral">1 nb</span></div>
+    <h3>RAG Example with LLama-Index + Nebius</h3>
+    <p>This example shows querying a PDF using  llama index framework and running LLM on Nebius Token Factory</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/rag/rag-pdf-llama-index','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="lora"><div class="section-eyebrow">LoRA Fine-tuning · 1</div><p class="section-lede">Train and serve LoRA adapters on open models.</p><div class="cb-grid"><a class="cb-card" href="r/lora/lora-1/index.html" data-search="create fun images using lora adapters on token factory - overview - pre-requisites - quick start - example 2 - dev notes lora">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">lora</span></div>
+    <h3>Create Fun images Using LORA Adapters on Token Factory</h3>
+    <p>- Overview - Pre-Requisites - Quick start - Example 2 - Dev Notes</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/lora/lora-1','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="post-training"><div class="section-eyebrow">Fine-tuning &amp; Post-training · 1</div><p class="section-lede">Full fine-tuning pipelines on Token Factory.</p><div class="cb-grid"><a class="cb-card" href="r/post-training/fine-tuning-1/index.html" data-search="fine tuning example in this tutorial, we demonstrate how to perform post-training / fine-tuning using nebius token factory post-training">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">post-training</span><span class="pill coral">1 nb</span></div>
+    <h3>Fine Tuning Example</h3>
+    <p>In this tutorial, we demonstrate how to perform post-training / fine-tuning using Nebius Token Factory</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/post-training/fine-tuning-1','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="distillation"><div class="section-eyebrow">Distillation · 1</div><p class="section-lede">Generate training data, distill, and evaluate smaller models.</p><div class="cb-grid"><a class="cb-card" href="r/distillation/distillation-1/index.html" data-search="distillation example in this tutorial, we demonstrate how to perform distillation using nebius token factory to create a grammar-correcting model. we will: distillation">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">distillation</span><span class="pill coral">3 nb</span></div>
+    <h3>Distillation Example</h3>
+    <p>In this tutorial, we demonstrate how to perform distillation using Nebius Token Factory to create a grammar-correcting model. We will:</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/distillation/distillation-1','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="models"><div class="section-eyebrow">Models · 2</div><p class="section-lede">Model-specific quickstarts — GLM-4.5, GPT-OSS, Qwen3, Nemotron.</p><div class="cb-grid"><a class="cb-card" href="r/models/index.html" data-search="models on nebius token factory browse and run the latest open models at tokenfactory.nebius.com/models. models">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">models</span><span class="pill coral">3 nb</span></div>
+    <h3>Models on Nebius Token Factory</h3>
+    <p>Browse and run the latest open models at tokenfactory.nebius.com/models.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/models','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/models/nemotron/index.html" data-search="nvidia nemotron models browse nvidia nemotron models available on nebius token factory. models">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">models</span></div>
+    <h3>NVIDIA Nemotron Models</h3>
+    <p>Browse NVIDIA Nemotron models available on Nebius Token Factory.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/models/nemotron','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="integrations"><div class="section-eyebrow">Integrations · 2</div><p class="section-lede">Token Factory inside OpenClaw, Tavily, and more.</p><div class="cb-grid"><a class="cb-card" href="r/integrations/openclaw/index.html" data-search="openclaw + nebius token factory openclaw is a self-hosted ai assistant that connects chat apps (whatsapp, telegram, discord, and more) to llm providers. because nebius token factory serves open models through an openai-compatible api, you can point openclaw at token facto integrations">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">integrations</span></div>
+    <h3>OpenClaw + Nebius Token Factory</h3>
+    <p>OpenClaw is a self-hosted AI assistant that connects chat apps (WhatsApp, Telegram, Discord, and more) to LLM providers. Because Nebius Token Factory serves open models through an OpenAI-compatible API, you can point OpenClaw at Token Facto</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/openclaw','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/integrations/tavily/index.html" data-search="tavily + token factory tavily is an llm-optimized search api built specifically for agents. it delivers clean, structured, and context-aware web results — making it ideal for research, competitive intelligence, and multi-step agentic workflows. tavily handles que integrations">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">integrations</span></div>
+    <h3>Tavily + Token Factory</h3>
+    <p>Tavily is an LLM-optimized search API built specifically for agents. It delivers clean, structured, and context-aware web results — making it ideal for research, competitive intelligence, and multi-step agentic workflows. Tavily handles que</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/tavily','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="apps"><div class="section-eyebrow">Apps · 1</div><p class="section-lede">End-to-end applications built on Token Factory.</p><div class="cb-grid"><a class="cb-card" href="r/apps/index.html" data-search="cool apps and demos built with nebius ai - whatllm - llm streetfighter! - allycat apps">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">apps</span></div>
+    <h3>Cool Apps and Demos built with Nebius AI</h3>
+    <p>- WhatLLM - LLM Streetfighter! - Allycat</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/apps','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="coding"><div class="section-eyebrow">Coding · 1</div><p class="section-lede">Coding-agent and code-generation recipes.</p><div class="cb-grid"><a class="cb-card" href="r/coding/index.html" data-search="using token factory models with coding agents token factory has integrations with many coding agents and allows you to run state of the art open source models. coding">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">coding</span></div>
+    <h3>Using Token Factory Models with Coding Agents</h3>
+    <p>Token Factory has integrations with many coding agents and allows you to run state of the art open source models.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/coding','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="workshops"><div class="section-eyebrow">Workshops · 2</div><p class="section-lede">Hands-on workshop material.</p><div class="cb-grid"><a class="cb-card" href="r/workshops/deep-research-writing-agents-nebius-okahu/index.html" data-search="deep research + writing agents workshop with nebius and okahu a hands-on workshop for building a practical ai agent system with two mcp servers: a deep research agent and a linkedin writing workflow. the current implementation uses nebius ai studio for text llm calls, exa for real-time research, gemin workshops">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">workshops</span></div>
+    <h3>Deep Research + Writing Agents Workshop with Nebius and Okahu</h3>
+    <p>A hands-on workshop for building a practical AI agent system with two MCP servers: a Deep Research Agent and a LinkedIn Writing Workflow. The current implementation uses Nebius AI Studio for text LLM calls, Exa for real-time research, Gemin</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/workshops/deep-research-writing-agents-nebius-okahu','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/workshops/token-factory-workshop/index.html" data-search="token factory workshop --- workshops">
+  <div class="cb-thumb" style="background-image:url(r/workshops/token-factory-workshop/qrcode-workshop.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">workshops</span></div>
+    <h3>Token Factory Workshop</h3>
+    <p>---</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/workshops/token-factory-workshop','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="builder-hour"><div class="section-eyebrow">Builder Hour · 1</div><p class="section-lede">Builder-hour sessions and walkthroughs.</p><div class="cb-grid"><a class="cb-card" href="r/builder-hour/index.html" data-search="🚀 token factory builder hour token factory builder hour is an engaging live session where builders and developers come together to share knowledge through interactive conversations and hands-on demos. builder-hour">
+  <div class="cb-thumb" style="background-image:url(r/builder-hour/builder-hour-1.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">builder-hour</span></div>
+    <h3>🚀 Token Factory Builder Hour</h3>
+    <p>Token Factory Builder Hour is an engaging live session where builders and developers come together to share knowledge through interactive conversations and hands-on demos.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/builder-hour','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="articles"><div class="section-eyebrow">Articles · 1</div><p class="section-lede">Written deep-dives.</p><div class="cb-grid"><a class="cb-card" href="r/articles/qwen3-2507.html" data-search="qwen3-235b-a22b-2507 is here! published date: 2025 aug 05 articles doc">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">articles</span><span class="pill">doc</span></div>
+    <h3>Qwen3-235B-A22B-2507 is here!</h3>
+    <p>Published date: 2025 Aug 05</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/articles/qwen3-2507.md','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="community"><div class="section-eyebrow">Community · 2</div><p class="section-lede">Community-contributed guides.</p><div class="cb-grid"><a class="cb-card" href="r/community/events.html" data-search="events supported by nebius ai hackaging.ai - agentic ai against aging community doc">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">community</span><span class="pill">doc</span></div>
+    <h3>Events Supported by Nebius AI</h3>
+    <p>hackaging.ai - Agentic AI Against Aging</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/community/events.md','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/community/openbench-evaluation-guide/index.html" data-search="🧪 end‑to‑end guide ▸ evaluating nebius token factory models with openbench openbench is a fast, standardized evaluation framework built by @groqinc for reproducible llm benchmarking. community">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">community</span></div>
+    <h3>🧪 End‑to‑End Guide ▸ Evaluating Nebius Token Factory Models with OpenBench</h3>
+    <p>OpenBench is a fast, standardized evaluation framework built by @groqinc for reproducible LLM benchmarking.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/community/openbench-evaluation-guide','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="fun"><div class="section-eyebrow">Fun · 2</div><p class="section-lede">Pelicans on bicycles, snake games — open models having fun.</p><div class="cb-grid"><a class="cb-card" href="r/fun/pelican-riding-bicycle/index.html" data-search="pelican riding a bicycle - a fun vibe benchmark this is inpired by simon willison&#x27;s experiment called pelican riding a bicycle.  it has become a cool vibe benchmark to evaluate llms. original github repo: simonw/pelican-bicycle fun">
+  <div class="cb-thumb" style="background-image:url(r/fun/pelican-riding-bicycle/token-factory-2.png)"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">fun</span></div>
+    <h3>Pelican Riding a Bicycle - A fun vibe benchmark</h3>
+    <p>This is inpired by Simon Willison&#x27;s experiment called pelican riding a bicycle.  It has become a cool vibe benchmark to evaluate LLMs. Original github repo: simonw/pelican-bicycle</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/fun/pelican-riding-bicycle','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/fun/snake-game/index.html" data-search="🐍 llm snake battle a visual snake battle game where two llms compete against each other! watch as ai models control their snakes in a battle of survival. fun">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">fun</span></div>
+    <h3>🐍 LLM Snake Battle</h3>
+    <p>A visual snake battle game where two LLMs compete against each other! Watch as AI models control their snakes in a battle of survival.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/fun/snake-game','_blank')">source ↗</span>
+  </div>
+</a></div></section>
+  <p class="cb-empty" hidden>No recipes match.</p>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo by opencolin.</span>
+  <span><a href="../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../assets/js/main.js"></script>
+<script src="../assets/nav-logo.js"></script>
+<script src="../assets/cookbook-filter.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PydanticAI Starter Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/pydantic-weather-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><img alt="banner" src="./banner.png" /></p>
+<h1 id="pydanticai-starter-agent">PydanticAI Starter Agent</h1>
+<p>A powerful AI agent built with PydanticAI that provides real-time weather information for any city. This agent uses the Nebius AI model to deliver accurate weather forecasts and insights.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>🌤️ <strong>Real-time Weather</strong>: Get current weather forecasts for any city worldwide</li>
+<li>🔍 <strong>Intelligent Search</strong>: Uses DuckDuckGo search to find accurate weather information</li>
+<li>🤖 <strong>Interactive Interface</strong>: Simple command-line interface for weather queries</li>
+<li>⚡ <strong>Fast Response</strong>: Quick and accurate weather information delivery</li>
+<li>🎯 <strong>Customizable</strong>: Easy to modify for different cities and weather-related queries</li>
+</ul>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li><strong>PydanticAI</strong> framework for AI agent development</li>
+<li><strong>Nebius AI's</strong> Meta-Llama-3.1-70B-Instruct model</li>
+<li><strong>DuckDuckGo Search Tool</strong> for weather information</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.8 or higher</li>
+<li>Nebius API key (get it from <a href="http://tokenfactory.nebius.com/">Nebius Token Factory</a>)</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p><strong>1. Get the code</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">    </span>agents/pydantic-weather-agent
+</code></pre></div>
+
+<p><strong>2. Install dependencies:</strong></p>
+<p>using <code>uv</code></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># create a venv and install dependencies</span>
+uv<span class="w">  </span>sync
+</code></pre></div>
+
+<p>Or install using python pip</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+
+<p><strong>3 - Create .env file</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="running-the-agent">Running the agent</h2>
+<p><strong>Using <code>uv</code></strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w">  </span>sync
+uv<span class="w">  </span>run<span class="w">   </span>python<span class="w"> </span>agent.py
+</code></pre></div>
+
+<p><strong>Using python pip</strong></p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>agent.py
+</code></pre></div>
+
+<p>The agent will fetch and display the weather forecast for the specified city (default: New York).</p>
+<h3 id="example-queries">Example Queries</h3>
+<ul>
+<li>"What is the weather forecast for San Francisco today?"</li>
+<li>"What's the temperature in London right now?"</li>
+<li>"Will it rain in Tokyo tomorrow?"</li>
+<li>"What's the weather like in Sydney?"</li>
+<li>"Show me the forecast for Paris"</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://ai.pydantic.dev/">PydanticAI Framework</a></li>
+<li><a href="http://tokenfactory.nebius.com/">Nebius AI</a></li>
+<li>Contributed from <a href="https://github.com/Arindam200/awesome-ai-apps">awesome-ai-apps</a></li>
+</ul><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="notebook/Nebius_Pydantic.html">notebook/Nebius_Pydantic.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/agents/pydantic-weather-agent/notebook/Nebius_Pydantic.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

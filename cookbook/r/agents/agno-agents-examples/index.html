@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agno Agents · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/agno-agents-examples" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="agno-agents">Agno Agents</h1>
+<p><img alt="Banner" src="./banner.png" /></p>
+<p>This folder has the following agents:</p>
+<ul>
+<li><a href="#web-search-agent">web search agent</a></li>
+<li><a href="#multi-agent-system">multi agent system</a></li>
+<li><a href="#knowledgebase-agent">knowledgebase agent</a></li>
+</ul>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li>Agno framework for AI agent development</li>
+<li>Nebius AI's for running LLMs</li>
+<li>Duckduckgo for web search</li>
+<li>Yahoo Finance for finance data</li>
+<li>Couchbase as vector storage</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.10 or higher</li>
+<li>Nebius API key (get it from <a href="http://tokenfactory.nebius.com/">Nebius Token Factory</a>)</li>
+<li>Couchbase database credentials (for couchbase example)</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p><strong>1. Get the code</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">    </span>agents/agno-agents-examples
+</code></pre></div>
+
+<p><strong>2. Install dependencies:</strong></p>
+<p>using <code>uv</code></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># create a venv and install dependencies</span>
+uv<span class="w">  </span>sync
+
+<span class="c1"># install a kernel</span>
+<span class="nb">source</span><span class="w">  </span>.venv/bin/activate
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;cookbook-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;cookbook-1&quot;</span>
+<span class="c1"># select this kernel in Jupyter</span>
+</code></pre></div>
+
+<p>Or install using python pip</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;cookbook-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;cookbook-1&quot;</span>
+<span class="c1"># select this kernel in Jupyter</span>
+</code></pre></div>
+
+<p><strong>3 - Create .env file</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="running-the-agents">Running the agents</h2>
+<p><strong>Using uv</strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--with<span class="w"> </span>jupyter<span class="w"> </span>jupyter<span class="w"> </span>lab
+</code></pre></div>
+
+<p><strong>using python/pip</strong></p>
+<div class="codehilite"><pre><span></span><code>jupyter<span class="w"> </span>lab
+</code></pre></div>
+
+<p>Open the notebooks in Jupyter
+- select the kernel we defined earlier
+- run the notebook</p>
+<h2 id="agents">Agents</h2>
+<h3 id="web-search-agent">Web search agent</h3>
+<p>Uses duckduckgo to search the web</p>
+<p><a href="agno_websearch_agent.html">agno_websearch_agent.ipynb</a></p>
+<ol start="2">
+<li>Creating an agent with a knowledge base for specialized domains</li>
+<li>Building multi-agent systems where specialized agents work together</li>
+</ol>
+<h3 id="multi-agent-system">Multi Agent System</h3>
+<p>This example shows how mutiple agents work togethe.</p>
+<ol>
+<li>A web search agent for finding general information</li>
+<li>A finance agent for retrieving financial data</li>
+<li>A coordinator agent that delegates tasks to the specialized agents</li>
+</ol>
+<p><a href="agno_multi_agent.html">agno_multi_agent.ipynb</a></p>
+<h3 id="knowledgebase-agent">Knowledgebase Agent</h3>
+<p>This example demonstrates how to create an agent with specialized knowledge.   Use couchbase as vector database.</p>
+<p><strong>Prerequisites</strong></p>
+<ul>
+<li>We need to connect to a couchbase instance.  You can sign up for a free account at <a href="https://www.couchbase.com/">www.couchbase.com</a></li>
+<li>Also add the following attributes to <code>.env</code> file</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>COUCHBASE_USER=username
+COUCHBASE_PASSWORD=password
+COUCHBASE_CONNECTION_STRING=
+</code></pre></div>
+
+<p><a href="agno_knowledgebase_agent.html">agno_knowledgebase_agent.ipynb</a></p>
+<h2 id="references-and-acknowledgements">References and Acknowledgements</h2>
+<ul>
+<li><a href="https://www.agno.com/">Agno Framework</a></li>
+<li><a href="http://tokenfactory.nebius.com/">Nebius AI</a></li>
+<li>Contributed from <a href="https://github.com/Arindam200/awesome-ai-apps">awesome-ai-apps</a></li>
+</ul><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="agno_knowledgebase_agent.html">agno_knowledgebase_agent.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/agents/agno-agents-examples/agno_knowledgebase_agent.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="agno_multi_agent.html">agno_multi_agent.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/agents/agno-agents-examples/agno_multi_agent.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="agno_websearch_agent.html">agno_websearch_agent.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/agents/agno-agents-examples/agno_websearch_agent.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

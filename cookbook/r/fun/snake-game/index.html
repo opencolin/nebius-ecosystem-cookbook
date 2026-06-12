@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🐍 LLM Snake Battle · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/fun/snake-game" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="llm-snake-battle">🐍 LLM Snake Battle</h1>
+<p>A visual snake battle game where two LLMs compete against each other! Watch as AI models control their snakes in a battle of survival.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Two AI Players</strong>: Pit any two LLM models against each other</li>
+<li><strong>Real-time Visualization</strong>: Watch the snakes move, grow, and compete</li>
+<li><strong>Game Log</strong>: Track each turn's decisions and events</li>
+<li><strong>Configurable</strong>: Choose models from any OpenAI-compatible API</li>
+<li><strong>Fancy UI</strong>: Beautiful dark theme with glowing effects</li>
+<li><strong>Unique Fruit Visuals</strong>: Each fruit type has distinct appearance with animated effects:</li>
+<li>🍎 Apple: Classic red circle with leaf</li>
+<li>🍇 Grapes: Cluster of purple grapes with stem</li>
+<li>⭐ Star: Glowing 5-pointed star</li>
+<li>🍒 Cherry: Two cherries with connecting stem</li>
+<li>🦋 Butterfly: Fluttering wings with animation</li>
+<li>💎 Diamond: Sparkling gem with pulse effect and sparkles</li>
+<li>🎁 Present: Gift box with ribbon and sparkle particles</li>
+<li><strong>Wall Wrapping</strong>: Snakes pass through walls to the opposite side</li>
+<li><strong>Smart AI</strong>: LLMs get visual board views and safety overrides</li>
+</ul>
+<h2 id="how-to-play">How to Play</h2>
+<ol>
+<li>Open <code>snake-1.html</code> in your web browser</li>
+<li>Enter your <strong>API URL</strong> (already filled with Nebius Token Factory endpoint)</li>
+<li>Paste your <strong>API Key</strong></li>
+<li>Click <strong>Load Models</strong> to fetch available models</li>
+<li>Select different models for Player 1 (Red) and Player 2 (Blue)</li>
+<li>Click <strong>Start Battle!</strong></li>
+</ol>
+<h2 id="game-rules">Game Rules</h2>
+<ul>
+<li>Each snake starts with 3 segments on opposite sides of the grid</li>
+<li>Snakes automatically move forward; LLMs choose direction (up/down/left/right)</li>
+<li><strong>Wall Wrapping</strong>: Going through any wall teleports you to the opposite side! (Left ↔ Right, Top ↔ Bottom)</li>
+<li>Walls are SAFE - only snake collisions cause death</li>
+<li><strong>Multiple Fruits</strong> appear on the board (3 at a time by default) - eating them makes the snake grow</li>
+<li><strong>Different Fruit Types</strong> with varying growth values and unique visuals:</li>
+<li>🍎 Apple (+1) - 40% spawn rate - Simple red circle with green leaf</li>
+<li>⭐ Star (+3) - 25% spawn rate - Golden 5-pointed star with glow</li>
+<li>🍇 Grapes (+2) - 15% spawn rate - Purple grape cluster with stem</li>
+<li>🍒 Cherry (+2) - 10% spawn rate - Two red cherries with connecting stem</li>
+<li>🦋 Butterfly (+3) - 6% spawn rate - <strong>Animated fluttering teal wings</strong></li>
+<li>💎 Diamond (+4) - 3% spawn rate - RARE! <strong>Sparkling cyan gem with pulse effect and twinkle</strong></li>
+<li>🎁 Present (+5) - 1% spawn rate - RARE! <strong>Orange gift box with ribbon and sparkle particles</strong></li>
+<li><strong>Collision kills</strong>:</li>
+<li>Hitting your own body</li>
+<li>Hitting the enemy snake</li>
+<li>Walls are SAFE (you wrap through!)</li>
+<li><strong>Head-on collision</strong>: Both snakes crash simultaneously</li>
+<li><strong>Winner</strong>: The snake that survives longer. If both crash in same turn, the longer snake wins.</li>
+</ul>
+<p><strong>Tip</strong>: Wall wrapping creates interesting strategies - you might wrap around the board quickly to reach a far-away fruit or trap your opponent!</p>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li>Pure HTML/CSS/JavaScript (no build tools required)</li>
+<li>Canvas API for game rendering</li>
+<li>OpenAI-compatible API for LLM calls</li>
+<li>Responsive design</li>
+</ul>
+<h2 id="file-structure">File Structure</h2>
+<div class="codehilite"><pre><span></span><code>├── snake-1.html    # Main HTML structure
+├── style.css       # Styling and animations
+├── game.js         # Game logic and API integration
+└── README.md       # This file
+</code></pre></div>
+
+<h2 id="customization">Customization</h2>
+<p>You can modify the game by editing <code>game.js</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// Grid size</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">GRID_SIZE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">30</span><span class="p">;</span><span class="w">       </span><span class="c1">// Try 20 for faster games, 40 for more space</span>
+
+<span class="c1">// Turn delay (milliseconds)</span>
+<span class="nx">gameState</span><span class="p">.</span><span class="nx">turnDelay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1000</span><span class="p">;</span><span class="w"> </span><span class="c1">// Lower = faster, Higher = more time for LLM thinking</span>
+
+<span class="c1">// Snake starting positions (controlled in initializeGame function)</span>
+
+<span class="c1">// Prompting logic (in getBoardState function)</span>
+</code></pre></div>
+
+<h2 id="api-compatibility">API Compatibility</h2>
+<p>Works with any OpenAI-compatible API that supports:
+- <code>GET /models</code> endpoint
+- <code>POST /chat/completions</code> endpoint
+- Standard message format</p>
+<p>Tested with Nebius Token Factory but should work with other providers.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>"Failed to load models" error:</strong>
+- Check your API URL ends with <code>/</code>
+- Verify your API key is correct
+- Check browser console (F12) for detailed errors</p>
+<p><strong>Snakes don't seem smart:</strong>
+- Try different models - some are better at this task than others
+- Increase turn delay to give models more time to "think"
+- The prompt is simple - complex strategic behavior may need prompting adjustments</p>
+<p><strong>Game too slow/fast:</strong>
+- Adjust the Turn Delay in the setup screen
+- Smaller grid sizes (edit <code>GRID_SIZE</code> in game.js) result in quicker games</p>
+<p>Enjoy watching AI snake battles! 🐍⚔️🐍</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

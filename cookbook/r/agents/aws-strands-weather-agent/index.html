@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AWS Strands Starter Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/aws-strands-weather-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><img alt="AWS Strands" src="./banner.png" /></p>
+<h1 id="aws-strands-starter-agent">AWS Strands Starter Agent</h1>
+<p>A simple demonstration of using the Strands library with Nebius Token Factory's API to create an AI assistant that can fetch weather information.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Custom AI assistant using Nebius's LLMs with the Strands Agent SDK.</li>
+<li>Weather forecasting capability using the National Weather Service API.</li>
+<li>Demonstrates using <code>http_request</code> tool for making external API calls.</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12+</li>
+<li><a href="https://github.com/astral-sh/uv">uv</a> - an extremely fast Python package installer and resolver.</li>
+<li><a href="https://dub.sh/nebius">Nebius API key</a></li>
+</ul>
+<h2 id="environment-variables">Environment Variables</h2>
+<p>The application requires the following environment variable. You can create a <code>.env</code> file in the project root to store it.</p>
+<ul>
+<li><code>NEBIUS_API_KEY</code>: Your Nebius Token Factory API key.</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<ol>
+<li>
+<p>Clone this repository and navigate to the agent's directory.</p>
+<p><code>bash
+cd agents/aws-strands-weather-agent</code>
+2.  Create a virtual environment and install dependencies using <code>uv</code>:</p>
+<p>```bash</p>
+<h1 id="create-a-virtual-environment">Create a virtual environment</h1>
+<p>uv venv</p>
+<h1 id="activate-the-virtual-environment">Activate the virtual environment</h1>
+<p>source .venv/bin/activate</p>
+<h1 id="install-dependencies-from-pyprojecttoml-and-uvlock">Install dependencies from pyproject.toml and uv.lock</h1>
+<p>uv sync
+```</p>
+</li>
+<li>
+<p>Create a <code>.env</code> file and add your <code>NEBIUS_API_KEY</code>.</p>
+<p><code>NEBIUS_API_KEY="your-nebius-api-key"</code></p>
+</li>
+</ol>
+<h2 id="usage">Usage</h2>
+<p>Run the main script:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>agent.py
+</code></pre></div>
+
+<p>The script will:</p>
+<ol>
+<li>Create a weather assistant agent.</li>
+<li>Ask the agent to compare the temperature in New York and Chicago for the upcoming weekend.</li>
+<li>Output the assistant's response.</li>
+</ol>
+<h2 id="customization">Customization</h2>
+<p>You can modify the <code>agent.py</code> file to:</p>
+<ul>
+<li>Change the assistant's <code>system_prompt</code>.</li>
+<li>Add more tools from <code>strands_tools</code> or your own custom tools.</li>
+<li>Alter the example query passed to the <code>weather_agent</code>.</li>
+<li>Configure different LLM models supported by LiteLLM.</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

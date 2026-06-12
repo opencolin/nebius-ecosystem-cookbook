@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LlamaIndex Starter Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/llamaindex-task-timer" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><img alt="Banner" src="./banner.png" /></p>
+<h1 id="llamaindex-starter-agent">LlamaIndex Starter Agent</h1>
+<p>A powerful AI agent template built with LlamaIndex that demonstrates how to create intelligent agents using the LlamaIndex framework. This starter project implements a Task Management Assistant using the Nebius AI model to showcase LlamaIndex's capabilities in building practical AI applications.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>🛠️ <strong>LlamaIndex Integration</strong>: Built using LlamaIndex's powerful agent framework</li>
+<li>⏱️ <strong>Custom Tools</strong>: Example implementation of custom function tools</li>
+<li>🤖 <strong>ReAct Agent</strong>: Demonstrates LlamaIndex's ReAct agent pattern</li>
+<li>📊 <strong>Practical Example</strong>: Task management assistant with real-world use cases</li>
+<li>⚡ <strong>Easy to Extend</strong>: Well-structured code for adding your own tools and functionality</li>
+</ul>
+<h2 id="references-and-acknowledgements">References and Acknowledgements</h2>
+<ul>
+<li><a href="https://docs.llamaindex.ai/en/stable/">LlamaIndex docs</a></li>
+<li><a href="http://tokenfactory.nebius.com/">Nebius AI</a></li>
+<li>Contributed from <a href="https://github.com/Arindam200/awesome-ai-apps">awesome-ai-apps</a></li>
+</ul>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li>Agno framework for AI agent development</li>
+<li>Nebius AI's for running LLMs.  We are using <code>openai/gpt-oss-20b</code> reasoning model </li>
+<li>HackerNews Tool from Agno</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.10 or higher</li>
+<li>Nebius API key (get it from <a href="http://tokenfactory.nebius.com/">Nebius Token Factory</a>)</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p><strong>1. Get the code</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">    </span>agents/llamaindex-task-timer
+</code></pre></div>
+
+<p><strong>2. Install dependencies:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># create a venv and install dependencies</span>
+uv<span class="w">  </span>sync
+</code></pre></div>
+
+<p>Or install using python pip</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+
+<p><strong>3 - Create .env file</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="running-the-agent">Running the agent</h2>
+<p><strong>Using <code>uv</code></strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w">  </span>sync
+uv<span class="w">  </span>run<span class="w">   </span>python<span class="w"> </span>agent.py
+</code></pre></div>
+
+<p><strong>Using python pip</strong></p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>agent.py
+</code></pre></div>
+
+<p>The agent will start with a welcome message and show available capabilities. You can interact with it by typing your questions or commands.</p>
+<h3 id="example-implementation">Example Implementation</h3>
+<p>This starter implements a Task Management Assistant with the following capabilities:</p>
+<ul>
+<li>Duration Analysis: Calculate time durations between tasks</li>
+<li>Task Estimation: Estimate completion times for multiple tasks</li>
+<li>Productivity Tracking: Calculate and analyze productivity rates</li>
+</ul>
+<p>Example queries:</p>
+<ul>
+<li>"If I worked from 09:00 to 17:00 and completed 8 tasks, what was my productivity rate?"</li>
+<li>"How long will it take to complete 3 tasks that each take 45 minutes?"</li>
+<li>"Calculate the duration between 09:00 and 17:00"</li>
+</ul>
+<h2 id="extending-the-agent">Extending the Agent</h2>
+<p>To add your own functionality:</p>
+<ol>
+<li>Create new function tools using <code>FunctionTool.from_defaults()</code></li>
+<li>Add your tools to the agent's tool list</li>
+<li>Implement your custom logic in the functions</li>
+</ol>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

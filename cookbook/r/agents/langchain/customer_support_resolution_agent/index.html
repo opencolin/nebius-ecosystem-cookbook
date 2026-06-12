@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Customer Support Resolution Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/customer_support_resolution_agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="customer-support-resolution-agent">Customer Support Resolution Agent</h1>
+<blockquote>
+<p>A SaaS-style customer support agent that answers product questions,
+looks up real order status, and escalates to a human ticket when it
+can't confidently resolve the issue.</p>
+</blockquote>
+<p>Built with <strong>LangChain</strong> for the agent + tool-calling layer and
+<strong>Nebius Token Factory</strong> for both the LLM (<code>Qwen/Qwen3-30B-A3B</code>) and
+the embedding model (<code>Qwen/Qwen3-Embedding-8B</code>).</p>
+<h2 id="features">🚀 Features</h2>
+<ul>
+<li><strong>Knowledge-grounded answers</strong> — every policy answer is retrieved
+  from a FAISS index built over the FAQ, refund policy, and shipping
+  policy docs.</li>
+<li><strong>Real order lookups</strong> — <code>lookup_order</code> reads from a sample order
+  database and verifies the customer's email before exposing details.</li>
+<li><strong>Confidence-aware escalation</strong> — when the agent can't resolve an
+  issue from the knowledge base + order data, it opens a human ticket
+  via <code>create_ticket</code> and tells the customer the ticket ID.</li>
+<li><strong>Tool-calling agent</strong> — uses LangChain's <code>create_agent</code> so the LLM
+  picks the right tool for each turn instead of hard-coded routing.</li>
+<li><strong>Streamlit UI + CLI</strong> — run as a chat app or in the terminal.</li>
+</ul>
+<h2 id="tech-stack">🛠️ Tech Stack</h2>
+<ul>
+<li><strong>LangChain</strong> — agent, tools, retrievers, prompt templates</li>
+<li><strong>Nebius Token Factory</strong> — LLM and embeddings (OpenAI-compatible API)</li>
+<li><strong>FAISS</strong> — local vector store for the knowledge base</li>
+<li><strong>Streamlit</strong> — chat UI</li>
+<li><strong>Python 3.10+</strong></li>
+</ul>
+<h2 id="the-four-tools">🧰 The four tools</h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lookup_order</code></td>
+<td>Order status, items, totals, tracking — gated on customer email</td>
+</tr>
+<tr>
+<td><code>kb_search</code></td>
+<td>Semantic search across FAQ + policy docs</td>
+</tr>
+<tr>
+<td><code>refund_policy_search</code></td>
+<td>Search restricted to the refund / returns policy</td>
+</tr>
+<tr>
+<td><code>create_ticket</code></td>
+<td>Opens a human ticket and escalates the conversation</td>
+</tr>
+</tbody>
+</table>
+<h2 id="getting-started">📦 Getting Started</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python 3.10+</li>
+<li>A <a href="https://nebius.com/services/token-factory">Nebius Token Factory</a> API key</li>
+</ul>
+<h3 id="1-install">1. Install</h3>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>agents/customer_support_resolution_agent
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<span class="c1"># or with uv:</span>
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+
+<h3 id="2-configure-environment">2. Configure environment</h3>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+<span class="c1"># edit .env and add your NEBIUS_API_KEY</span>
+</code></pre></div>
+
+<h3 id="3-build-the-knowledge-base-one-time">3. Build the knowledge base (one-time)</h3>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>ingest.py
+</code></pre></div>
+
+<p>This embeds the docs in <code>data/*.md</code> with <code>Qwen/Qwen3-Embedding-8B</code> and writes
+the FAISS index to <code>kb_index/</code>.</p>
+<h3 id="4-run">4. Run</h3>
+<p>Streamlit chat UI:</p>
+<div class="codehilite"><pre><span></span><code>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
+</code></pre></div>
+
+<p>Terminal CLI:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>main.py
+</code></pre></div>
+
+<h2 id="demo-prompts-to-try">💬 Demo prompts to try</h2>
+<h3 id="order-lookups">Order Lookups</h3>
+<ul>
+<li><em>"I need to check on my order NC-10234. My email is alex@example.com."</em></li>
+<li><em>"What's the status of order NC-10235? My email is customer@domain.com"</em></li>
+<li><em>"Can you track order NC-10234 for me? Email: alex@example.com"</em></li>
+</ul>
+<h3 id="policy-faq-questions">Policy &amp; FAQ Questions</h3>
+<ul>
+<li><em>"How long does shipping take?"</em></li>
+<li><em>"What's your refund policy?"</em></li>
+<li><em>"How long do refunds take to a credit card?"</em></li>
+<li><em>"Can I cancel my order?"</em></li>
+<li><em>"What's your return window?"</em></li>
+</ul>
+<h3 id="escalation-scenarios">Escalation Scenarios</h3>
+<ul>
+<li><em>"My package arrived broken. What do I do?"</em> — escalates to human ticket</li>
+<li><em>"I think someone used my card to place an order, can a human help me?"</em> — escalates</li>
+<li><em>"I've been trying to get a refund for 2 weeks, please escalate this"</em></li>
+<li><em>"My order never arrived and I need immediate help"</em></li>
+</ul>
+<h3 id="combination-queries">Combination Queries</h3>
+<ul>
+<li><em>"Where's order NC-10234 (email: alex@example.com)? Also, can I still cancel it?"</em></li>
+<li><em>"What's your return policy for damaged items? My order NC-10235 arrived with a broken product"</em></li>
+</ul>
+<h2 id="project-structure">📂 Project structure</h2>
+<div class="codehilite"><pre><span></span><code>customer_support_resolution_agent/
+├── agent.py            # LangChain tool-calling agent + system prompt
+├── tools.py            # lookup_order, kb_search, refund_policy_search, create_ticket
+├── ingest.py           # Build / load FAISS index over data/*.md
+├── app.py              # Streamlit chat UI
+├── main.py             # Terminal CLI
+├── data/
+│   ├── faq.md
+│   ├── refund_policy.md
+│   ├── shipping_policy.md
+│   ├── orders.json     # Sample order DB
+│   └── tickets.json    # Tickets created by create_ticket
+├── kb_index/           # FAISS index (created by ingest.py)
+├── pyproject.toml
+└── env.example
+</code></pre></div>
+
+<h2 id="how-escalation-works">🧠 How escalation works</h2>
+<p>The agent's system prompt lists explicit conditions under which it
+must call <code>create_ticket</code> — low confidence from <code>kb_search</code>, customer
+asking for a human, damaged items, refund disputes, or any tool error
+it cannot resolve in one more step. When it escalates, it returns the
+ticket ID to the customer and the ticket is appended to
+<code>data/tickets.json</code> so you can see it in the Streamlit sidebar.</p>
+<h2 id="extending-it">🔁 Extending it</h2>
+<ul>
+<li>Swap <code>data/orders.json</code> for a real database query.</li>
+<li>Replace FAISS with a managed vector DB (Qdrant, Pinecone) — only
+  <code>ingest.py</code> and <code>tools._get_kb</code> change.</li>
+<li>Add tools: <code>update_shipping_address</code>, <code>issue_store_credit</code>,
+  <code>start_return</code>. Register them in <code>tools.ALL_TOOLS</code>.</li>
+<li>Plug <code>create_ticket</code> into Zendesk / Linear / your real ticketing
+  system.</li>
+</ul>
+<h2 id="license">📄 License</h2>
+<p>MIT — see the repo root <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/customer_support_resolution_agent/LICENSE" target="_blank" rel="noopener">LICENSE</a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

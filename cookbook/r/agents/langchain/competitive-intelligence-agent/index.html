@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Competitive Intelligence Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/competitive-intelligence-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="competitive-intelligence-agent">Competitive Intelligence Agent</h1>
+<p>A LangChain <strong>Deep Agent</strong> that produces decision-grade competitive briefs, powered by an LLM served by <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a>, and real-time web research via <a href="https://tavily.com/">Tavily</a>.</p>
+<p>You give it a single company name. It picks the top competitors itself, researches each across <strong>pricing</strong>, <strong>recent activity</strong>, and <strong>sentiment</strong>, and synthesizes a strategic brief.</p>
+<h2 id="why-deep-agents">Why deep agents</h2>
+<p>A regular tool-calling agent gets shallow on a task like this — it does one search, hallucinates the rest. Deep Agents add three primitives that make multi-step research actually work:</p>
+<ul>
+<li><strong>Planning</strong> — a <code>write_todos</code> tool the agent uses to lay out work before it starts, and tick off as it goes.</li>
+<li><strong>A virtual filesystem</strong> — <code>write_file</code> / <code>read_file</code> so the agent can accumulate findings and produce a single clean final artifact.</li>
+<li><strong>Sub-agents</strong> — bounded specialist agents the lead can delegate to. We ship three:</li>
+<li><code>pricing-researcher</code> — finds and extracts the official pricing page.</li>
+<li><code>news-researcher</code> — surfaces launches, funding, and exec moves from the
+    last 30–90 days (uses Tavily's <code>topic="news"</code> + <code>time_range</code>).</li>
+<li><code>sentiment-researcher</code> — gauges developer/customer sentiment from HN,
+    Reddit, G2, and Capterra (uses Tavily's <code>include_domains</code>).</li>
+</ul>
+<p>All sub-agents share two tools: <code>tavily_search</code> (LLM-optimized web search) and <code>tavily_extract</code> (clean-markdown page fetch). Everything else — planning, files, delegation — is provided by Deep Agents out of the box.</p>
+<h2 id="setup">Setup</h2>
+<p>This project uses <a href="https://docs.astral.sh/uv/">uv</a>.</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>agents/langchain/competitive-intelligence-agent
+uv<span class="w"> </span>sync
+cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Then edit <code>.env</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># https://tokenfactory.nebius.com/</span>
+<span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your-nebius-api-key
+
+<span class="c1"># https://tavily.com/</span>
+<span class="nv">TAVILY_API_KEY</span><span class="o">=</span>your-tavily-api-key
+</code></pre></div>
+
+<h2 id="run">Run</h2>
+<h3 id="cli">CLI</h3>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>cli.py<span class="w"> </span><span class="s2">&quot;Netflix&quot;</span>
+</code></pre></div>
+
+<h3 id="streamlit-web-ui">Streamlit (web UI)</h3>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>streamlit<span class="w"> </span>run<span class="w"> </span>streamlit_app.py
+</code></pre></div>
+
+<p>Opens a browser with a branded activity feed: enter a company in the sidebar, click <strong>Generate Brief</strong>, and watch the agent plan, dispatch sub-agents, and stream results live. The final brief renders as markdown with a download button.</p>
+<p>That's it. The agent will:</p>
+<ol>
+<li>Identify Netflix's top direct competitors.</li>
+<li>Lay out a TODO plan covering all dimensions.</li>
+<li>Dispatch sub-agents in parallel for each company.</li>
+<li>Synthesize the results into <code>brief.md</code> and save it to disk
+   (<code>./brief-netflix.md</code> by default).</li>
+</ol>
+<p>You'll see every step rendered live in the terminal: plan updates, tool calls, sub-agent dispatches, and the final brief.</p>
+<h3 id="options">Options</h3>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>cli.py<span class="w"> </span><span class="s2">&quot;Linear&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span><span class="s2">&quot;moonshotai/Kimi-K2.5&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>./linear-brief.md
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model</code>, <code>-m</code></td>
+<td><code>moonshotai/Kimi-K2.5</code></td>
+<td>Any tool-calling capable Nebius TF model.</td>
+</tr>
+<tr>
+<td><code>--output</code>, <code>-o</code></td>
+<td><code>./brief-&lt;company&gt;.md</code></td>
+<td>Where to save the final markdown brief.</td>
+</tr>
+<tr>
+<td><code>--recursion-limit</code></td>
+<td><code>150</code></td>
+<td>Bump if the agent runs out of LangGraph steps.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-the-output-looks-like">What the output looks like</h2>
+<p>The brief is structured for action, not entertainment:</p>
+<ul>
+<li><strong>TL;DR</strong> — 3-5 bullets on where the target wins/loses.</li>
+<li><strong>Side-by-side table</strong> — pricing, free tier, momentum, sentiment per company.</li>
+<li><strong>Per-company detail</strong> — pricing / recent moves / sentiment paragraphs with inline source URLs.</li>
+<li><strong>Strategic implications</strong> — opinionated bullets on what the target should do about it.</li>
+<li><strong>Sources</strong> — every URL the sub-agents cited, grouped by company.</li>
+</ul>
+<h2 id="files">Files</h2>
+<div class="codehilite"><pre><span></span><code>agent.py         # Lead agent + 3 sub-agent specs + the brief-schema prompt
+cli.py           # Typer entry point + Rich live renderer + output handling
+streamlit_app.py # Streamlit web UI with live activity feed + brief viewer
+</code></pre></div>
+
+<p>Two files. The Deep Agents SDK does the heavy lifting — we just compose model, two tools, three sub-agent prompts, and a brief structure.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>LangChain Deep Agents — <a href="https://docs.langchain.com/oss/python/deepagents/overview">https://docs.langchain.com/oss/python/deepagents/overview</a></li>
+<li>LangChain Tavily — <a href="https://docs.langchain.com/oss/python/integrations/tools/tavily_search">https://docs.langchain.com/oss/python/integrations/tools/tavily_search</a></li>
+<li>LangChain Nebius provider — <a href="https://docs.langchain.com/oss/python/integrations/providers/nebius">https://docs.langchain.com/oss/python/integrations/providers/nebius</a></li>
+<li>Nebius Token Factory — <a href="https://tokenfactory.nebius.com/">https://tokenfactory.nebius.com/</a></li>
+<li>Tavily — <a href="https://docs.tavily.com/">https://docs.tavily.com/</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

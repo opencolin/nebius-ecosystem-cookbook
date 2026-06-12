@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tavily + Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/tavily" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="tavily-token-factory">Tavily + Token Factory</h1>
+<p><img src="https://www.tavily.com/logos/tavily-full.svg" alt="Tavily" width="200"/></p>
+<h2 id="about-tavily">About Tavily</h2>
+<p><a href="https://tavily.com/">Tavily</a> is an LLM-optimized search API built specifically for agents. It delivers clean, structured, and context-aware web results — making it ideal for research, competitive intelligence, and multi-step agentic workflows. Tavily handles query formulation, result filtering, and content extraction so your Nebius-powered agents can focus on reasoning and synthesis instead of wrestling with raw HTML. Many examples in this cookbook pair Tavily search with Nebius Token Factory models to build agents that plan, research, and produce decision-grade outputs.</p>
+<ul>
+<li>📖 <a href="https://docs.tavily.com/">Tavily Documentation</a></li>
+<li>🎮 <a href="https://app.tavily.com/playground">Tavily Playground</a></li>
+</ul>
+<p>Here are some examples of Tavily and Token Factory.</p>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Description</th>
+<th>Tech Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../tool-calling/tavily_tool_calling.html">Tavily tool calling</a></td>
+<td>Jupyter notebook demonstrating Tavily tool-calling with Nebius Token Factory</td>
+<td>Token Factory · Tavily</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/tavily/workshops/token-factory-workshop/tavily-search.md" target="_blank" rel="noopener">Tavily search</a></td>
+<td>Agent Search with Tavily</td>
+<td>Token Factory · Tavily</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/tavily/agents/langchain/competitive-intelligence-agent/" target="_blank" rel="noopener">competitive research agent</a></td>
+<td>Deep agent example that uses 3 sub-agents to do pricing-research, news-research and sentiment-research</td>
+<td>LangChain deepagents · Nebius TF · Tavily</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/tavily/agents/universal-deep-research-nebius/README.md" target="_blank" rel="noopener">Universal Deep research</a></td>
+<td>Multi-step research pipeline with FastAPI backend + Next.js frontend; fetches web results via Tavily</td>
+<td>FastAPI · Next.js · Nebius TF · Tavily</td>
+</tr>
+</tbody>
+</table>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

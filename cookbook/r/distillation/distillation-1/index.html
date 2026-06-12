@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Distillation Example · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/distillation/distillation-1" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="distillation-example">Distillation Example</h1>
+<p>In this tutorial, we demonstrate how to perform distillation using <strong>Nebius Token Factory</strong> to create a grammar-correcting model. We will:  </p>
+<ol>
+<li>Generate high-quality training data via batched LLM generation using the recently released <strong>Qwen/Qwen3-235B-A22B-Instruct-2507</strong>.</li>
+<li>Fine-tune a <strong>Qwen/Qwen3-30B-A3B-Instruct-2507</strong> non-reasoning student model using LoRA adapters  </li>
+<li>Deploy, evaluate and compare the distilled model with a 3.5x times larger model of this family, <strong>Qwen/Qwen3-30B-A3B-Instruct-2507</strong>, using the most powerful open-source LLM to date, <strong>deepseek-ai/DeepSeek-R1-0528</strong>, as evaluator.</li>
+</ol>
+<ul>
+<li><a href="#distillation-example">Distillation Example</a></li>
+<li><a href="#understanding-distillation">Understanding Distillation</a></li>
+<li><a href="#1---setup">1 - Setup</a></li>
+<li><a href="#2---running-the-code">2 - Running the code</a></li>
+<li><a href="#3---generate-synthetic-data">3 - Generate Synthetic Data</a></li>
+<li><a href="#4---fine-tuning">4 - Fine tuning</a></li>
+<li><a href="#5---verifing-the-distilled-model">5 - Verifing the distilled model</a></li>
+<li><a href="#6---your-distilled-model-in-nebius-token-factory">6 - Your distilled model in Nebius Token Factory</a></li>
+<li><a href="#7---using-your-distilled-model">7 - Using your distilled model</a></li>
+<li><a href="#8---use-the-distilled-model-using-an-api">8 - Use the distilled model using an API</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+<h2 id="understanding-distillation">Understanding Distillation</h2>
+<p>For more details on how distillation works see : <strong><a href="https://github.com/nebius/token-factory-cookbook/blob/main/distillation/distillation-1/distillation-explained.md" target="_blank" rel="noopener">Distillation explained</a></strong></p>
+<p><img alt="" src="images/llm_distillation_diagram.png" /></p>
+<h2 id="1-setup">1 - Setup</h2>
+<p><strong>1. Get the code</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">    </span>distillation/distillation-1
+</code></pre></div>
+
+<p><strong>2. Install dependencies:</strong></p>
+<p>If using <code>uv</code> (preferred)</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+
+uv<span class="w"> </span>add<span class="w"> </span>--dev<span class="w"> </span>ipykernel<span class="w">   </span><span class="c1"># only when setting up UV for first time</span>
+
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;distillation-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;distillation-1&quot;</span>
+<span class="c1"># select this kernel when running in jupyter / vscode</span>
+</code></pre></div>
+
+<p>If using <code>pip</code></p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;distillation-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;distillation-1&quot;</span>
+<span class="c1"># select this kernel when running in jupyter / vscode</span>
+</code></pre></div>
+
+<p><strong>3 - Create .env file</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="2-running-the-code">2 - Running the code</h2>
+<p>Using <code>uv</code></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--with<span class="w"> </span>jupyter<span class="w"> </span>jupyter<span class="w"> </span>lab
+</code></pre></div>
+
+<p>Using standard python/pip</p>
+<div class="codehilite"><pre><span></span><code>jupyter<span class="w"> </span>lab<span class="w"> </span>
+</code></pre></div>
+
+<p>Using VSCode
+- open the notebook
+- run with custom jupyter kernel we created in step-1</p>
+<p>Run the notebooks in the following order</p>
+<h2 id="3-generate-synthetic-data">3 - Generate Synthetic Data</h2>
+<p>We are going to use a powerful LLM <code>Qwen3-235B-A22B</code> to create some synthetic data from <a href="https://huggingface.co/datasets/liweili/c4_200m">C4-200M</a> dataset </p>
+<p>We are going to run this using <strong>batch inference</strong> mode.</p>
+<p>The runtime can take anywhere from 1 to 24 hours.</p>
+<p>Note: we only have to do this once.  Then we can use the generated output.</p>
+<p>Run this notebook: <a href="1_generate_training_data.html">1_generate_training_data.ipynb</a></p>
+<p>After successful completion we will see a file <code>data/batch_output.jsonl</code> .</p>
+<h2 id="4-fine-tuning">4 - Fine tuning</h2>
+<p>We use the data we generated in previous step to fine tune a 'student model'</p>
+<p>The fine tuned model will be saved into <code>models</code> directory.</p>
+<p>Run this notebook:  <a href="2_training.html">2_training.ipynb</a></p>
+<p>You can see fine tuning jobs' status on the <a href="https://tokenfactory.nebius.com/fine-tuning">Studio fine-tuning dashboard</a> </p>
+<p><img alt="" src="images/fine-tuning-1.png" /></p>
+<h2 id="5-verifing-the-distilled-model">5 - Verifing the distilled model</h2>
+<p>This notebook will show how to evaluate our distilled model ('student' model)</p>
+<p>We will use another powerful LLM <strong>DeepSeek-R1</strong> as an evaluator</p>
+<p>Run notebook: <a href="3_evaluate_model.html">3_evaluate_model.ipynb</a></p>
+<h2 id="6-your-distilled-model-in-nebius-token-factory">6 - Your distilled model in Nebius Token Factory</h2>
+<p>Find your distilled models in <strong>models --&gt; custom</strong> section</p>
+<p><img alt="" src="images/distilled-model-1.png" /></p>
+<h2 id="7-using-your-distilled-model">7 - Using your distilled model</h2>
+<p>Try your new shiny model in the playground!</p>
+<p>Here you see the <strong>distilled model</strong> performing an  grammer correction </p>
+<p><img alt="" src="images/distilled-model-3.png" /></p>
+<h2 id="8-use-the-distilled-model-using-an-api">8 - Use the distilled model using an API</h2>
+<p>See our <a href="https://github.com/nebius/token-factory-cookbook/blob/main/distillation/distillation-1/api/README.md" target="_blank" rel="noopener">API examples</a></p>
+<p>And <a href="https://docs.tokenfactory.nebius.com//inference/quickstart">documentation</a></p>
+<h2 id="references">References</h2>
+<ol>
+<li>Stahlberg, F., &amp; Kumar, S. (2021). Synthetic data generation for grammatical error correction with tagged corruption models. In Proceedings of the 16th Workshop on Innovative Use of NLP for Building Educational Applications (pp. 37–47). Association for Computational Linguistics. https://www.aclweb.org/anthology/2021.bea-1.4</li>
+<li>Qwen Team. (2025, April 29). <em>Qwen3: Think deeper, act faster</em>. Qwen Blog. https://qwenlm.github.io/blog/qwen3/</li>
+<li>Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang and Weizhu Chen. LoRA: Low-Rank Adaptation of Large Language Models. The Tenth International Conference on Learning Representations, ICLR 2022, Virtual Event, April 25-29, 2022, 2022. https://openreview.net/forum?id=nZeVKeeFYf9</li>
+<li>Napoles, C., Sakaguchi, K., &amp; Tetreault, J. (2017). JFLEG: A fluency corpus and benchmark for grammatical error correction. In Proceedings of the 15th Conference of the European Chapter of the Association for Computational Linguistics: Volume 2, Short Papers (pp. 229–234). Association for Computational Linguistics. http://www.aclweb.org/anthology/E17-2037</li>
+</ol><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="1_generate_training_data.html">1_generate_training_data.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/distillation/distillation-1/1_generate_training_data.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="2_training.html">2_training.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/distillation/distillation-1/2_training.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="3_evaluate_model.html">3_evaluate_model.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/distillation/distillation-1/3_evaluate_model.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nebius-Qdrant Content Generation Platform · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/rag/content-gen-pipeline-qdrant" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="nebius-qdrant-content-generation-platform">Nebius-Qdrant Content Generation Platform</h1>
+<p>An AI-powered content generation platform that helps in creating social media posts, articles, and demo applications using a RAG pipeline built with Nebius and Qdrant Cloud vector database. 
+<img alt="Qdrant-Nebius RAG" src="https://github.com/user-attachments/assets/56847ea1-810c-476f-a2b6-e3c99269a7bb" /></p>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Node.js 18+</li>
+<li>Nebius API key</li>
+<li>Qdrant Cloud account and API key</li>
+</ul>
+<h3 id="setup">Setup</h3>
+<ol>
+<li><strong>Clone and setup environment:</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/token-factory-cookbook
+<span class="nb">cd</span><span class="w"> </span>rag/content-gen-pipeline-qdrant
+cp<span class="w"> </span>backend/env.example<span class="w"> </span>backend/.env
+cp<span class="w"> </span>frontend/env.example<span class="w"> </span>frontend/.env
+</code></pre></div>
+
+<ol start="2">
+<li><strong>Configure environment variables:</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Backend (.env)</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="m">3001</span>
+<span class="nv">NODE_ENV</span><span class="o">=</span>development
+<span class="nv">QDRANT_URL</span><span class="o">=</span>https://your-cluster-id.us-east-1-0.aws.cloud.qdrant.io:6333
+<span class="nv">QDRANT_API_KEY</span><span class="o">=</span>your_qdrant_cloud_api_key_here
+<span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your_nebius_api_key_here
+<span class="nv">CORS_ORIGIN</span><span class="o">=</span>http://localhost:3000
+
+<span class="c1"># Frontend (.env)</span>
+<span class="nv">REACT_APP_API_BASE_URL</span><span class="o">=</span>http://localhost:3001
+<span class="nv">REACT_APP_API_TIMEOUT</span><span class="o">=</span><span class="m">30000</span>
+</code></pre></div>
+
+<ol start="3">
+<li><strong>Start the application:</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>backend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>start
+<span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>start
+</code></pre></div>
+
+<h2 id="current-workflows">Current Workflows</h2>
+<p>The platform supports two main workflows for content generation:</p>
+<h3 id="1-content-generation-workflow">1. Content Generation Workflow</h3>
+<p><strong>Purpose</strong>: Generate AI-powered content suggestions for various content types with optional document context.</p>
+<p><strong>Content Types</strong>:
+- <strong>Social Media Posts</strong>: Generate engaging posts for LinkedIn, Twitter, Instagram, etc.
+- <strong>Articles</strong>: Create blog posts and articles with structured content
+- <strong>Demo Applications</strong>: Generate demo ideas and application concepts</p>
+<p><strong>Process</strong>:
+1. Select content type (social media, article, or demo)
+2. Add optional goals or requirements
+3. Optionally provide document context for RAG-enhanced generation
+4. AI generates multiple suggestions with:
+   - Titles and descriptions
+   - Key points or features
+   - Target audience
+   - Platform recommendations
+   - Engagement strategies</p>
+<p><strong>Features</strong>:
+- Uses Nebius Token Factory (Llama-3.3-70B-Instruct model for generation, Qwen/Qwen3-Embedding-8B for embeddings)
+- RAG-enhanced generation using uploaded document context
+- Provides formatted, ready-to-use content
+- Stores generation history</p>
+<h3 id="2-document-upload-processing-workflow">2. Document Upload &amp; Processing Workflow</h3>
+<p><strong>Purpose</strong>: Upload and process documents to provide context for RAG-enhanced content generation.</p>
+<p><strong>Supported Formats</strong>:
+- Text files (.txt, .md, .docx)
+- URLs (web pages)</p>
+<p><strong>Process</strong>:
+1. Upload documents through the web interface
+2. Automatic content extraction and processing
+3. Document chunking (1000 words with 200-word overlap)
+4. Vector embedding generation using Nebius Token Factory (Qwen/Qwen3-Embedding-8B)
+5. Storage in Qdrant Cloud vector database
+6. Context retrieval for content generation</p>
+<p><strong>Features</strong>:
+- Automatic content extraction from URLs
+- Intelligent document chunking
+- Vector embedding for semantic search using Nebius Embedding Qwen/Qwen3-Embedding-8B model
+- UUID-based point IDs for reliability
+- Context-aware content generation</p>
+<h2 id="local-development">Local Development</h2>
+<h3 id="development-setup">Development Setup</h3>
+<ol>
+<li><strong>Clone the repository:</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>&lt;repository-url&gt;
+<span class="nb">cd</span><span class="w"> </span>nebius-qdrant
+</code></pre></div>
+
+<ol start="2">
+<li><strong>Install dependencies:</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Backend dependencies</span>
+<span class="nb">cd</span><span class="w"> </span>backend
+npm<span class="w"> </span>install
+
+<span class="c1"># Frontend dependencies</span>
+<span class="nb">cd</span><span class="w"> </span>../frontend
+npm<span class="w"> </span>install
+</code></pre></div>
+
+<ol start="3">
+<li><strong>Configure environment:</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Copy environment files</span>
+cp<span class="w"> </span>backend/env.example<span class="w"> </span>backend/.env
+cp<span class="w"> </span>frontend/env.example<span class="w"> </span>frontend/.env
+
+<span class="c1"># Edit backend/.env with your API keys</span>
+<span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your_nebius_api_key
+<span class="nv">QDRANT_URL</span><span class="o">=</span>https://your-cluster-id.us-east-1-0.aws.cloud.qdrant.io:6333
+<span class="nv">QDRANT_API_KEY</span><span class="o">=</span>your_qdrant_cloud_api_key
+</code></pre></div>
+
+<ol start="4">
+<li><strong>Start development servers:</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Terminal 1: Backend</span>
+<span class="nb">cd</span><span class="w"> </span>backend
+npm<span class="w"> </span>start
+
+<span class="c1"># Terminal 2: Frontend</span>
+<span class="nb">cd</span><span class="w"> </span>frontend
+npm<span class="w"> </span>start
+</code></pre></div>
+
+<h3 id="development-urls">Development URLs</h3>
+<ul>
+<li><strong>Frontend</strong>: http://localhost:3000</li>
+<li><strong>Backend API</strong>: http://localhost:3001</li>
+</ul>
+<h3 id="development-features">Development Features</h3>
+<ul>
+<li>Hot reloading for both frontend and backend</li>
+<li>Real-time API testing</li>
+<li>Vector database management via Qdrant Cloud</li>
+<li>Content generation history</li>
+<li>Document processing logs</li>
+</ul>
+<h2 id="project-structure">Project Structure</h2>
+<div class="codehilite"><pre><span></span><code>nebius-qdrant/
+├── backend/                 # Node.js API server
+│   ├── src/
+│   │   ├── controllers/     # API endpoints
+│   │   │   ├── contentController.js    # Content generation logic
+│   │   │   ├── dataController.js       # Document upload &amp; management
+│   │   │   └── feedbackController.js   # User feedback handling
+│   │   ├── services/        # Business logic
+│   │   │   ├── nebiusService.js        # Nebius AI integration
+│   │   │   ├── qdrantService.js        # Qdrant Cloud operations
+│   │   │   ├── embeddingService.js     # Nebius AI embeddings
+│   │   │   └── documentService.js      # Document processing
+│   │   └── utils/          # Utilities
+│   │       └── formatter.js            # Response formatting
+│   ├── examples/           # Usage examples
+│   │   └── rag-usage-example.js        # RAG workflow demo
+│   └── uploads/            # Temporary file storage
+├── frontend/               # React application
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   │   ├── DocumentUpload.js       # File upload interface
+│   │   │   ├── Header.js               # Navigation header
+│   │   │   └── Sidebar.js              # Side navigation
+│   │   ├── pages/         # Page components
+│   │   │   ├── Dashboard.js            # Main dashboard
+│   │   │   ├── ContentGenerator.js     # Content generation UI
+│   │   │   ├── DataUpload.js           # Document management
+│   │   │   ├── Analytics.js            # Usage analytics
+│   │   │   └── History.js              # Generation history
+│   │   └── services/      # API client
+│   │       └── api.js                  # API integration
+│   └── public/            # Static assets
+└── docker-compose.yml     # Docker configuration (backend + frontend only)
+</code></pre></div>
+
+<h2 id="api-endpoints">API Endpoints</h2>
+<h3 id="content-generation">Content Generation</h3>
+<ul>
+<li><code>POST /api/content/suggest</code> - Generate content suggestions with optional RAG context</li>
+<li><code>GET /api/content/stats</code> - Get content statistics</li>
+<li><code>GET /api/content/history</code> - Get generation history</li>
+</ul>
+<h3 id="data-management">Data Management</h3>
+<ul>
+<li><code>POST /api/data/company</code> - Upload company data</li>
+<li><code>POST /api/data/files</code> - Upload documents</li>
+<li><code>POST /api/data/links</code> - Upload URLs</li>
+<li><code>GET /api/data/documents</code> - Get uploaded documents</li>
+<li><code>GET /api/data/stats</code> - Get data statistics</li>
+</ul>
+<h3 id="feedback">Feedback</h3>
+<ul>
+<li><code>POST /api/feedback</code> - Submit user feedback</li>
+</ul>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>AI-Powered Content</strong>: Uses Nebius Token Factory (Llama-3.3-70B-Instruct for generation, Qwen/Qwen3-Embedding-8B for embeddings) for high-quality content generation</li>
+<li><strong>RAG-Enhanced Generation</strong>: Context-aware content creation using uploaded documents</li>
+<li><strong>Document Processing</strong>: Automatic chunking, embedding, and storage</li>
+<li><strong>Vector Search</strong>: Qdrant Cloud integration for semantic search and context retrieval</li>
+<li><strong>Modern UI</strong>: Clean, responsive React interface with Tailwind CSS</li>
+<li><strong>Real-time Processing</strong>: Live content generation and document processing</li>
+<li><strong>Multi-format Support</strong>: Text files, URLs, JSON, and CSV processing</li>
+<li><strong>History Tracking</strong>: Complete generation history and analytics</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

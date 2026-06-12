@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LangChain examples for Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/archived" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="langchain-examples-for-nebius-token-factory">LangChain examples for Nebius Token Factory</h1>
+<p>This folder contains production-oriented LangChain examples powered by Nebius Token Factory. Each example is self-contained with its own <code>requirements.txt</code>, <code>.env.example</code>, source files, and sample data.</p>
+<h2 id="examples">Examples</h2>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Production use case</th>
+<th>What it demonstrates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/archived/voice-agent-gradium-nebius-langchain/" target="_blank" rel="noopener">Voice Agent with Gradium</a></td>
+<td>Conversational pitch and public-speaking coach</td>
+<td>Browser voice turns, Gradium STT/TTS, LangChain prompt orchestration, Nebius reasoning</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/archived/incident-response-agent/" target="_blank" rel="noopener">Incident Response Agent</a></td>
+<td>SRE incident triage</td>
+<td>Tool-driven log search, runbook lookup, deploy correlation, typed mitigation plan</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/archived/customer-support-resolution-agent/" target="_blank" rel="noopener">Customer Support Resolution Agent</a></td>
+<td>CX ticket resolution</td>
+<td>KB search, order lookup, policy-grounded draft responses, approval-aware workflow recommendations</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/archived/vendor-risk-compliance-agent/" target="_blank" rel="noopener">Vendor Risk Compliance Agent</a></td>
+<td>Security/privacy vendor review</td>
+<td>Policy control search, contract evidence review, data-residency checks, risk register output</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/archived/data-quality-ops-agent/" target="_blank" rel="noopener">Data Quality Ops Agent</a></td>
+<td>Data operations investigation</td>
+<td>Guarded read-only SQL, schema discovery, pipeline change correlation, reproducible data quality report</td>
+</tr>
+</tbody>
+</table>
+<h2 id="setup-pattern">Setup pattern</h2>
+<p>Each project can be run independently:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>langchain/&lt;example-folder&gt;
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># add NEBIUS_API_KEY and any project-specific keys</span>
+python<span class="w"> </span>main.py
+</code></pre></div>
+
+<p>The voice agent also includes a FastAPI browser UI:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>langchain/voice-agent-gradium-nebius-langchain
+uvicorn<span class="w"> </span>voice_agent_server:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8501</span>
+</code></pre></div>
+
+<h2 id="safety-notes">Safety notes</h2>
+<ul>
+<li>All examples are designed to use local fixtures and read-only or draft-only tools.</li>
+<li>No real infrastructure, refunds, shipments, or vendor approvals are executed.</li>
+<li><code>.env.example</code> files contain placeholders only; add real keys locally.</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

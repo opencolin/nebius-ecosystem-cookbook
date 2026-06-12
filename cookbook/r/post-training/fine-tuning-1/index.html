@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fine Tuning Example · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/post-training/fine-tuning-1" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="fine-tuning-example">Fine Tuning Example</h1>
+<p>In this tutorial, we demonstrate how to perform post-training / fine-tuning using <strong>Nebius Token Factory</strong> </p>
+<ul>
+<li><a href="#fine-tuning-example">Fine Tuning Example</a></li>
+<li><a href="#1-get-the-code">1. Get the code</a></li>
+<li><a href="#2-install-dependencies-if-running-locally">2. Install dependencies (If running locally)</a></li>
+<li><a href="#3---create-env-file">3 - Create .env file</a></li>
+<li><a href="#4---running-the-code">4 - Running the code</a></li>
+<li><a href="#5---fine-tuning">5 - Fine tuning</a></li>
+<li><a href="#6---your-fine-tuned-model-in-nebius-token-factory">6 - Your fine-tuned model in Nebius Token Factory</a></li>
+<li><a href="#7---using-your-fine-tuned-model-in-playground">7 - Using your fine-tuned model in Playground</a></li>
+<li><a href="#8---use-the-fine-tuned-model-using-an-api">8 - Use the fine-tuned model using an API</a></li>
+<li><a href="#references">References</a></li>
+<li><a href="#dev-notes">Dev Notes</a></li>
+</ul>
+<h2 id="1-get-the-code">1. Get the code</h2>
+<p>Code: <a href="fine_tune_llama.html">fine_tune_llama.ipynb</a></p>
+<p><a href="https://colab.research.google.com/github/nebius/token-factory-cookbook/blob/main/post-training/fine-tuning-1/fine_tune_llama.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> - run without any local setup!</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">    </span>post-training/fine-tuning-1
+</code></pre></div>
+
+<h2 id="2-install-dependencies-if-running-locally">2. Install dependencies (If running locally)</h2>
+<p><strong>If using <code>uv</code> (preferred)</strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+uv<span class="w"> </span>add<span class="w"> </span>--dev<span class="w"> </span>ipykernel<span class="w">   </span><span class="c1"># only when setting up UV for first time</span>
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;fine-tuning-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;fine-tuning-1&quot;</span>
+<span class="c1"># select this kernel when running in jupyter / vscode</span>
+</code></pre></div>
+
+<p><strong>If using Conda</strong></p>
+<div class="codehilite"><pre><span></span><code>conda<span class="w">  </span>create<span class="w">  </span>-n<span class="w"> </span>fine-tuning-1<span class="w">  </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12
+conda<span class="w"> </span>activate<span class="w">  </span>fine-tuning-1
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;fine-tuning-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;fine-tuning-1&quot;</span>
+</code></pre></div>
+
+<p><strong>If using <code>pip</code></strong></p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;fine-tuning-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;fine-tuning-1&quot;</span>
+<span class="c1"># select this kernel when running in jupyter / vscode</span>
+</code></pre></div>
+
+<h2 id="3-create-env-file">3 - Create .env file</h2>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="4-running-the-code">4 - Running the code</h2>
+<p><strong>Using VSCode</strong></p>
+<ul>
+<li>open the notebook: <a href="fine_tune_llama.html">fine_tune_llama.ipynb</a></li>
+<li>run with custom jupyter kernel we created (<code>fine-tuning-1</code>)</li>
+</ul>
+<p><strong>Using <code>uv</code></strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--with<span class="w"> </span>jupyter<span class="w"> </span>jupyter<span class="w"> </span>lab<span class="w"> </span>fine_tune_llama.ipynb
+</code></pre></div>
+
+<p>Using standard python/pip</p>
+<div class="codehilite"><pre><span></span><code>jupyter<span class="w"> </span>lab<span class="w"> </span>
+</code></pre></div>
+
+<h2 id="5-fine-tuning">5 - Fine tuning</h2>
+<p>You can see fine tuning jobs' status on the <a href="https://tokenfactory.nebius.com/post-training">post training dashboard</a> </p>
+<p><img alt="" src="images/fine-tuning-job.png" /></p>
+<p>The fine tuned model will be saved locally into  <code>models-checkpoints</code> directory.</p>
+<h2 id="6-your-fine-tuned-model-in-nebius-token-factory">6 - Your fine-tuned model in Nebius Token Factory</h2>
+<p>Find your fine-tuned models in <strong>models --&gt; private</strong> section</p>
+<p><img alt="" src="images/fine-tuning-models.png" /></p>
+<h2 id="7-using-your-fine-tuned-model-in-playground">7 - Using your fine-tuned model in Playground</h2>
+<p>Try your new shiny model in the playground!</p>
+<h2 id="8-use-the-fine-tuned-model-using-an-api">8 - Use the fine-tuned model using an API</h2>
+<p>See our <a href="https://github.com/nebius/token-factory-cookbook/blob/main/post-training/fine-tuning-1/api/README.md" target="_blank" rel="noopener">API examples</a></p>
+<p>And <a href="https://docs.tokenfactory.nebius.com//inference/quickstart">documentation</a></p>
+<h2 id="references">References</h2>
+<h2 id="dev-notes">Dev Notes</h2>
+<p>How to setup a <code>uv</code> project</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>init<span class="w"> </span>--python<span class="o">=</span><span class="m">3</span>.12
+uv<span class="w"> </span>add<span class="w"> </span>openai<span class="w"> </span>datasets<span class="w"> </span>python-dotenv<span class="w">  </span>pandas<span class="w">  </span>seaborn<span class="w">  </span>jinja2
+uv<span class="w"> </span>add<span class="w"> </span>--dev<span class="w"> </span>ipykernel
+
+<span class="c1"># create a requirements.txt file</span>
+uv<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--frozen<span class="w"> </span>--no-hashes<span class="w"> </span>--no-emit-project<span class="w"> </span>--no-default-groups<span class="w"> </span>--output-file<span class="o">=</span>requirements.txt
+</code></pre></div><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="fine_tune_llama.html">fine_tune_llama.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/post-training/fine-tuning-1/fine_tune_llama.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

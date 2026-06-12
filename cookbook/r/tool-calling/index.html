@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Function / Tool Calling Examples · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../index.html">Ecosystem</a>
+      <a href="../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/tool-calling" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="function-tool-calling-examples">Function / Tool Calling Examples</h1>
+<p>Some examples showing how to do function/tool calling in Nebius Token Factory</p>
+<h2 id="references-and-acknowledgements">References and Acknowledgements</h2>
+<ul>
+<li><a href="https://docs.tokenfactory.nebius.com//inference/quickstart">API documentation</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com//inference/tool-calling">Tool calling docs</a></li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Nebius API key (get it from <a href="http://tokenfactory.nebius.com/">Nebius Token Factory</a>)</li>
+</ul>
+<h2 id="function-calling-explained">Function Calling Explained</h2>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/tool-calling/function-calling-explained.md" target="_blank" rel="noopener">Function calling explained</a></p>
+<p><img alt="" src="function-calling-explained.svg" /></p>
+<h2 id="setup">Setup</h2>
+<p><strong>1. Using Google Colab</strong></p>
+<p>No setup needed.  Run the notebook and it will install all dependencies</p>
+<p><strong>2. (Local) Using uv (recommended)</strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+uv<span class="w">  </span>pip<span class="w"> </span>install<span class="w">  </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;cookbook-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;cookbook-1&quot;</span>
+</code></pre></div>
+
+<p><strong>3. (Local) Using python / pip</strong></p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="s2">&quot;cookbook-1&quot;</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;cookbook-1&quot;</span>
+</code></pre></div>
+
+<h2 id="running-the-code">Running the code</h2>
+<p><strong>Using Jupyter</strong></p>
+<div class="codehilite"><pre><span></span><code>jupyter<span class="w"> </span>lab
+</code></pre></div>
+
+<p>And select the kernel defined above and run notebooks.</p>
+<p><strong>Using vscode and other IDEs</strong></p>
+<p>Restart vscode so it will refresh available kernels.  Then select it and run it.</p>
+<h2 id="examples">Examples</h2>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Description</th>
+<th>Tech Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="function_calling_1.html">simple function calling example</a></td>
+<td>Demonstrates how to call functions</td>
+<td>Nebius AI</td>
+</tr>
+<tr>
+<td><a href="tavily_tool_calling.html">Tavily tool calling example</a></td>
+<td>Demonstrates how to implement research agent with Tavily search</td>
+<td>Nebius AI, Tavily search</td>
+</tr>
+</tbody>
+</table><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="function_calling_1.html">function_calling_1.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/tool-calling/function_calling_1.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="tavily_tool_calling.html">tavily_tool_calling.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/tool-calling/tavily_tool_calling.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/nav-logo.js"></script>
+</body>
+</html>

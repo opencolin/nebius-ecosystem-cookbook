@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nebius Ecosystem &amp; Partners + Token Factory Cookbook</title>
+  <meta name="description" content="The stack Nebius owns end-to-end (Token Factory, Tavily, Contree, AI Cloud), the reference architectures that compose it, the partners and channels it plugs into (agent labs, model launches, gateways, NVIDIA), and the community ecosystem it captures." />
+  <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="index.html" class="active">Ecosystem</a>
+      <a href="cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="cookbook/index.html">Cookbook →</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <span class="hero-eyebrow">Initiatives 2 &amp; 7 · Ecosystem &amp; partners</span>
+    <h1>The ecosystem Nebius owns, integrates, and captures.</h1>
+    <p class="lede">One story in three moves. <strong>Own</strong> the whole agent stack — open-model inference, live web data, safe execution, and compute, on one cloud. <strong>Integrate</strong> with every partner who could out-shout Nebius, turning them into distribution channels instead of threats. <strong>Capture</strong> the adjacent communities already building agents — and aggregate it all into one browsable directory (mocked up at the <a href="https://demo.buildspace.tv/ecosystem">builder directory</a>).</p>
+    <div class="btn-row">
+      <a class="btn" href="#stack">The stack we own</a>
+      <a class="btn secondary" href="#partners">The partners we plug into</a>
+      <a class="btn secondary" href="#directory">The directory</a>
+      <a class="btn" href="cookbook/index.html">Browse the Cookbook →</a>
+    </div>
+    <div class="hero-meta">
+      <span><strong>Own:</strong> Token Factory · Tavily · Contree · AI Cloud</span>
+      <span><strong>Integrate:</strong> agent labs · model launches · gateways · NVIDIA</span>
+      <span><strong>Capture:</strong> 190+ projects in the directory prototype</span>
+    </div>
+  </div>
+</header>
+
+<section class="container" style="padding-bottom: 0;">
+  <div class="callout coral">
+    <p><strong>The connective thesis: Token Factory is the open-model backend for any MCP-native harness.</strong> MCP is the distribution layer that ties owned products and outside partners together — the Tavily MCP server already inside Claude Code, Codex, and Cursor; the Contree MCP server for safe code execution; and the official Nebius <code>SKILL.md</code> that drops <code>base_url=Nebius</code> into 50+ agents at once. Every one is a config line away from Token Factory. Own the protocol surface and distribution compounds.</p>
+  </div>
+</section>
+
+<section id="stack" class="container">
+  <div class="section-eyebrow">Own · the three pillars (plus execution)</div>
+  <h2 class="section-title">Models. Web data. Compute. Execution. One vendor.</h2>
+  <p class="section-lede">Competitors sell one leg of the stool. The ecosystem narrative — in every reference architecture, workshop, and hackathon brief — is that the whole agent runs on Nebius.</p>
+
+  <div class="cards" style="margin-top: 1.5rem;">
+    <div class="card">
+      <span class="pill coral">Token Factory</span>
+      <h3>The open-model on-ramp</h3>
+      <p>An OpenAI-compatible API over DeepSeek, Qwen, GLM, Kimi, MiniMax M2.7, Mistral (Devstral / Codestral 3 / Mistral Large 3), Llama, and Hermes — plus LoRA fine-tuning, batch, and dedicated endpoints. Re-point one <code>base_url</code> and your agent runs on open models. This is where every builder journey starts. <strong>Mistral Large 3 on Nebius's EU data centers</strong> is the data-residency choice for European teams.</p>
+    </div>
+    <div class="card">
+      <span class="pill coral">Tavily</span>
+      <h3>The web-data layer</h3>
+      <p>Search, extract, crawl — real-time web access purpose-built for agents, with an MCP server that drops into Claude Code, Codex, and Cursor in minutes. No compute rival owns anything like it. Onboarding mocked up at <a href="https://demo.buildspace.tv/tavily">/tavily</a>.</p>
+    </div>
+    <div class="card">
+      <span class="pill coral">Contree</span>
+      <h3>The execution layer</h3>
+      <p>A Git-native agent sandbox (branch/rollback, MCP server + Python SDK) built on Nebius microVMs — the safe place agent-generated code actually runs, so the whole agent (model, web data, compute, execution) lives on one cloud.</p>
+    </div>
+    <div class="card">
+      <span class="pill coral">AI Cloud</span>
+      <h3>The scale layer</h3>
+      <p>Managed GPU clusters on the latest NVIDIA silicon — Slurm via the open-source <strong>Soperator</strong>, managed Kubernetes, and Serverless for elastic jobs. Where fine-tunes graduate into training runs without re-platforming.</p>
+    </div>
+  </div>
+
+  <div class="callout coral" style="margin-top: 1.5rem;">
+    <p><strong>The grows-with-you arc — the ecosystem's spine.</strong> First inference call (Token Factory, minute 5) → agent with live web data (+ Tavily, day 1) → safe code execution (Contree sandbox) → fine-tuned model on your task (week 2) → dedicated endpoints in production (month 2) → committed GPU capacity (quarter 2, AI Cloud). Every piece of ecosystem content places the reader somewhere on this arc and shows the next step — that's how the land becomes the expand.</p>
+  </div>
+</section>
+
+<section style="background: var(--coral-tint);">
+  <div class="container">
+    <div class="section-eyebrow">Own · the two in-house partner engines</div>
+    <h2 class="section-title">Tavily and Contree: products we already own, run as channels.</h2>
+    <p class="section-lede">Two of the pillars aren't just features — they're products with their own developer followings and MCP footprints inside every major harness. The play is to run each one and Token Factory as <strong>one bundle with two front doors</strong>, so each owned asset is also a distribution surface.</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="pill coral">Tavily · proof this quarter</span>
+        <h3>The co-hosting machine</h3>
+        <p>Tavily events already on the calendar: a market-research-agent build day with <strong>J.P. Morgan and LangChain</strong> at NY Tech Week, <strong>Agents After Dark</strong> with CopilotKit, a voice-agent build night with <strong>ElevenLabs</strong>, and co-sponsorship of <strong>BuilderShip</strong>. Each puts Nebius in front of a partner's audience at shared cost.</p>
+      </div>
+      <div class="card">
+        <span class="pill coral">Tavily · cross-sell</span>
+        <h3>Two funnels, one bundle</h3>
+        <p>Every Tavily developer is building an agent → a Token Factory prospect. Every Token Factory agent needs web data → a Tavily prospect. Bundled credits, one onboarding (<a href="https://demo.buildspace.tv/tavily">mocked up at /tavily</a>), shared attribution — measured as <strong>Tavily ↔ Token Factory cross-adoption</strong> on the dashboard.</p>
+      </div>
+      <div class="card">
+        <span class="pill coral">Contree · cross-sell</span>
+        <h3>The execution-side loop</h3>
+        <p>Every Contree user runs agent-generated code → a Token Factory inference prospect. Every Token Factory agent builder needs somewhere safe to run that code → a Contree prospect. The same land→expand loop the Tavily bundle runs, on the execution side — its MCP server drops into Claude Code and Cursor MCP-native by design.</p>
+      </div>
+      <div class="card">
+        <span class="pill">Contree · reproducibility</span>
+        <h3>SWE-bench as tags</h3>
+        <p>Git-style fork/rollback per cell plus preloaded SWE-bench environments make Contree the natural execution substrate under the Open-Model Index — a citeable image per environment instead of weeks of setup.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background: var(--ocean-soft);">
+  <div class="container">
+    <div class="section-eyebrow">Initiative 2 · compose</div>
+    <h2 class="section-title">Reference architectures — canonical, maintained, co-marketed.</h2>
+    <p class="section-lede">"What can I build on Nebius?" needs canonical answers, each shipping a repo + short video + written guide + cost calculator. The workshop library on the builder site is the home; several are already drafted there.</p>
+    <div class="callout coral"><p><strong>▶ These reference architectures are real, runnable recipes.</strong> The full <a href="cookbook/index.html">Token Factory Cookbook</a> — <strong>50 recipes across 17 categories, 27 notebooks rendered with their outputs</strong> — backs every architecture below: <a href="cookbook/index.html">research agents</a> (CrewAI / LangChain + Tavily), <a href="cookbook/index.html">fine-tuning &amp; LoRA</a>, the <a href="cookbook/index.html">one-<code>base_url</code> API quickstarts</a>, RAG, distillation, and more. <a href="cookbook/index.html">Browse all 50 →</a></p></div>
+
+    <div class="callout coral">
+      <p><strong>The cost calculator's hook: inference is 60-80% of your agent's cost — here's the line item you can cut most.</strong> Not "model your Together bill" but the sharpest lever in the budget. The calculator shows a tiered-routing view across Token Factory's 60+ models — a cheap model for routing/classification, a mid model for implementation, a top-tier model for hard reasoning — because that's where the order-of-magnitude savings live. <em>The "60-80% of agent operating expenses" and "~10x via intelligent routing" figures are reported industry findings (per the source corpus), not Nebius's own measurements.</em></p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+      <div class="initiative">
+        <div class="initiative-num">1</div>
+        <div>
+          <h3>Token Factory + Claude Code / Codex / Cursor</h3>
+          <div class="attacks">The agent on-ramp · co-marketed with the agent labs</div>
+          <p>Point any agent harness at open models via MCP servers and one <code>base_url</code>. The five-minute setup that converts harness users into Token Factory accounts — already drafted as the unified selector guide on the builder site.</p>
+        </div>
+      </div>
+      <div class="initiative">
+        <div class="initiative-num">2</div>
+        <div>
+          <h3>The research agent — Tavily + Token Factory</h3>
+          <div class="attacks">The flagship Tavily pairing</div>
+          <p>A production research agent: Tavily for live web search/extract, an open model on Token Factory for reasoning, deployed on Serverless. The canonical "agents need the web" demo — and the bundle's best cross-sell artifact.</p>
+        </div>
+      </div>
+      <div class="initiative">
+        <div class="initiative-num">3</div>
+        <div>
+          <h3>Fine-tune and serve an open model</h3>
+          <div class="attacks">The answer to frontier-API bill fatigue</div>
+          <p>Tune a small open model on your task with Token Factory LoRA, evaluate against the frontier API, serve on a dedicated endpoint. Pairs with the fine-tuning ROI benchmark.</p>
+        </div>
+      </div>
+      <div class="initiative">
+        <div class="initiative-num">4</div>
+        <div>
+          <h3>Train it, tune it, serve it</h3>
+          <div class="attacks">The full-stack proof — all three surfaces in one walkthrough</div>
+          <p>One project that touches AI Cloud (train), Token Factory (tune + serve), and Tavily (the agent on top). The single most important artifact for the land→expand story.</p>
+        </div>
+      </div>
+      <div class="initiative">
+        <div class="initiative-num">5</div>
+        <div>
+          <h3>OpenClaw on Nebius · RAG on Nebius · serverless agents · batch pipelines</h3>
+          <div class="attacks">The long tail, community-extendable</div>
+          <p>Each a repo + guide in the library, each a workshop, each a hackathon track brief. Community submissions promoted to official references through the Fellows program.</p>
+        </div>
+      </div>
+      <div class="initiative">
+        <div class="initiative-num">6</div>
+        <div>
+          <h3>Run your coding-agent's sandbox on Nebius</h3>
+          <div class="attacks">The agent-execution wedge · Serverless as the runtime layer</div>
+          <p>Position Nebius Serverless / AI Cloud as the runtime layer <em>under</em> agent harnesses — the layer E2B, Daytona, Modal, Northflank, Runloop, and Vercel Sandbox occupy. The worked example is the code-as-tool pattern: the agent writes Python that runs in a Nebius sandbox, compressing a ~150K-token tool-dump down to ~2K returned results. Positioning bars to clear: Claude Managed Agents at <strong>$0.08/agent-hour</strong> and Daytona's <strong>sub-100ms cold start</strong> — quoted as the targets to beat, not as first-party Nebius numbers until a published test exists.</p>
+        </div>
+      </div>
+      <div class="initiative">
+        <div class="initiative-num">7</div>
+        <div>
+          <h3>Point your multi-agent harness at Token Factory open models</h3>
+          <div class="attacks">The high-token-volume "land" workload</div>
+          <p>Distinct from the IDE harnesses: production multi-agent / long-running systems — <strong>Deep Agents on LangGraph, OpenHands, SWE-agent</strong>, and a parallel-worktree <strong>Minions</strong>-style fan-out. These multi-hour, parallel loops (think ~1,500-PR build runs and 6-hour three-agent runs) are the heaviest open-model consumers, so they benefit most from cheap open models. Ship the agent-fleet infra angle as a first-class feature: open harness + sandbox isolation on Serverless/k8s (via Soperator), GitHub-Actions and Slack triggers, and per-run compute/token cost tracking.</p>
+        </div>
+      </div>
+      <div class="initiative">
+        <div class="initiative-num">8</div>
+        <div>
+          <h3>CopilotKit + A2UI on Token Factory — give your agent a UI</h3>
+          <div class="attacks">Generative UI on an open model</div>
+          <p>An agent on a Token Factory open model (DeepSeek / Qwen / GLM) emitting A2UI / AG-UI to a CopilotKit frontend — leaning on the A2UI v0.9 change that lets <em>any</em> instruction-following model drive declarative UI, not just constrained-generation models. One reference-architecture card, not a tentpole. <em>Fact-check the A2UI v0.9 / CopilotKit specifics at publish time.</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="partners" class="container">
+  <div class="section-eyebrow">Integrate · agent labs</div>
+  <h2 class="section-title">Anthropic, OpenAI, Cursor, OpenClaw — meet the harnesses where they are.</h2>
+  <p class="section-lede">The agent harnesses drive the fastest-growing developer behavior of 2026, and all of them benefit from a credible open-model backend. The motion is co-marketed reference architectures, not partnership press releases.</p>
+
+  <div class="cards">
+    <div class="card">
+      <span class="pill coral">Anthropic</span>
+      <h3>Claude Code + Token Factory + Tavily</h3>
+      <p>The MCP quickstart (model backend + web search in one config) and a joint webinar slot. Nebius already runs NVIDIA co-webinars — the same playbook extends to the labs.</p>
+    </div>
+    <div class="card">
+      <span class="pill coral">OpenAI</span>
+      <h3>Codex + Token Factory</h3>
+      <p>Codex pointed at open models for cost-tiered workloads; the OpenAI-compatible API makes the integration a config change, not a rewrite. Reference repo + dev-day presence.</p>
+    </div>
+    <div class="card">
+      <span class="pill">Cursor</span>
+      <h3>Custom model provider</h3>
+      <p>Token Factory as a Cursor custom model provider + the Tavily MCP for in-editor web search — already drafted as a guide on the builder site.</p>
+    </div>
+    <div class="card">
+      <span class="pill">OpenClaw</span>
+      <h3>The community harness</h3>
+      <p>OpenClaw-on-Nebius is already a workshop and a webinar (the NVIDIA NemoClaw security session). Lean in: it's the community's favorite long-running-agent harness, and it runs best on owned compute.</p>
+    </div>
+    <div class="card">
+      <span class="pill coral">Nous Research</span>
+      <h3>Hermes Agent — fine-tune the trajectories</h3>
+      <p>Hermes Agent ships RL + LoRA via Atropos wired in by default — so an agent's own trajectories become fine-tuning data. The co-marketing line writes itself: <strong>fine-tune your agent's trajectories on Nebius</strong>, the inference→fine-tune→train arc in one partner. Nebius already serves the Hermes line Nous trains.</p>
+    </div>
+    <div class="card">
+      <span class="pill coral">Vercel</span>
+      <h3>Open Agents on Token Factory</h3>
+      <p>The Vercel Open Agents template + Vercel Sandbox + AI Gateway, pointed at open models on Token Factory. A reference architecture that meets frontend-leaning agent builders in the stack they already deploy on.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Harness maintainers are the reference-architecture co-marketing targets.</strong> Beyond the marquee labs, the people building the harnesses developers actually run — <strong>ForgeCode / Factory (Droid)</strong>, <strong>OpenCode</strong>, and <strong>Cline</strong> — are each a co-authored "open models on Token Factory" reference away from putting <code>base_url=Nebius</code> in front of their users.</p>
+  </div>
+</section>
+
+<section style="background: var(--coral-tint);">
+  <div class="container">
+    <div class="section-eyebrow">Integrate · model labs</div>
+    <h2 class="section-title">Be the launch-day home for open-model releases.</h2>
+    <p class="section-lede">Every DeepSeek, Qwen, GLM, Kimi, MiniMax, Mistral, or Llama release is a borrowed-distribution moment: day-0 availability on Token Factory, a launch benchmark in the Open-Model Index, and a launch-night community stream. Target: <strong>≥2 co-launched releases in Phase 2</strong>.</p>
+
+    <div class="callout coral">
+      <p><strong>The launch-day kit (repeatable):</strong> day-0 model card + pricing on Token Factory → benchmark drop vs the incumbents serving it → "try it in Claude Code/Cursor in one config line" MCP snippet → Tavily-powered research-agent demo on the new model → community stream + newsletter feature. One template, every release, compounding SEO.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Nous Research / Teknium — a launch home we already half-own.</strong> Nebius already serves the Hermes line, so target Hermes releases for day-0 Token Factory availability plus a launch benchmark — the same repeatable launch-day kit, run with a partner whose model is already on the platform. (The competitive-map listing of Nous Forge lives in the strategy.)</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Mistral — the EU-sovereignty launch partner.</strong> Carry the Mistral coding + frontier family on Token Factory: <strong>Devstral</strong> and <strong>Codestral 3</strong> as the open coding + fill-in-the-middle specialists, and <strong>Mistral Large 3</strong> served on Nebius's EU data centers as the data-residency choice for European teams. Model coverage and one EU line — not a separate sovereign-inference program.</p>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="section-eyebrow">Integrate · run the whole stack on Nebius</div>
+  <h2 class="section-title">The orchestration and memory neighbors, as backend integrations.</h2>
+  <p class="section-lede">A production agent is more than a model call — it's an orchestrator, a sandbox, and a memory layer. <strong>Contree</strong> is the in-house execution anchor (above); these are the highest-fit outside neighbors to integrate and co-market with so the whole stack lands on Nebius, not just the inference leg.</p>
+
+  <div class="cards">
+    <div class="card">
+      <span class="pill">Orchestration</span>
+      <h3>Temporal</h3>
+      <p>The durable control plane for long-running agent loops. A Temporal worker on a Nebius VM driving ephemeral Contree sandboxes and Token Factory inference is the production pattern to ship as a reference.</p>
+    </div>
+    <div class="card">
+      <span class="pill">Orchestration</span>
+      <h3>LangGraph</h3>
+      <p>Where multi-agent and Deep Agents graphs are built. First-class Token Factory backing so the graph's nodes call open models by default.</p>
+    </div>
+    <div class="card">
+      <span class="pill">Agent memory</span>
+      <h3>Letta &amp; Mem0</h3>
+      <p>The memory layer agents accrue state in. Integration targets so "where does my agent remember" routes through a stack already running its inference and execution on Nebius.</p>
+    </div>
+    <div class="card">
+      <span class="pill coral">The pattern</span>
+      <h3>Control plane → exec plane → inference</h3>
+      <p>Temporal/Inngest worker on a Nebius VM → ephemeral Contree sandbox → Token Factory inference. One stack, one cloud — the single-provider reference architecture that proves production agents run end-to-end on Nebius.</p>
+    </div>
+  </div>
+</section>
+
+<section style="background: var(--ocean-soft);">
+  <div class="container">
+    <div class="section-eyebrow">Integrate · frameworks, registries &amp; NVIDIA</div>
+    <h2 class="section-title">First-class everywhere builders already are.</h2>
+
+    <table>
+      <thead>
+        <tr><th>Partner / surface</th><th>The motion</th><th>DevRel deliverable</th><th>What it feeds</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Tavily</strong> (in-house)</td><td>Bundle + co-hosted events</td><td>Research-agent reference · shared credits · event series</td><td>Cross-adoption metric · event pipeline</td></tr>
+        <tr><td><strong>LangChain / LlamaIndex</strong></td><td>First-class provider integrations</td><td>Official <code>ChatNebius</code>-style integrations + templates</td><td>Framework-native acquisition</td></tr>
+        <tr><td><strong>vLLM / SGLang</strong></td><td>Serving-stack credibility</td><td>Tuning guides + contributions from the AI Cloud team</td><td>ML-infra persona trust</td></tr>
+        <tr><td><strong>Hugging Face</strong></td><td>Where fine-tuners live</td><td>Deploy-to-Nebius paths from model cards; Unsloth/Axolotl guides</td><td>Fine-tuning funnel</td></tr>
+        <tr><td><strong>OpenRouter</strong></td><td>Meet switchers in the router</td><td>Token Factory listed as a provider; win on price/latency columns</td><td>Comparison-shopper capture</td></tr>
+        <tr><td><strong>Gateways &amp; routers</strong><br><small>LiteLLM · Portkey · Bifrost · Vercel AI Gateway</small></td><td>Register Token Factory as an OpenAI-compatible backend so every agent routing through them can fall over to / cost-optimize onto Nebius</td><td>Provider configs + gateway docs PRs</td><td>Passive routed-traffic acquisition</td></tr>
+        <tr><td><strong>MCP directories / agent registries</strong></td><td>Default presence</td><td>Tavily MCP + Token Factory entries, maintained</td><td>Agent-builder discovery</td></tr>
+        <tr><td><strong>NVIDIA</strong></td><td>The named partnership, productized for devs</td><td>Co-webinars (NemoClaw-style), GTC presence, reference architectures</td><td>Enterprise/training persona</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout coral">
+      <p><strong>Gateways are a now-or-never land surface.</strong> Automatic model routing becomes table stakes for managed agent platforms within ~12 months — so being a native, OpenAI-compatible backend in every gateway today is the difference between catching that routed traffic and being invisible to it.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Sequencing.</strong> Phase 1: Tavily bundle + LangChain/LlamaIndex integrations + MCP directory presence (cheap, fast, already moving). Phase 2: first model co-launches + agent-lab reference architectures. Phase 3: NVIDIA flagship moments (GTC) + registry/marketplace expansion. Partner-sourced signups get UTM attribution from day one so the dashboard can rank channels by activation, not logos.</p>
+    </div>
+  </div>
+</section>
+
+<section id="directory" class="container">
+  <div class="section-eyebrow">Capture · the directory</div>
+  <h2 class="section-title">The ecosystem directory — 190+ projects, mocked up today.</h2>
+  <p class="section-lede">The builder-site prototype at <a href="https://demo.buildspace.tv/ecosystem">demo.buildspace.tv/ecosystem</a> already shows the ecosystem aggregated into one browsable surface — an interactive mock-up of what it could be, not a live production directory.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value coral">190+</div>
+      <div class="stat-label">Projects listed</div>
+      <small>community apps + hackathon cohorts</small>
+    </div>
+    <div class="stat">
+      <div class="stat-value">3</div>
+      <div class="stat-label">Hackathon cohorts imported</div>
+      <small>robotics · JetBrains · SIA + BioHack</small>
+    </div>
+    <div class="stat">
+      <div class="stat-value">20+</div>
+      <div class="stat-label">Partner integrations</div>
+      <small>Tavily, LangChain, vLLM, agent harnesses…</small>
+    </div>
+    <div class="stat">
+      <div class="stat-value coral">Mock-up</div>
+      <div class="stat-label">Submit-a-project flow</div>
+      <small>community pipeline, zero-backend</small>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <span class="pill coral">Surface</span>
+      <h3>One directory, filterable</h3>
+      <p>Community apps and partner integrations in one grid — filter by Hackathons, Integration, or product (Token Factory, AI Cloud, Tavily, Soperator). Every project links its repo and demo.</p>
+    </div>
+    <div class="card">
+      <span class="pill">Flywheel</span>
+      <h3>Hackathon → directory → reference</h3>
+      <p>Every hackathon cohort lands in the directory (the SIA and BioHack winners are in there now, with repos and demo videos). The best get promoted to official reference architectures and cohort invitations.</p>
+    </div>
+    <div class="card">
+      <span class="pill">OSS</span>
+      <h3>Soperator + open tooling</h3>
+      <p>Nebius's open-source Slurm operator anchors the infra-eng contribution surface — the genuine OSS flywheel piece, amplified through content and KubeCon-track talks.</p>
+    </div>
+  </div>
+</section>
+
+<section style="background: var(--coral-tint);">
+  <div class="container">
+    <div class="section-eyebrow">Capture · the map</div>
+    <h2 class="section-title">Whose ecosystem we capture, and with what.</h2>
+    <table>
+      <thead>
+        <tr><th>Adjacent community</th><th>What they need</th><th>The capture artifact</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Claude Code / Codex / Cursor / OpenClaw users</td><td>Cheaper, controllable models for their harness</td><td>One-<code>base_url</code> MCP quickstarts + the agent matrix benchmark</td></tr>
+        <tr><td>Tavily's developer base</td><td>Models + compute for the agents they're already building</td><td>The research-agent reference + bundled credits</td></tr>
+        <tr><td>Hugging Face fine-tuners (Unsloth / Axolotl crowds)</td><td>Serving + GPUs for their tuned models</td><td>Fine-tune-and-serve reference + fine-tuning ROI benchmark</td></tr>
+        <tr><td>Together / Fireworks / OpenRouter users</td><td>A path past inference-only ceilings</td><td>Honest comparisons + the grows-with-you arc</td></tr>
+        <tr><td>LangChain / LlamaIndex builders</td><td>A first-class backend</td><td>Official integrations + co-marketed templates</td></tr>
+        <tr><td>Platform / ML-infra engineers</td><td>Slurm/k8s clusters that just work</td><td>Soperator OSS + AI Cloud training references</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top: 1rem; max-width: 65ch;">The mechanism in every row is the same: meet the community inside its own tooling with a genuinely useful artifact, then let the community engine and events convert attention into activation.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <a class="brand" href="index.html" style="color: white;"><span class="brand-mark"></span> Nebius Ecosystem</a>
+        <p style="font-size: 0.9rem; margin-top: 1rem; max-width: 38ch;">An ecosystem demo — the Nebius stack &amp; partners, with the full open-source <a href="https://github.com/nebius/token-factory-cookbook">Token Factory Cookbook</a> rendered and browsable. Hosted on GitHub Pages.</p>
+      </div>
+      <div class="footer-col">
+        <h4>This site</h4>
+        <ul>
+          <li><a href="index.html">Ecosystem &amp; Partners</a></li>
+          <li><a href="cookbook/index.html">Cookbook (50 recipes)</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Nebius</h4>
+        <ul>
+          <li><a href="https://nebius.com">nebius.com</a></li>
+          <li><a href="https://github.com/nebius/token-factory-cookbook">Cookbook repo ↗</a></li>
+          <li><a href="https://demo.buildspace.tv/ecosystem">Builder directory ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>Nebius products &amp; trademarks belong to Nebius. Cookbook recipes © Nebius (MIT). Ecosystem demo by opencolin.</span>
+      <span>GitHub Pages experiment</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script src="assets/nav-logo.js"></script>
+</body>
+</html>

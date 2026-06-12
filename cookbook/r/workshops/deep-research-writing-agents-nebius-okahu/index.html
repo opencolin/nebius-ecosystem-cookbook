@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Deep Research + Writing Agents Workshop with Nebius and Okahu · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/workshops/deep-research-writing-agents-nebius-okahu" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="deep-research-writing-agents-workshop-with-nebius-and-okahu">Deep Research + Writing Agents Workshop with Nebius and Okahu</h1>
+<p>A hands-on workshop for building a practical AI agent system with two MCP servers: a <strong>Deep Research Agent</strong> and a <strong>LinkedIn Writing Workflow</strong>. The current implementation uses <strong>Nebius AI Studio</strong> for text LLM calls, <strong>Exa</strong> for real-time research, <strong>Gemini</strong> for image generation, and <strong>Okahu Cloud + Monocle</strong> for observability and eval traces.</p>
+<p>The system can be run directly, connected to an MCP-compatible harness such as Claude Code or Cursor, or rebuilt from scratch through the <code>implement_yourself/</code> track.</p>
+<h2 id="how-to-use-this-repo">How to Use This Repo</h2>
+<p>Three ways to use this repo. Pick the mode that fits the time you have. Or work through all three in order, since each builds on the last:</p>
+<ol>
+<li><strong>Run the finished Nebius/Okahu stack.</strong> Generate a research brief, draft a LinkedIn post through an evaluator-optimizer loop, create an image, and score the output with a local LLM-as-judge. Follow <a href="#getting-started">Getting Started</a> and <a href="#running-the-code">Running the Code</a>.</li>
+<li><strong>Inspect observability and evals.</strong> Export Monocle traces to Okahu Cloud and inspect workflow spans, LLM calls, judge scores, critiques, and aggregate F1 summaries.</li>
+<li><strong>Implement it yourself with agentic coding.</strong> Open <a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/implement_yourself/" target="_blank" rel="noopener"><code>implement_yourself/</code></a>, a stripped-down skeleton prepared with 25 pre-groomed tickets and a custom <code>/implement</code> Claude Code skill that orchestrates SWE and Tester agents in a loop, ticket by ticket, until the directory matches <code>src/</code>. See <a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/implement_yourself/README.md" target="_blank" rel="noopener"><code>implement_yourself/README.md</code></a> for the kickoff guide.</li>
+</ol>
+<blockquote>
+<p><strong>No cheating, by design.</strong> <code>implement_yourself/</code> is a self-contained project. Open your harness (Claude Code, Cursor, …) <strong>directly in that folder</strong> (not at the repo root) so its working directory is scoped to the skeleton. The agents can't see the reference implementation in <code>../src/</code>, can't grep it, can't read its files. You get a real build, not a copy-paste.</p>
+</blockquote>
+<h2 id="what-youll-build-today">What You'll Build Today</h2>
+<p><strong>Deep Research Agent</strong> — An MCP server that runs deep research using Exa for real-time search, Nebius for LLM reasoning, and public captions for YouTube analysis:</p>
+<div class="codehilite"><pre><span></span><code>user topic → [deep_research] × N → analyze_youtube_video (if URLs) → [deep_research gap-fill] → compile_research → research.md
+</code></pre></div>
+
+<p><strong>LinkedIn Writing Workflow</strong> — An MCP server that generates LinkedIn posts with an evaluator-optimizer loop:</p>
+<div class="codehilite"><pre><span></span><code>research.md + guideline → generate post → [review → edit] × N → post.md → generate image
+</code></pre></div>
+
+<p>Both servers expose tools, resources, and prompts via the <a href="https://modelcontextprotocol.io/">Model Context Protocol</a>, letting any MCP-compatible harness orchestrate the workflow.</p>
+<p><img src="media/architecture.png" alt="End-to-end workflow architecture" width="800"/></p>
+<p><strong>Patterns and concepts you'll learn:</strong></p>
+<ul>
+<li><strong>Tool-use agents</strong> — letting the LLM decide which tools to call and when</li>
+<li><strong>Evaluator-optimizer loop</strong> — generate, review, edit in cycles</li>
+<li><strong>Grounded search</strong> — Exa search with citations for factual research</li>
+<li><strong>Structured LLM output</strong> — Pydantic schemas for type-safe model responses</li>
+<li><strong>MCP server design</strong> — registering tools, resources, and prompts with FastMCP</li>
+<li><strong>LLM-as-judge evaluation</strong> — automated quality scoring with Okahu/Monocle tracing</li>
+</ul>
+<p><img width="1400" height="1380" alt="system_architecture" src="https://github.com/user-attachments/assets/5507d5dd-5809-4e01-bcf3-a6de980bc773" /></p>
+<h2 id="example-end-to-end-workflow">Example: End-to-End Workflow</h2>
+<p>Here's a real run through the full pipeline — from a topic seed to a published-ready LinkedIn post with an AI-generated image.</p>
+<h3 id="final-output">Final output</h3>
+<!-- LinkedIn-style post card -->
+<div align="center">
+<table>
+<tr>
+<td>
+
+<div>
+<strong>Phil Tobaloo</strong><br/>
+<sub>Builder of production AI systems</sub>
+</div>
+
+---
+
+We planned 12 AI agents and shipped 1. It worked better.
+Sounds crazy, right? But it's a common story.
+
+A client built an AI marketing chatbot. Their initial design had dozens of agents: orchestrator, validators, spam prevention. It failed.
+
+A single agent with tools won. Tasks were tightly coupled. One brain maintained context. Tools were still specialized.
+
+This is the core mistake. People jump to complex multi-agent setups too fast.
+
+Think AI system design as a spectrum:
+*   Workflows: You control steps.
+*   Single Agent + Tools: Model decides flow.
+*   Multi-Agent: Multiple decision-makers.
+
+...
+
+A single agent works for most cases. But it has limits.
+Too many tools? You hit "context rot."
+Past ~10-20 tools, LLMs degrade at tool selection. They get overwhelmed. Information gets lost in the middle.
+
+So, when do you actually need multi-agent?
+
+...
+
+**The simplest system that reliably solves the problem is always the best system.**
+Don't overengineer your AI agents. Build simple first.
+
+What's the most complex agent architecture you've simplified? Tell me below.
+
+<sub><a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/media/post_3.md" target="_blank" rel="noopener">Read the full post</a></sub>
+
+<img src="media/post_image.png" width="500"/>
+
+</td>
+</tr>
+</table>
+</div>
+
+<details>
+<summary><strong>Step-by-step breakdown</strong> (seed → research → guideline → drafts)</summary>
+
+<br/>
+
+#### 1. Start with a seed
+
+A short research brief with 2-3 questions and reference links:
+
+
+<div class="codehilite"><pre><span></span><code><span class="gh"># Research Topic: AI Agent Architecture — When Less Is More</span>
+
+<span class="gu">## Key Questions</span>
+<span class="k">1.</span> Why do single-agent architectures with smart tools outperform multi-agent systems?
+<span class="k">2.</span> What are the only legitimate reasons to adopt a multi-agent architecture?
+
+<span class="gu">## References</span>
+<span class="k">-</span><span class="w"> </span>Stop Overengineering: Workflows vs AI Agents Explained (YouTube)
+<span class="k">-</span><span class="w"> </span>From 12 Agents to 1 (DecodingAI article)
+</code></pre></div>
+
+
+
+#### 2. Deep Research Agent produces `research.md`
+
+The agent runs multiple Exa-backed search queries and analyzes YouTube transcripts, then compiles everything into a structured research brief with sources.
+
+> The full research.md for this example is ~20k tokens across 2 queries and 1 video transcript.
+
+#### 3. Write a guideline
+
+A short brief describing the post angle, audience, and key points:
+
+
+<div class="codehilite"><pre><span></span><code><span class="gh"># LinkedIn Post Guideline</span>
+
+<span class="gu">## Topic</span>
+Why most AI teams should use 1 agent instead of 12.
+
+<span class="gu">## Angle</span>
+Open with the counterintuitive &quot;12 agents → 1&quot; hook. Introduce the complexity
+spectrum. End with a clear mental model.
+
+<span class="gu">## Target Audience</span>
+Builders and technical leads shipping LLM-powered applications.
+
+<span class="gu">## Key Points</span>
+<span class="k">-</span><span class="w"> </span>A team planned 12 agents but shipped 1 — it worked better.
+<span class="k">-</span><span class="w"> </span>The spectrum: workflows → single agent + tools → multi-agent. Stay left.
+<span class="k">-</span><span class="w"> </span>&quot;Context rot&quot;: past ~10-20 tools, LLMs degrade at tool selection.
+<span class="k">-</span><span class="w"> </span>Only 4 valid reasons for multi-agent.
+
+<span class="gu">## Tone</span>
+Direct, opinionated, practical. No fluff.
+</code></pre></div>
+
+
+
+#### 4. Writing Workflow refines the post
+
+The evaluator-optimizer loop generates a draft, then runs 3 rounds of review + edit:
+
+<table>
+<tr>
+<td width="50%">
+
+**v0 — Initial draft**
+
+> We planned 12 AI agents. We shipped 1.
+>
+> Sounds crazy, right? But it's a common story.
+>
+> A client wanted an AI chatbot for marketing content: emails, SMS, promos. Their initial design had dozens of specialized agents: orchestrator, analyzers, validators, spam prevention.
+>
+> In practice? A single agent with tools won. Tasks were tightly coupled, sequential. Splitting it created information silos and handoff errors. [...]
+>
+> **The simplest system that reliably solves the problem is always the best system.**
+
+</td>
+<td width="50%">
+
+**v3 — After 3 review/edit cycles**
+
+> We planned 12 AI agents and shipped 1. It worked better.
+>
+> A client built an AI marketing chatbot. Their initial design had dozens of agents: orchestrator, validators, spam prevention. It failed.
+>
+> A single agent with tools won. Tasks were tightly coupled. One brain maintained context. Tools were still specialized.
+>
+> **Stay as far left as possible.** Move right only when forced. [...]
+>
+> **The simplest system that reliably solves the problem is always the best system.**
+
+</td>
+</tr>
+<tr>
+<td align="center"><em>Verbose, redundant phrasing, weak hook</em></td>
+<td align="center"><em>Tighter, punchier, stronger structure</em></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary>Example 2 — Harness Engineering (click to expand)</summary>
+
+<img src="examples/harness-engineering/post_image.png" width="300"/>
+
+
+<div class="codehilite"><pre><span></span><code>Harness engineering isn&#39;t just a new term for prompt engineering. It&#39;s where AI is heading.
+
+Agents got useful enough for code and tools, but they weren&#39;t reliable. They&#39;d repeat mistakes. The bottleneck shifted from code generation to consistent, reliable behavior in real systems.
+
+Think of it this way: prompt engineering is what to ask. Context engineering is what to send the model. Harness engineering is how the whole thing operates. It&#39;s the environment around the model, beyond just tokens.
+
+Car analogy: the model is the engine. Context is the fuel. The harness is the rest of the car: steering, brakes, lane boundaries. It prevents crashes.
+
+A harness includes tools, permissions, state, tests, logs, retries, checkpoints, guardrails, and evals.
+
+Stop hoping the model improves. Engineer its environment. The burden shifts to us, the builders, to prevent repeat mistakes.
+
+I use self-reflection in my Claude Code setup. The agent learns what I liked, saving tokens and time.
+
+Real companies are already doing this. Anthropic&#39;s long-running agents externalize memory into artifacts. OpenAI built a 1M-line product with zero manual code using structured docs and agent-to-agent reviews. Stripe agents merge 1K+ PRs weekly within isolated environments. LangChain moved a coding agent from outside the top 30 to top 5 on Terminal Bench 2.0 by changing only the harness. Same model, better system.
+
+This isn&#39;t just for coding agents. This is the new way software gets built.
+
+The programmer&#39;s job is shifting: less writing code, more designing habitats for agents to work without issues. Think machine-readable docs, evals, sandboxes, permission boundaries, and structural tests.
+
+Reliability is the real work. Not just prompting.
+
+LLMs are heading into systems, workflows, harnesses. Value comes from orchestration, constraints, feedback loops—not just a single prompt. The future isn&#39;t one genius model. It&#39;s models in well-engineered environments.
+
+That&#39;s why harness engineering matters. It&#39;s what happens when you stop demoing intelligence and start shipping it.
+
+Want to learn more? I explain it all in my latest video: https://youtu.be/zYerCzIexCg What&#39;s your biggest challenge building reliable agent systems right now?
+</code></pre></div>
+
+
+
+</details>
+
+<details>
+<summary>Example 3 — Angine de Poitrine (click to expand)</summary>
+
+<img src="examples/angine-de-poitrine-ai-engineers/post_image.png" width="300"/>
+
+
+<div class="codehilite"><pre><span></span><code>Forget your latest AI model. There&#39;s a new system breaking the internet: Angine de Poitrine.
+
+This masked duo from Quebec, deploys a high-resolution audio architecture. It makes everything else sound low-res.
+
+Khn&#39;s custom double-necked microtonal guitar features 2x resolution: 24 notes per octave, not 12. Fine-grained frequency modulation.
+
+Klek backs him up on drums, driving rhythms that feel like O(n^2) time signatures. Pure algorithmic complexity.
+
+Their sound: &quot;Dada Pythagorean-Cubist mantra-rock.&quot; Eastern traditions meet Frank Zappa.
+
+Their 27-minute inference run for KEXP in Feb 2026 hit 7M+ views and broke the internet. Sold-out shows in NYC, London, Rennes followed.
+
+Their anonymity adds another layer. Polka-dot costumes and papier-mâché masks are anonymous inference endpoints.
+
+They communicate in an invented language. This ensures pure signal: raw output, no artist biases. A decoupled identity art experiment.
+
+Khn&#39;s loop pedals are recursive pipelines. They stack complex guitar and bass in real-time, building dense soundscapes.
+
+Just dropped: their new album, Vol. II, on April 3, 2026.
+
+AI music is common. Angine de Poitrine proves human artistry is the ultimate non-deterministic function. Raw, complex, and deeply human.
+
+You need to hear this.
+
+What&#39;s the most complex system you&#39;ve encountered recently?
+</code></pre></div>
+
+
+
+</details>
+
+<blockquote>
+<p>Browse more full examples (seed, research, post drafts, reviews, final post + image) in the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/examples/" target="_blank" rel="noopener"><code>examples/</code></a> directory.</p>
+</blockquote>
+<h2 id="tech-stack">Tech Stack</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM API</td>
+<td>Nebius AI Studio via LangChain</td>
+</tr>
+<tr>
+<td>MCP Framework</td>
+<td>FastMCP</td>
+</tr>
+<tr>
+<td>Real-time Search</td>
+<td>Exa</td>
+</tr>
+<tr>
+<td>Data Validation</td>
+<td>Pydantic</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td>Pydantic Settings</td>
+</tr>
+<tr>
+<td>Observability</td>
+<td>Okahu Cloud + Monocle</td>
+</tr>
+<tr>
+<td>Image Generation</td>
+<td>Gemini <code>gemini-2.5-flash-image</code></td>
+</tr>
+<tr>
+<td>QA</td>
+<td>Ruff</td>
+</tr>
+<tr>
+<td>Package Manager</td>
+<td>uv</td>
+</tr>
+</tbody>
+</table>
+<h2 id="getting-started">Getting Started</h2>
+<blockquote>
+<p><strong>Assumes</strong> working Python knowledge and basic familiarity with LLMs.</p>
+</blockquote>
+<h3 id="prerequisites">Prerequisites</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Check</th>
+<th>Install</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python 3.12+</td>
+<td><code>python --version</code></td>
+<td><code>uv python install 3.12</code> or <a href="https://www.python.org/downloads/">python.org</a></td>
+</tr>
+<tr>
+<td>uv 0.7+</td>
+<td><code>uv --version</code></td>
+<td><code>curl -LsSf https://astral.sh/uv/install.sh \| sh</code> (<a href="https://docs.astral.sh/uv/getting-started/installation/">docs</a>)</td>
+</tr>
+<tr>
+<td>GNU Make</td>
+<td><code>make --version</code></td>
+<td>Pre-installed on macOS/Linux. Windows: <code>choco install make</code></td>
+</tr>
+<tr>
+<td>Nebius API Key</td>
+<td>—</td>
+<td><a href="https://studio.nebius.com/">studio.nebius.com</a> (required — text LLM calls)</td>
+</tr>
+<tr>
+<td>Exa API Key</td>
+<td>—</td>
+<td><a href="https://dashboard.exa.ai/">dashboard.exa.ai</a> (required — real-time search)</td>
+</tr>
+<tr>
+<td>Gemini API Key</td>
+<td>—</td>
+<td><a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> (required — image generation)</td>
+</tr>
+<tr>
+<td>Okahu account</td>
+<td>—</td>
+<td><a href="https://www.okahu.ai/">okahu.ai</a> (optional, for observability and eval traces)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="installation">Installation</h3>
+<ol>
+<li><strong>Open this workshop and configure:</strong></li>
+</ol>
+<p><code>bash
+   cd workshops/deep-research-writing-agents-nebius-okahu
+   cp .env.example .env          # add NEBIUS_API_KEY, EXA_API_KEY, GEMINI_API_KEY</code></p>
+<ol start="2">
+<li><strong>Install dependencies:</strong></li>
+</ol>
+<p><code>bash
+   uv sync</code></p>
+<blockquote>
+<p><strong>Note:</strong> If you don't have Python 3.12+, uv can install it for you: <code>uv python install 3.12</code>, then re-run <code>uv sync</code>.</p>
+</blockquote>
+<ol start="3">
+<li><strong>Verify the setup:</strong></li>
+</ol>
+<p><code>bash
+   make test-end-to-end          # runs research + writing pipeline end-to-end</code></p>
+<p>If it completes without errors, you're good to go.</p>
+<h2 id="running-the-code">Running the Code</h2>
+<p>There are four ways to run the workflows:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MCP Servers</strong> (recommended)</td>
+<td>Interactive use with AI harness</td>
+</tr>
+<tr>
+<td><strong>Skills</strong></td>
+<td>Guided slash-command workflows</td>
+</tr>
+<tr>
+<td><strong>Streamlit UI</strong></td>
+<td>Visual end-to-end demo with live progress</td>
+</tr>
+<tr>
+<td><strong>Scripts</strong></td>
+<td>Verify setup, smoke tests</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mcp-servers-recommended">MCP Servers (recommended)</h3>
+<p>Connect the servers to an MCP-compatible harness (Claude Code, Cursor) for interactive use. This is the primary way to use the workshop.</p>
+<p><strong>Setup:</strong> The <code>.mcp.json</code> file is pre-configured. Both servers start automatically when you open the project in Claude Code or Cursor.</p>
+<table>
+<thead>
+<tr>
+<th>Server</th>
+<th>Tools</th>
+<th>Prompt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deep-research</code></td>
+<td><code>deep_research</code>, <code>analyze_youtube_video</code>, <code>compile_research</code></td>
+<td><code>research_workflow</code></td>
+</tr>
+<tr>
+<td><code>linkedin-writer</code></td>
+<td><code>generate_post</code>, <code>edit_post</code>, <code>generate_image</code></td>
+<td><code>linkedin_post_workflow</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Usage:</strong></p>
+<ol>
+<li>Open the project in Claude Code or Cursor</li>
+<li>Invoke an MCP prompt (e.g., <code>research_workflow</code>) to get guided through the full workflow</li>
+<li>Or call individual tools directly for fine-grained control</li>
+</ol>
+<p><strong>Manual server start (advanced):</strong></p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>run-research-server<span class="w">    </span><span class="c1"># stdio transport</span>
+make<span class="w"> </span>run-writing-server<span class="w">     </span><span class="c1"># stdio transport</span>
+</code></pre></div>
+
+<h3 id="skills">Skills</h3>
+<p>Pre-built slash commands that orchestrate the MCP tools with sensible defaults. All output goes to <code>outputs/{topic-slug}/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/research</code></td>
+<td>Deep research on a topic → <code>research.md</code></td>
+</tr>
+<tr>
+<td><code>/write-post</code></td>
+<td>Generate LinkedIn post from existing research → <code>post.md</code> + <code>post_image.png</code></td>
+</tr>
+<tr>
+<td><code>/research-and-write</code></td>
+<td>Full pipeline: research a topic, then write a post from it</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code>/research-and-write
+</code></pre></div>
+
+<p>The skill will ask you for a topic and guideline, then run the full pipeline end-to-end. Check <a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/examples/" target="_blank" rel="noopener"><code>examples/</code></a> to see what each step produces.</p>
+<h3 id="streamlit-ui">Streamlit UI</h3>
+<p>A standalone chat UI that orchestrates both MCP servers via FastMCP — no harness required. Drop in a topic (or upload a <code>.md</code> / <code>.txt</code> seed file) and watch the pipeline run end-to-end with live per-stage progress: search counters, sources collected, evaluator-optimizer loop, and image generation.</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>run-ui
+</code></pre></div>
+
+<p><img alt="Streamlit UI showing live deep-research progress, the writing workflow's evaluator-optimizer loop, and the generated image" src="media/streamlit_ui.png" /></p>
+<p>Outputs land in <code>outputs/{topic-slug}/</code> (same layout as the skills).</p>
+<details>
+<summary><strong>Scripts</strong> (terminal-only, for smoke tests)</summary>
+
+<br/>
+
+Run workflows directly from the terminal via `make`. Useful for verifying your setup works and running quick smoke tests. See `[examples/](examples/)` for full end-to-end output samples.
+
+**Test workflows:**
+
+
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>test-research-workflow<span class="w">    </span><span class="c1"># Research on a sample topic → test_logic/research.md</span>
+make<span class="w"> </span>test-writing-workflow<span class="w">     </span><span class="c1"># Generate post from research → test_logic/post.md</span>
+make<span class="w"> </span>test-end-to-end<span class="w">           </span><span class="c1"># Both steps sequentially</span>
+</code></pre></div>
+
+
+
+> **Note:** `test-writing-workflow` requires `test_logic/research.md` to exist. Run `test-research-workflow` first, or use `test-end-to-end`.
+
+**Full dataset run:**
+
+The `[datasets/](datasets/)` directory contains a pre-built LinkedIn posts dataset with seeds, guidelines, research documents, ground truth posts, and generated outputs — used for both batch runs and evaluation.
+
+
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>run-dataset-writing<span class="w">           </span><span class="c1"># Research + write for all dataset posts (with images)</span>
+make<span class="w"> </span>run-dataset-writing-no-image<span class="w">  </span><span class="c1"># Same, skip image generation (faster)</span>
+</code></pre></div>
+
+
+
+</details>
+
+<h3 id="evaluation-okahumonocle-tracing-optional">Evaluation (Okahu/Monocle tracing optional)</h3>
+<p>The workshop includes a local LLM-as-judge evaluation pipeline. Instead of manually reviewing each generated post, an LLM scores it against quality criteria (structure, tone, accuracy), then the scripts compute F1 against expert labels. Monocle can export traces locally and to <a href="https://www.okahu.ai/">Okahu Cloud</a> so you can inspect eval runs, prompts, outputs, and workflow behavior.</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>eval-dev<span class="w">               </span><span class="c1"># LLM judge on dev split</span>
+make<span class="w"> </span>eval-test<span class="w">              </span><span class="c1"># LLM judge on test split</span>
+make<span class="w"> </span>eval-online<span class="w">            </span><span class="c1"># Generate + judge posts on the fly</span>
+</code></pre></div>
+
+<p>Set <code>MONOCLE_EXPORTER=file,okahu</code> and <code>OKAHU_API_KEY</code> to send traces to Okahu Cloud. The commands still compute F1 locally.</p>
+<p>Okahu MCP configuration examples are included for Cursor and VS Code:
+<a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/cursor/mcp.json" target="_blank" rel="noopener"><code>./.cursor/mcp.json</code></a> and <a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/vscode/mcp.json" target="_blank" rel="noopener"><code>./.vscode/mcp.json</code></a>.</p>
+<h2 id="project-structure">Project Structure</h2>
+<div class="codehilite"><pre><span></span><code>├── src/
+│   ├── research/              # Deep Research Agent MCP server
+│   │   ├── server.py          # FastMCP entry point
+│   │   ├── config/            # Settings, constants, prompt templates
+│   │   ├── models/            # Pydantic schemas for structured LLM output
+│   │   ├── app/               # Business logic handlers
+│   │   ├── tools/             # MCP tool implementations
+│   │   ├── routers/           # MCP tool, resource, and prompt registration
+│   │   └── utils/             # Nebius/LangChain, Exa, file I/O, Okahu, markdown helpers
+│   └── writing/               # LinkedIn Writer MCP server
+│       ├── server.py          # FastMCP entry point
+│       ├── profiles/          # Shipped markdown profiles (structure, terminology, character, branding)
+│       ├── config/            # Settings, constants, prompt templates
+│       ├── models/            # Pydantic schemas (Post, Review, Profiles)
+│       ├── app/               # Business logic handlers
+│       ├── evals/             # Local LLM judge metric and evaluation harness
+│       ├── tools/             # MCP tool implementations
+│       ├── routers/           # MCP tool, resource, and prompt registration
+│       └── utils/             # Nebius/LangChain, Gemini image, Okahu helpers
+├── datasets/                  # LinkedIn posts dataset with labels and splits
+├── examples/                  # Full end-to-end output samples (seed → research → posts → image)
+├── scripts/                   # Entrypoints and test scripts
+├── .mcp.json                  # MCP server configuration for harnesses
+├── Makefile                   # Command center
+└── .env.example               # Environment variable template
+</code></pre></div>
+
+<h2 id="license">License</h2>
+<p>MIT License. See <a href="https://github.com/nebius/token-factory-cookbook/blob/main/workshops/deep-research-writing-agents-nebius-okahu/LICENSE" target="_blank" rel="noopener">LICENSE</a> for details.</p>
+<p>Copyright (c) 2026 Paul Iusztin, Towards AI Inc</p>
+<h2 id="attribution">Attribution</h2>
+<p>This repository was forked and adapted from the original <a href="https://github.com/iusztinpaul/designing-real-world-ai-agents-workshop">designing-real-world-ai-agents-workshop</a> by Paul Iusztin and the original workshop contributors Louis-François Bouchard, Paul Iusztin, and Samridhi Vaid.</p>
+<p>This fork updates the workshop implementation to use Nebius AI Studio for text LLMs, Exa for real-time search, Gemini for image generation, and Okahu Cloud + Monocle for observability and eval traces.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

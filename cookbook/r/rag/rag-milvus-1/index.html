@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>End to End RAG Pipeline with Open Source Stack · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/rag/rag-milvus-1" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="end-to-end-rag-pipeline-with-open-source-stack">End to End RAG Pipeline with Open Source Stack</h1>
+<p>This example demonstrates how to build a end-to-end RAG pipeline using open source stack.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Parse complex PDF documents (100s of pages)</li>
+<li>Chunk them and calculate embeddings for chunks</li>
+<li>Efficient compute of embeddings using batch mode</li>
+<li>Store the calculated embeddings in a vector database for fast retrieval</li>
+<li>When user asks a question, the question and relevant document chunks are sent to LLM to get the answer</li>
+</ul>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li>Parsing PDF documents using <a href="https://docs.llamaindex.ai/en/stable/">llama-index</a></li>
+<li>Embedding model: <a href="https://huggingface.co/Qwen/Qwen3-Embedding-8B">Qwen/Qwen3-Embedding-8B</a> - running on <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a></li>
+<li>Vector Database: <a href="https://milvus.io/">Milvus</a></li>
+<li>LLMs: open source LLMs  (GPT-OSS / Qwen3 / DeepSeek) running on <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a></li>
+</ul>
+<h2 id="pre-requisites">Pre requisites</h2>
+<ul>
+<li>Nebius API key.  Sign up for free at <a href="https://tokenfactory.nebius.com/">Token Factory</a></li>
+</ul>
+<h2 id="rag-workflow">RAG Workflow</h2>
+<p><img alt="" src="images/rag-1.png" /></p>
+<h2 id="step-1-getting-started">Step-1: Getting Started</h2>
+<p><strong>1. Get the code</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">    </span>rag/rag-milvus-1
+</code></pre></div>
+
+<p><strong>2. Install dependencies:</strong></p>
+<p>If using <code>uv</code> (preferred)</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="k">$(</span>basename<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">))</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>basename<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">))</span><span class="s2">&quot;</span>
+<span class="c1"># select this kernel when running in jupyter / vscode</span>
+<span class="c1"># see installed kernels</span>
+jupyter<span class="w"> </span>kernelspec<span class="w"> </span>list<span class="w"> </span>
+</code></pre></div>
+
+<p>If using <code>pip</code></p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>ipykernel<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--name<span class="o">=</span><span class="k">$(</span>basename<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">))</span><span class="w"> </span>--display-name<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>basename<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">))</span><span class="s2">&quot;</span>
+<span class="c1"># select this kernel when running in jupyter / vscode</span>
+<span class="c1"># see installed kernels</span>
+jupyter<span class="w"> </span>kernelspec<span class="w"> </span>list<span class="w"> </span>
+</code></pre></div>
+
+<p><strong>3 - Create .env file</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="step-2-running-the-code">Step-2: Running the code</h2>
+<p><strong>Using UV</strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--with<span class="w"> </span>jupyter<span class="w"> </span>jupyter<span class="w"> </span>lab
+</code></pre></div>
+
+<p><strong>Using pip/Jupyter</strong></p>
+<div class="codehilite"><pre><span></span><code>jupyter<span class="w"> </span>lab
+</code></pre></div>
+
+<p>And select the kernel defined above and run notebooks.</p>
+<p><strong>Using vscode and other IDEs</strong></p>
+<p>Restart vscode so it will refresh available kernels.  Then select it and run it.</p>
+<h2 id="step-3-process-pdfs">Step-3: Process PDFs</h2>
+<p>We will 
+- parse PDF files 
+- compute embeddings
+- and store them into vector database</p>
+<p>Run this notebook: <a href="1_process_pdfs.html">1_process_pdfs.ipynb</a></p>
+<h2 id="step-4-query-pdfs">Step-4: Query PDFs</h2>
+<p>Use this notebook to query PDFs</p>
+<p>Run this notebook: <a href="2_query_pdfs.html">2_query_pdfs.ipynb</a></p>
+<h2 id="dev-notes">Dev Notes</h2>
+<p>How the uv project was created.</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>init<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.11<span class="w"> </span>.
+uv<span class="w"> </span>add<span class="w"> </span>llama-index<span class="w"> </span>pymilvus<span class="w"> </span>openai<span class="w">  </span>python-dotenv<span class="w"> </span>llama-index-vector-stores-milvus<span class="w"> </span>llama-index-embeddings-nebius<span class="w">   </span>llama-index-llms-nebius
+uv<span class="w"> </span>add<span class="w"> </span>--dev<span class="w"> </span>ipykernel<span class="w">   </span><span class="c1"># for jupyter kernel</span>
+uv<span class="w"> </span>sync
+<span class="c1"># creating requirements.txt file</span>
+uv<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--no-hashes<span class="w"> </span>--format<span class="w"> </span>requirements-txt<span class="w"> </span>--output-file<span class="w"> </span>requirements.txt
+</code></pre></div><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="1_process_pdfs.html">1_process_pdfs.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/rag/rag-milvus-1/1_process_pdfs.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="2_query_pdfs.html">2_query_pdfs.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/rag/rag-milvus-1/2_query_pdfs.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HackerNews Analysis Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/agno-hacker-news-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><img alt="Banner" src="./banner.png" /></p>
+<h1 id="hackernews-analysis-agent">HackerNews Analysis Agent</h1>
+<p>A powerful AI agent built with Agno that analyzes and provides insights about HackerNews content. This agent uses the Nebius AI model to deliver intelligent analysis of tech news, trends, and discussions.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>🔍 <strong>Intelligent Analysis</strong>: Deep analysis of HackerNews content, including trending topics, user engagement, and tech trends</li>
+<li>💡 <strong>Contextual Insights</strong>: Provides meaningful context and connections between stories</li>
+<li>📊 <strong>Engagement Analysis</strong>: Tracks user engagement patterns and identifies interesting discussions</li>
+<li>🤖 <strong>Interactive Interface</strong>: Easy-to-use command-line interface for natural conversations</li>
+<li>⚡ <strong>Real-time Updates</strong>: Get the latest tech news and trends as they happen</li>
+</ul>
+<h2 id="references-and-acknowledgements">References and Acknowledgements</h2>
+<ul>
+<li><a href="https://www.agno.com/">Agno Framework</a></li>
+<li><a href="http://tokenfactory.nebius.com/">Nebius AI</a></li>
+<li>Contributed from <a href="https://github.com/Arindam200/awesome-ai-apps">awesome-ai-apps</a></li>
+</ul>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li>Agno framework for AI agent development</li>
+<li>Nebius AI's for running LLMs.  We are using <code>openai/gpt-oss-20b</code> reasoning model </li>
+<li>HackerNews Tool from Agno</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.10 or higher</li>
+<li>Nebius API key (get it from <a href="http://tokenfactory.nebius.com/">Nebius Token Factory</a>)</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p><strong>1. Get the code</strong></p>
+<div class="codehilite"><pre><span></span><code>git<span class="w">   </span>clone<span class="w">    </span>https://github.com/nebius/token-factory-cookbook/
+<span class="nb">cd</span><span class="w">    </span>agents/agno-hacker-news-agent
+</code></pre></div>
+
+<p><strong>2. Install dependencies:</strong></p>
+<p>using <code>uv</code></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># create a venv and install dependencies</span>
+uv<span class="w">  </span>sync
+</code></pre></div>
+
+<p>Or install using python pip</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+
+<p><strong>3 - Create .env file</strong></p>
+<p>Create a <code>.env</code> file in the project root and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your_api_key_here
+</code></pre></div>
+
+<h2 id="running-the-agent">Running the agent</h2>
+<p><strong>Using <code>uv</code></strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w">  </span>sync
+uv<span class="w">  </span>run<span class="w">   </span>python<span class="w"> </span>main.py
+</code></pre></div>
+
+<p><strong>Using python pip</strong></p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>main.py
+</code></pre></div>
+
+<p>The agent will start with a welcome message and show available capabilities. You can interact with it by typing your questions or commands.</p>
+<h3 id="example-queries">Example Queries</h3>
+<ul>
+<li>"What are the most discussed topics on HackerNews today?"</li>
+<li>"Analyze the engagement patterns in the top stories"</li>
+<li>"What tech trends are emerging from recent discussions?"</li>
+<li>"Compare the top stories from this week with last week"</li>
+<li>"Show me the most controversial stories of the day"</li>
+</ul><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="Agno_Nebius.html">Agno_Nebius.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/agents/agno-hacker-news-agent/Agno_Nebius.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

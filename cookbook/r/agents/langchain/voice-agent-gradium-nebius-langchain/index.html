@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PitchLoop Voice Coach · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/voice-agent-gradium-nebius-langchain" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="pitchloop-voice-coach">PitchLoop Voice Coach</h1>
+<p>PitchLoop is a conversational voice-agent example powered by <strong>Gradium</strong>, <strong>Nebius Token Factory</strong>, and <strong>LangChain</strong>.</p>
+<ul>
+<li><strong>Gradium STT</strong> transcribes the user's recorded answer.</li>
+<li><strong>LangChain + Nebius</strong> scores the answer and decides the next coaching question.</li>
+<li><strong>Gradium TTS</strong> speaks the feedback and the next prompt back to the user.</li>
+<li><strong>FastAPI + browser audio APIs</strong> provide a lightweight conversational UI.</li>
+<li><strong>Streamlit</strong> is included as an alternate analysis UI.</li>
+</ul>
+<p>The use case is practical: founders, developers, and operators can rehearse spoken pitches, interviews, demos, and sales answers in short conversational loops.</p>
+<h2 id="project-structure">Project structure</h2>
+<div class="codehilite"><pre><span></span><code>.
+├── app.py                         # Streamlit voice-agent UI
+├── voice_agent_server.py          # FastAPI conversational voice UI
+├── static/                        # Browser recorder + conversation frontend
+├── voice_pitch_coach/
+│   ├── coach.py                   # LangChain + Nebius coaching agent
+│   ├── gradium_audio.py           # Gradium STT/TTS wrapper
+│   ├── cli.py                     # WAV-file command-line workflow
+│   ├── schemas.py                 # Structured feedback model
+│   └── settings.py                # Environment loading
+├── requirements.txt
+├── pyproject.toml
+└── .env.example
+</code></pre></div>
+
+<h2 id="setup">Setup</h2>
+<p>This project needs Python 3.10 or newer.</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Then fill:</p>
+<div class="codehilite"><pre><span></span><code>GRADIUM_API_KEY=...
+NEBIUS_API_KEY=...
+</code></pre></div>
+
+<h2 id="run-the-conversational-voice-agent">Run the conversational voice agent</h2>
+<div class="codehilite"><pre><span></span><code>uvicorn<span class="w"> </span>voice_agent_server:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8501</span>
+</code></pre></div>
+
+<p>Open the local URL, click <strong>Start speaking</strong>, answer the coach prompt, then click <strong>Stop and send</strong>. The agent will transcribe your turn, respond in the conversation, and play the Gradium voice reply automatically.</p>
+<h2 id="run-the-streamlit-analysis-ui">Run the Streamlit analysis UI</h2>
+<div class="codehilite"><pre><span></span><code>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
+</code></pre></div>
+
+<h2 id="run-from-a-wav-file">Run from a WAV file</h2>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>voice_pitch_coach.cli<span class="w"> </span>samples/my_pitch.wav<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--scenario<span class="w"> </span><span class="s2">&quot;startup pitch&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--audience<span class="w"> </span><span class="s2">&quot;seed investors&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--goal<span class="w"> </span><span class="s2">&quot;earn a second meeting&quot;</span>
+</code></pre></div>
+
+<p>The CLI prints the transcript, score, feedback, rewrite, and next question. It also writes spoken feedback to <code>outputs/coach-feedback.wav</code>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

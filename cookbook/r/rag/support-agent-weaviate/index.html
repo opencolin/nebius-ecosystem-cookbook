@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>macOS/Linux · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/rag/support-agent-weaviate" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<div align="center">
+  <h1>Internal Support Agent</h1>
+
+  ![Nebius-Weaviate Support Agent](https://github.com/user-attachments/assets/cd6f534c-7a5f-4554-a52b-fa59386282f9)
+</div>
+
+<p>Internal Support Agent is a Retrieval-Augmented Generation (RAG) assistant combining web search, document processing, vector retrieval, and intelligent support tools. It features multi‑agent orchestration, automatic support assessment, and integrations with Notion and Calendly. The project provides both a Streamlit web app and a Slack bot.</p>
+<hr />
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Web Search</strong>: Real-time information retrieval via Exa.ai.</li>
+<li><strong>Document Processing</strong>: Upload and process <code>.txt</code>, <code>.pdf</code>, <code>.docx</code>, and <code>.md</code> files.</li>
+<li><strong>Vector Storage</strong>: Efficient chunking and storage in Weaviate.</li>
+<li><strong>LLM Generation</strong>: Advanced reasoning using Nebius Token Factory models.</li>
+<li><strong>Intelligent Support</strong>: Auto assessment and proactive support via Notion and Calendly.</li>
+<li><strong>Slack Integration</strong>: DMs, channel <code>@mentions</code>, and <code>/rag</code> command.</li>
+<li><strong>Streamlit Frontend</strong>: Modern dark‑themed chat UI and document management.</li>
+<li><strong>Retrieval Controls</strong>: Sidebar sliders for web results, vector docs limit, and relevance threshold.</li>
+<li><strong>Response Analytics (Streamlit only)</strong>: Optional per‑message stats in the UI.</li>
+<li><strong>Database Tools</strong>: Weaviate health check, stats, wipe collection, and add sample document.</li>
+<li><strong>Manual Support</strong>: Create support requests from the sidebar.</li>
+</ul>
+<hr />
+<h2 id="architecture">Architecture</h2>
+<h3 id="main-components">Main Components</h3>
+<ul>
+<li><strong>Agents</strong>: Modular agents for search, embedding, document processing, LLM generation, and monitoring.</li>
+<li><strong>Workflow</strong>: Stateful orchestration using LangGraph (<code>graph/workflow.py</code>).</li>
+<li><strong>Support Tools</strong>: LangChain-style tools for Notion ticketing and Calendly scheduling (<code>tools/tools_notion_and_cal.py</code>).</li>
+<li><strong>Environment Integration</strong>: Uses Nebius Token Factory, Exa.ai, Weaviate, Notion, Calendly.</li>
+</ul>
+<h3 id="workflow-state">Workflow State</h3>
+<p>The workflow state is defined in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/graph/state.py" target="_blank" rel="noopener"><code>graph.state.WorkflowState</code></a>.</p>
+<hr />
+<h2 id="agents-flow-diagram">Agents Flow Diagram</h2>
+<div class="codehilite"><pre><span></span><code>flowchart TD
+    A[&quot;search_web (SearchAgent)&quot;] --&gt;|&quot;uploaded_files exist&quot;| B[&quot;process_documents (DocumentAgent)&quot;]
+    A --&gt;|&quot;no uploaded_files&quot;| C[&quot;retrieve_docs (EmbeddingAgent &amp; VectorService)&quot;]
+    B --&gt; C
+    C --&gt; D[&quot;generate_response (LLMAgent)&quot;]
+    D --&gt; E[&quot;monitor_request (MonitoringAgent)&quot;]
+    E --&gt; F[END]
+</code></pre></div>
+
+<p><strong>Flow Explanation:</strong>
+- <strong>search_web</strong>: Uses <code>SearchAgent</code> to fetch web results.
+- If files are uploaded, <code>DocumentAgent</code> processes them, then proceeds to document retrieval.
+- If no files, goes directly to <code>retrieve_docs</code> using <code>EmbeddingAgent</code> and <code>VectorService</code>.
+- <code>LLMAgent</code> generates the final response.
+- <code>MonitoringAgent</code> logs the request before workflow ends.</p>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python 3.10+</li>
+<li>API keys for Nebius Token Factory, Exa.ai, Weaviate, Notion, Calendly, Slack</li>
+</ul>
+<h3 id="installation">Installation</h3>
+<p>1) Clone the repository</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/your-org/nebius-support-agent.git
+<span class="nb">cd</span><span class="w"> </span>nebius-support-agent
+</code></pre></div>
+
+<p>2) Install uv (recommended)</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># macOS/Linux</span>
+curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+<span class="c1"># Windows (PowerShell)</span>
+irm<span class="w"> </span>https://astral.sh/uv/install.ps1<span class="w"> </span><span class="p">|</span><span class="w"> </span>iex
+</code></pre></div>
+
+<p>3) Create and activate a virtual environment</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate<span class="w">  </span><span class="c1"># Windows: .venv\\Scripts\\activate</span>
+</code></pre></div>
+
+<p>4) Install dependencies (from <code>pyproject.toml</code>)</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+</code></pre></div>
+
+<p>5) Configure environment variables
+- Create a <code>.env</code> in the project root and fill in keys listed in “Environment Variables”.</p>
+<h3 id="running-the-app">Running the App</h3>
+<ul>
+<li><strong>Streamlit Frontend</strong></li>
+</ul>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
+</code></pre></div>
+
+<ul>
+<li><strong>Slack Bot</strong> (DMs, <code>@mentions</code>, <code>/rag</code>)</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>slack_bot.py
+</code></pre></div>
+
+<hr />
+<h2 id="usage">Usage</h2>
+<h3 id="document-upload">Document Upload</h3>
+<ul>
+<li>Upload documents via the Streamlit interface.</li>
+<li>Documents are chunked, embedded, and stored in Weaviate for retrieval.</li>
+</ul>
+<h3 id="chat-support">Chat &amp; Support</h3>
+<ul>
+<li>Ask questions in the Streamlit chat or Slack.</li>
+<li>The AI can trigger support actions (e.g., Notion tickets, Calendly scheduling) when appropriate.</li>
+</ul>
+<h3 id="retrieval-settings-sidebar">Retrieval Settings (Sidebar)</h3>
+<ul>
+<li>Control web search results, vector document limit, and minimum vector relevance threshold.</li>
+<li>These values affect the current run of the workflow (<code>web_search_limit</code>, <code>doc_retrieval_limit</code>, <code>min_vector_relevance</code>).</li>
+</ul>
+<h3 id="response-analytics-streamlit-only">Response Analytics (Streamlit only)</h3>
+<ul>
+<li>Expand “Response Analytics” under a message to view:</li>
+<li>Search results count, retrieved docs count, generation time</li>
+<li>Tools used (web_search, notion_append_entry, cal_create_booking)</li>
+<li>Effective limits and vector relevance metrics<blockquote>
+<p>Note: Slack responses intentionally do not include internal logs or stats.</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="database-management">Database Management</h3>
+<ul>
+<li>Get Weaviate stats and health.</li>
+<li>Clear the collection (wipe) and clear chat history.</li>
+<li>Optionally add a sample document to the vector DB for quick testing.</li>
+</ul>
+<h3 id="manual-support">Manual Support</h3>
+<ul>
+<li>If a user email is set, you can create a manual support request from the sidebar.</li>
+</ul>
+<hr />
+<h2 id="project-structure">Project Structure</h2>
+<div class="codehilite"><pre><span></span><code>.env
+app.py
+config.py
+pyproject.toml
+uv.lock
+slack_bot.py
+slack_test.py
+assets/
+    langgraph_logo.png
+    logo.png
+    notion.png
+    weavite.png
+agents/
+    document_agent.py
+    embedding_agent.py
+    llm_agent.py
+    monitoring_agent.py
+    search_agent.py
+graph/
+    state.py
+    workflow.py
+services/
+    vector_service.py
+tools/
+    support_tools.py
+    tools_notion_and_cal.py
+</code></pre></div>
+
+<ul>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/app.py" target="_blank" rel="noopener"><code>app.py</code></a>: Streamlit frontend</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/slack_bot.py" target="_blank" rel="noopener"><code>slack_bot.py</code></a>: Slack bot integration</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/agents/" target="_blank" rel="noopener"><code>agents/</code></a>: Modular agent implementations</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/graph/" target="_blank" rel="noopener"><code>graph/</code></a>: Workflow orchestration</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/services/vector_service.py" target="_blank" rel="noopener"><code>services/vector_service.py</code></a>: Vector database service</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/tools/" target="_blank" rel="noopener"><code>tools/</code></a>: Support tool integrations</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/rag/support-agent-weaviate/config.py" target="_blank" rel="noopener"><code>config.py</code></a>: Configuration and environment variables</li>
+</ul>
+<hr />
+<h2 id="environment-variables">Environment Variables</h2>
+<p>Create <code>.env</code> and set:
+- <strong>Required</strong>: <code>NEBIUS_API_KEY</code>, <code>EXA_API_KEY</code>, <code>WEAVIATE_URL</code>, <code>WEAVIATE_API_KEY</code>
+- <strong>Slack</strong>: <code>SLACK_BOT_TOKEN</code>, <code>SLACK_APP_TOKEN</code>, <code>SLACK_SIGNING_SECRET</code>
+- <strong>Notion (support)</strong>: <code>NOTION_API_KEY</code>, <code>NOTION_DATABASE_ID</code>
+- <strong>Calendly (support)</strong>: <code>CALENDLY_API_KEY</code> (or legacy <code>CAL_API_KEY</code>), <code>CALENDLY_EVENT_TYPE_ID</code>, <code>CALENDLY_USERNAME</code>
+- <strong>Optional</strong>: <code>KEYWORDS_AI_API_KEY</code></p>
+<p>Defaults/tuning (optional):
+- <code>DEFAULT_WEB_RESULTS</code> (default 5)
+- <code>DEFAULT_DOCS_RETRIEVAL</code> (default 5)
+- <code>DEFAULT_MIN_VECTOR_RELEVANCE</code> (default 0.7)</p>
+<p>Model defaults (from <code>config.py</code>):
+- <code>LLM_MODEL = "zai-org/GLM-4.5"</code>
+- <code>EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-8B"</code></p>
+<p>To change models, open <code>config.py</code> and edit <code>LLM_MODEL</code> and/or <code>EMBEDDING_MODEL</code> to the desired Nebius Token Factory identifiers.</p>
+<hr />
+<h2 id="support-maintenance">Support &amp; Maintenance</h2>
+<ul>
+<li>Optional support ticket creation for errors (if user email is available).</li>
+<li>Manual support requests via Streamlit sidebar.</li>
+<li>Vector database and chat history maintenance tools.</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>Slack SSL certificate error on macOS</strong> (<code>SSL: CERTIFICATE_VERIFY_FAILED</code>):</li>
+<li>Run Apple’s certificate installer for your Python: <code>Install Certificates.command</code> (e.g., <code>/Applications/Python\ 3.13/Install\ Certificates.command</code>).</li>
+<li>
+<p>Or ensure <code>certifi</code> is installed and up to date.</p>
+</li>
+<li>
+<p><strong>Missing environment variables in Streamlit</strong>: The app shows a guided checklist in the UI; add the listed keys to <code>.env</code> and restart.</p>
+</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>
