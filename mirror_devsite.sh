@@ -88,4 +88,38 @@ for f in glob.glob("devsite/_next/static/chunks/**/*.js", recursive=True):
 print(f"  rewrote {n} JS chunk(s)")
 PY
 
+# 5) Make in-site navigation work. Next <Link> re-asserts absolute routes
+#    (href="/events") on hydration and drives client-side routing, which is
+#    broken under the subpath (the app has no basePath, so the router targets
+#    the domain root + 404s on _next/data). Inject a capture-phase click
+#    interceptor that turns internal absolute-route clicks into hard
+#    navigations to the mirrored .html. Runs before React's handler, so the
+#    SPA router never sees the click. External/hash/asset links pass through.
+echo "→ injecting nav interceptor into all pages…"
+python3 - "$PREFIX" <<'PY'
+import sys, glob
+prefix = sys.argv[1]
+marker = "/*devsite-navfix*/"
+script = ('<head><script>' + marker +
+  '(function(){var B="' + prefix + '";'
+  'document.addEventListener("click",function(e){'
+  'var a=e.target&&e.target.closest?e.target.closest("a"):null;if(!a)return;'
+  'var h=a.getAttribute("href");if(!h)return;'
+  'if(h[0]==="#"||h.indexOf("//")===0||/^[a-z]+:/i.test(h))return;'        # hash / protocol-relative / scheme
+  'if(h.indexOf(B)===0||h[0]!=="/")return;'                                # already-subpath or relative: leave
+  'var q=h.replace(/[?#].*$/,"");if(/\\.[a-z0-9]+$/i.test(q))return;'      # already a file (.html/.svg)
+  'var p=q==="/"?"/index":q.replace(/\\/$/,"");'
+  'e.preventDefault();e.stopPropagation();window.location.href=B+p+".html"'
+  '},true)})();</script>')
+n = 0
+for f in glob.glob("devsite/**/*.html", recursive=True):
+    s = open(f, encoding="utf-8").read()
+    if marker in s:
+        continue
+    s2 = s.replace("<head>", script, 1)
+    if s2 != s:
+        open(f, "w", encoding="utf-8").write(s2); n += 1
+print(f"  injected nav interceptor into {n} page(s)")
+PY
+
 echo "✓ devsite mirror ready ($(find devsite -name '*.html' | wc -l | tr -d ' ') pages, $(du -sh devsite | cut -f1))"
