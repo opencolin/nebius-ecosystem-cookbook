@@ -22,6 +22,7 @@ NEW_NAV = """<nav class="nav">
     <div class="nav-links" id="nav-menu">
       <a href="index.html" class="active">Ecosystem</a>
       <a href="cookbook/index.html">Cookbook</a>
+      <a href="devsite/index.html">Builder devsite</a>
     </div>
     <div class="nav-actions">
       <a class="nav-cta" href="cookbook/index.html">Cookbook →</a>
@@ -70,7 +71,7 @@ html = re.sub(r"<title>.*?</title>",
 
 # 3) hero: add a Cookbook button to the first .btn-row
 html = html.replace('<a class="btn secondary" href="#directory">The directory</a>',
-                    '<a class="btn secondary" href="#directory">The directory</a>\n      <a class="btn" href="cookbook/index.html">Browse the Cookbook →</a>', 1)
+                    '<a class="btn secondary" href="#directory">The directory</a>\n      <a class="btn" href="cookbook/index.html">Browse the Cookbook →</a>\n      <a class="btn secondary" href="devsite/index.html">The builder devsite →</a>', 1)
 
 # 4) wire the reference-architectures section to the cookbook (insert a callout after its lede)
 ref_lede = 'each shipping a repo + short video + written guide + cost calculator. The workshop library on the builder site is the home; several are already drafted there.</p>'

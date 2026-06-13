@@ -95,6 +95,7 @@ def page_shell(title, body, depth, source_url=None, source_label="View source on
     <div class="nav-links" id="nav-menu">
       <a href="{rr}index.html">Ecosystem</a>
       <a href="{rr}cookbook/index.html">Cookbook</a>
+      <a href="{rr}devsite/index.html">Builder devsite</a>
     </div>
     <div class="nav-actions">
       <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
@@ -390,6 +391,7 @@ def write_index(recipes):
     <div class="nav-links" id="nav-menu">
       <a href="../index.html">Ecosystem</a>
       <a href="index.html" class="active">Cookbook</a>
+      <a href="../devsite/index.html">Builder devsite</a>
     </div>
     <div class="nav-actions">
       <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
