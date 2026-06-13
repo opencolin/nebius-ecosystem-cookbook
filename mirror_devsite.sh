@@ -63,4 +63,29 @@ else:
     print("  already neutralized")
 PY
 
+# 4) Rewrite absolute root paths baked into the JS bundles.
+#    The devsite has no Next assetPrefix/basePath, so its client runtime hardcodes
+#    absolute "/_next/" (webpack publicPath) and components emit absolute asset
+#    refs like "/nebius-logo.svg". Those resolve to the Pages domain root and 404
+#    under the /<repo>/devsite/ subpath. wget only relativizes refs in the static
+#    HTML, not strings inside JS — so rewrite the bundles to the subpath-absolute
+#    prefix. (Match the QUOTED literals so re-runs stay idempotent.)
+PREFIX="/nebius-ecosystem-cookbook/devsite"
+echo "→ rewriting absolute runtime paths to $PREFIX …"
+python3 - "$PREFIX" <<'PY'
+import sys, glob
+prefix = sys.argv[1]
+subs = [('"/_next/"', f'"{prefix}/_next/"'),
+        ('"/nebius-logo.svg"', f'"{prefix}/nebius-logo.svg"')]
+n = 0
+for f in glob.glob("devsite/_next/static/chunks/**/*.js", recursive=True):
+    s = open(f, encoding="utf-8").read()
+    o = s
+    for a, b in subs:
+        s = s.replace(a, b)
+    if s != o:
+        open(f, "w", encoding="utf-8").write(s); n += 1
+print(f"  rewrote {n} JS chunk(s)")
+PY
+
 echo "✓ devsite mirror ready ($(find devsite -name '*.html' | wc -l | tr -d ' ') pages, $(du -sh devsite | cut -f1))"
