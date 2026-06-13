@@ -97,29 +97,36 @@ PY
 #    SPA router never sees the click. External/hash/asset links pass through.
 echo "→ injecting nav interceptor into all pages…"
 python3 - "$PREFIX" <<'PY'
-import sys, glob
+import sys, glob, re
 prefix = sys.argv[1]
-marker = "/*devsite-navfix*/"
-script = ('<head><script>' + marker +
-  '(function(){var B="' + prefix + '";'
+# Intercept EVERY internal anchor click in capture phase (before React), then hard-
+# navigate, so Next's client router never hijacks it. Two shapes reach us:
+#  - relative href ("library/x.html", "../events.html") — wget relativized the SSR
+#    markup; resolve via a.href and hard-nav (the router would otherwise push the
+#    app's internal absolute route "/library/x" with no .html → 404).
+#  - absolute route ("/events") — Next re-asserted it on hydration; map to the
+#    subpath + ".html".
+# Pass through: hash, external scheme, protocol-relative, already-correct subpath.
+body = ('(function(){var B="' + prefix + '";'
   'document.addEventListener("click",function(e){'
   'var a=e.target&&e.target.closest?e.target.closest("a"):null;if(!a)return;'
   'var h=a.getAttribute("href");if(!h)return;'
-  'if(h[0]==="#"||h.indexOf("//")===0||/^[a-z]+:/i.test(h))return;'        # hash / protocol-relative / scheme
-  'if(h.indexOf(B)===0||h[0]!=="/")return;'                                # already-subpath or relative: leave
-  'var q=h.replace(/[?#].*$/,"");if(/\\.[a-z0-9]+$/i.test(q))return;'      # already a file (.html/.svg)
-  'var p=q==="/"?"/index":q.replace(/\\/$/,"");'
-  'e.preventDefault();e.stopPropagation();window.location.href=B+p+".html"'
-  '},true)})();</script>')
+  'if(h[0]==="#"||h.indexOf("//")===0||/^[a-z]+:/i.test(h))return;'
+  'if(h.indexOf(B+"/")===0)return;'
+  'var t;if(h[0]==="/"){var q=h.replace(/[?#].*$/,"");'
+  't=/\\.[a-z0-9]+$/i.test(q)?B+q:B+(q==="/"?"/index":q.replace(/\\/$/,""))+".html";}'
+  'else{t=a.href;}'
+  'e.preventDefault();e.stopPropagation();window.location.href=t;'
+  '},true)})();')
+script = '<script>/*devsite-navfix*/' + body + '</script>'
+old = re.compile(r'<script>/\*devsite-navfix\*/.*?</script>', re.DOTALL)
 n = 0
 for f in glob.glob("devsite/**/*.html", recursive=True):
     s = open(f, encoding="utf-8").read()
-    if marker in s:
-        continue
-    s2 = s.replace("<head>", script, 1)
+    s2 = old.sub(script, s, count=1) if "/*devsite-navfix*/" in s else s.replace("<head>", "<head>" + script, 1)
     if s2 != s:
         open(f, "w", encoding="utf-8").write(s2); n += 1
-print(f"  injected nav interceptor into {n} page(s)")
+print(f"  injected/updated nav interceptor in {n} page(s)")
 PY
 
 echo "✓ devsite mirror ready ($(find devsite -name '*.html' | wc -l | tr -d ' ') pages, $(du -sh devsite | cut -f1))"
