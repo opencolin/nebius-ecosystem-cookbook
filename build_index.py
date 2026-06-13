@@ -78,6 +78,40 @@ cookbook_cta = ref_lede + """
     <div class="callout coral"><p><strong>▶ These reference architectures are real, runnable recipes.</strong> The full <a href="cookbook/index.html">Token Factory Cookbook</a> — <strong>50 recipes across 17 categories, 27 notebooks rendered with their outputs</strong> — backs every architecture below: <a href="cookbook/index.html">research agents</a> (CrewAI / LangChain + Tavily), <a href="cookbook/index.html">fine-tuning &amp; LoRA</a>, the <a href="cookbook/index.html">one-<code>base_url</code> API quickstarts</a>, RAG, distillation, and more. <a href="cookbook/index.html">Browse all 50 →</a></p></div>"""
 html = html.replace(ref_lede, cookbook_cta, 1)
 
+# 4b) per-card deep links: each reference-architecture card -> its matching recipe(s)
+PER_CARD = {
+    "Token Factory + Claude Code / Codex / Cursor": [
+        ("API quickstarts", "cookbook/r/api/index.html"),
+        ("Google ADK tool-calling", "cookbook/r/agents/google-adk-tool-calling/index.html")],
+    "The research agent — Tavily + Token Factory": [
+        ("CrewAI research agent", "cookbook/r/agents/crewai-research-agent/index.html"),
+        ("Tavily tool-calling", "cookbook/r/tool-calling/tavily_tool_calling.html")],
+    "Fine-tune and serve an open model": [
+        ("LoRA", "cookbook/r/lora/lora-1/index.html"),
+        ("Fine-tune Llama", "cookbook/r/post-training/fine-tuning-1/index.html"),
+        ("Add a LoRA", "cookbook/r/AddLora.html")],
+    "Train it, tune it, serve it": [
+        ("Fine-tuning pipeline", "cookbook/r/post-training/fine-tuning-1/index.html"),
+        ("Distillation", "cookbook/r/distillation/distillation-1/index.html")],
+    "OpenClaw on Nebius · RAG on Nebius · serverless agents · batch pipelines": [
+        ("OpenClaw on Nebius", "cookbook/r/integrations/openclaw/index.html"),
+        ("RAG: chat-with-PDF", "cookbook/r/rag/chat-with-pdf/index.html"),
+        ("Batch inference", "cookbook/r/batch.html")],
+    "Run your coding-agent's sandbox on Nebius": [
+        ("OpenClaw on Nebius", "cookbook/r/integrations/openclaw/index.html"),
+        ("Tool calling", "cookbook/r/tool-calling/index.html")],
+    "Point your multi-agent harness at Token Factory open models": [
+        ("Deep Agents (LangGraph)", "cookbook/r/agents/langchain/deep-agent-example-1/index.html"),
+        ("Competitive-intel agent", "cookbook/r/agents/langchain/competitive-intelligence-agent/index.html")],
+}
+for title, links in PER_CARD.items():
+    line = " · ".join(f'<a href="{href}">{label}</a>' for label, href in links)
+    inject = f'\n          <div class="attacks" style="margin-top:.55rem">🍳 Runnable recipe: {line}</div>'
+    pattern = re.compile(r"(<h3>" + re.escape(title) + r"</h3>.*?</p>)", re.S)
+    html, n = pattern.subn(lambda m: m.group(1) + inject, html, count=1)
+    if not n:
+        print(f"  ! per-card link not injected (title not found): {title}")
+
 # 5) strip links to internal sibling pages -> plain text (keep inner content)
 for s in SIBLINGS:
     html = re.sub(rf'<a [^>]*href="{re.escape(s)}\.html"[^>]*>(.*?)</a>', r"\1", html, flags=re.S)
