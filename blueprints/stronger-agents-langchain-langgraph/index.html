@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Stronger Agents with LangChain and LangGraph · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/04-stronger-agents-langchain-langgraph" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">intermediate</span><span class="pill coral">read 13 min</span><span class="pill coral">run 6 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">langchain</span><span class="pill">langgraph</span><span class="pill">fastapi</span><span class="pill">openai-sdk</span><span class="pill">structlog</span><span class="pill">prometheus</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/04-stronger-agents-langchain-langgraph
+cp .env.example .env  # then fill NEBIUS_API_KEY
+uv sync &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="orchestration-stronger-agents-with-langchain-and-langgraph">Orchestration — Stronger Agents with LangChain and LangGraph</h1>
+<blockquote>
+<p>Turn the hand-wired Nebius agent into a typed graph that can choose the shortest useful path to an answer.</p>
+</blockquote>
+<p>Recipe <strong>04 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p>Foundation → Knowledge → Grounding → <strong>Orchestration</strong> → Thread Memory → User Memory → Observability → Guardrails → Actions → Simulation</p>
+</blockquote>
+<p>The first three cookbooks prove the Nebius integration path: call the model, ground it in private data, then add fresh web context.
+The next production problem is latency.
+A working agent can still feel broken when one answer comes back as:</p>
+<div class="codehilite"><pre><span></span><code>Time: 40.78s | Tokens: 40 embed, 1421 in, 535 out | Cost: $0.000399
+</code></pre></div>
+
+<p>That cost is fine.
+The wait is not.
+This cookbook introduces LangChain and LangGraph as the point where orchestration becomes explicit enough to reduce time to response: route the request, skip unnecessary model/tool work, cap generated tokens by path, and stream phase events as soon as the graph has something useful to report.</p>
+<p>After moving the book agent into the graph, a follow-up recommendation request with recent-context needs came back like this:</p>
+<div class="codehilite"><pre><span></span><code>Time: 6.97s | Tokens: 418 in, 266 out | Cost: $0.000161 | Routing: deliberate / curated_plus_fresh_context
+</code></pre></div>
+
+<p>The important change is not only the lower cost.
+It is that the user sees useful output in seconds, while the route and context decision stay visible for debugging.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A production-shape FastAPI service that keeps the same SSE contract as the earlier recipes, but moves latency-sensitive orchestration into a LangGraph state graph:</p>
+<ol>
+<li><strong>Route</strong> — classify the request as <code>direct</code> or <code>deliberate</code> without spending a model call.</li>
+<li><strong>Prepare</strong> — use a LangChain prompt template to build Nebius chat messages from graph state.</li>
+<li><strong>Budget</strong> — cap output tokens differently for fast-path and deliberate-path requests.</li>
+<li><strong>Stream</strong> — emit named SSE events while graph updates and Nebius tokens arrive.</li>
+</ol>
+<p>Persistent context and memory primitives are deliberately saved for Cookbook #5.
+This recipe stays focused on graph shape, typed state, and streaming events.</p>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    Request[&quot;POST /agent/run&quot;] --&gt; Route[&quot;route&quot;]
+    Route --&gt;|&quot;direct&quot;| Direct[&quot;prepare_direct&quot;]
+    Route --&gt;|&quot;deliberate&quot;| Deliberate[&quot;prepare_deliberate&quot;]
+    Direct --&gt; Stream[&quot;Nebius stream&quot;]
+    Deliberate --&gt; Stream
+    Stream --&gt; SSE[&quot;SSE events&quot;]
+</code></pre></div>
+
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12+</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a></li>
+<li>A Nebius API key — get one from the <a href="https://nebius.com">Nebius console</a></li>
+<li>Docker (optional)</li>
+</ul>
+<h2 id="run-it">Run it</h2>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Open .env and fill NEBIUS_API_KEY</span>
+
+uv<span class="w"> </span>sync
+make<span class="w"> </span>dev
+</code></pre></div>
+
+<p>Then in another terminal:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;prompt&quot;:&quot;Recommend recent climate fiction with enough context to explain why each book is worth reading now.&quot;}&#39;</span>
+</code></pre></div>
+
+<p>You should see named SSE events:</p>
+<div class="codehilite"><pre><span></span><code>event: status
+data: {&quot;phase&quot;:&quot;routing&quot;,&quot;targetFirstTokenMs&quot;:1200}
+
+event: status
+data: {&quot;phase&quot;:&quot;routed&quot;,&quot;route&quot;:&quot;direct&quot;}
+
+event: status
+data: {&quot;phase&quot;:&quot;writing&quot;,&quot;route&quot;:&quot;direct&quot;}
+
+event: token
+data: {&quot;text&quot;:&quot;Graph&quot;}
+
+event: done
+data: {}
+</code></pre></div>
+
+<h2 id="walk-through">Walk-through</h2>
+<p>The FastAPI route stays intentionally boring.
+It validates the request, passes temperature and max-token controls into the agent, and translates typed events into SSE.
+The graph lives in <a href="https://github.com/nebius/nebius-partner-cookbook/blob/main/cookbooks/04-stronger-agents-langchain-langgraph/app/core/agent.py" target="_blank" rel="noopener"><code>app/core/agent.py</code></a>.</p>
+<div class="codehilite"><pre><span></span><code>request ──► route ──► LangGraph route node ──► direct/deliberate prepare node ──► Nebius stream ──► SSE
+</code></pre></div>
+
+<p>The graph is small on purpose, but the production move is real.
+The route node makes the latency decision visible.
+The prepare nodes keep prompt construction out of the route handler.
+The token budgets make "answer directly" and "think a little more" materially different execution paths.</p>
+<p>This is not magic acceleration.
+LangGraph does not make a model emit tokens faster.
+It helps you stop spending latency on work the current request does not need, and it gives the API layer immediate progress events instead of a silent 40-second wait.</p>
+<h2 id="latency-controls">Latency controls</h2>
+<p>The default <code>.env.example</code> includes:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">DIRECT_RESPONSE_MAX_TOKENS</span><span class="o">=</span><span class="m">384</span>
+<span class="nv">DELIBERATE_RESPONSE_MAX_TOKENS</span><span class="o">=</span><span class="m">700</span>
+<span class="nv">FIRST_TOKEN_TARGET_MS</span><span class="o">=</span><span class="m">1200</span>
+</code></pre></div>
+
+<p>Simple prompts use the direct route and a smaller output budget.
+Longer prompts, comparisons, pricing questions, or freshness-sensitive wording use the deliberate route.
+The client can still send <code>temperature</code> and <code>max_tokens</code>, but the graph clamps <code>max_tokens</code> to the selected route's budget.</p>
+<h2 id="why-this-is-faster">Why this is faster</h2>
+<p>The earlier knowledge and real-time examples prove the full production path: embed, retrieve, search, synthesize, then stream.
+That path is valuable when the prompt needs domain knowledge or fresh context.
+It is wasteful when the user asks a small direct question.</p>
+<p>Cookbook #4 separates orchestration from capability.
+The graph first decides which work is necessary.
+The direct route avoids extra model or tool calls and keeps the answer budget small.
+The deliberate route keeps room for a richer answer, but it is still bounded.
+Both routes send <code>status</code> events before the model finishes, so the user is never waiting on a silent connection.</p>
+<h2 id="metrics">Metrics</h2>
+<p>The <code>/metrics</code> endpoint includes the base HTTP and Nebius metrics from the earlier cookbooks, plus orchestration-specific signals:</p>
+<div class="codehilite"><pre><span></span><code>agent_route_total{route=&quot;direct&quot;}
+agent_route_total{route=&quot;deliberate&quot;}
+agent_first_token_seconds_bucket{route=&quot;direct&quot;,le=&quot;1.2&quot;}
+</code></pre></div>
+
+<p>These metrics answer the production questions this cookbook raises:</p>
+<ul>
+<li>Which path are users actually taking?</li>
+<li>Is the fast path staying fast?</li>
+<li>Did a routing change improve time to first token or just move latency around?</li>
+</ul>
+<h2 id="memory-boundary">Memory boundary</h2>
+<p>This cookbook does not introduce persistent context or memory primitives.
+The state graph only carries the data needed for the current request.
+Cookbook #5 introduces short-term thread memory, and Cookbook #6 adds durable user/application memory.</p>
+<h2 id="test-it">Test it</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check
+</code></pre></div>
+
+<p>The tests mock the Nebius streaming endpoint with <code>respx</code>, so they do not call the network by default.</p>
+<h2 id="going-further">Going further</h2>
+<ul>
+<li>Replace the deterministic route node with a small-model router once the routing policy needs semantics instead of keywords.</li>
+<li>Add a retrieval/tool node between planning and writing.</li>
+<li>Run independent tool calls in parallel once this graph has more than one tool edge.</li>
+<li>Cookbook #5 adds LangGraph memory for thread and user/application context.</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>LangGraph quickstart — <a href="https://docs.langchain.com/oss/python/langgraph/quickstart">docs.langchain.com/oss/python/langgraph/quickstart</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>MIT</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

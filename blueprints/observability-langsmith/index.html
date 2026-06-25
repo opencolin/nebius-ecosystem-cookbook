@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Observability with LangSmith · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/07-observability-langsmith" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">advanced</span><span class="pill coral">read 14 min</span><span class="pill coral">run 8 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">langsmith</span><span class="pill">langchain</span><span class="pill">fastapi</span><span class="pill">openai-sdk</span><span class="pill">structlog</span><span class="pill">prometheus</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/07-observability-langsmith
+cp .env.example .env  # then fill NEBIUS_API_KEY and LANGSMITH_API_KEY
+docker compose up -d postgres &amp;&amp; uv sync &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="observability-observability-with-langsmith">Observability — Observability with LangSmith</h1>
+<blockquote>
+<p>Trace, inspect, annotate, and debug a stateful Nebius-backed agent with LangSmith.</p>
+</blockquote>
+<p>Recipe <strong>07 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p>Foundation → Knowledge → Grounding → Orchestration → Thread Memory → User Memory → <strong>Observability</strong> → Guardrails → Actions → Simulation</p>
+</blockquote>
+<p>By this point the agent can answer, orchestrate, remember a thread, and persist user memory in Postgres.
+The next production problem is visibility.
+When a run is bad, slow, expensive, or surprising, logs alone do not show the full chain of prompt, memory, route, model call, and output.</p>
+<p>This recipe keeps everything from Cookbook #6 and adds LangSmith as the agent-run observability layer.
+Prometheus still answers aggregate service questions.
+LangSmith answers per-run behavior questions.</p>
+<h2 id="what-is-a-trace">What is a trace?</h2>
+<p>A trace is the complete execution tree for one agent request.
+The root run is the request-level operation, and each meaningful internal step is a child run, often called a span.
+In this cookbook the root run is <code>agent.run</code>.
+Its children show memory recall, graph routing, prompt rendering, the Nebius model stream, memory persistence, and feedback correlation.</p>
+<p>That tree matters in production because an agent failure is rarely just "the model was bad."
+It may be bad recalled memory, an unexpected route, a bloated prompt, a slow model stream, a malformed output, or user feedback attached after the response.
+Logs can show that each step happened.
+A trace shows how the steps fit together for the exact request a reviewer is investigating.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A FastAPI service that extends the long-term-memory agent:</p>
+<ol>
+<li><strong>Inherited orchestration</strong> — the LangGraph route from Cookbook #4 still chooses the response path.</li>
+<li><strong>Inherited memory</strong> — <code>thread_id</code>, <code>user_id</code>, Postgres memory, memory summary, and deletion endpoints remain intact.</li>
+<li><strong>LangSmith tracing</strong> — each run is traced with metadata, tags, redacted previews, and annotated child spans.</li>
+<li><strong>Feedback capture</strong> — reviewers can attach feedback to a LangSmith run.</li>
+<li><strong>Privacy-aware telemetry</strong> — traces store previews and identifiers, not raw secrets or unnecessary PII.</li>
+<li><strong>Credential-free local runs</strong> — tracing is off by default so the recipe works without a LangSmith account.</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>request ──► memory recall ──► LangGraph route ──► Nebius stream ──► SSE
+              │                    │                  │
+              └────────────────────┴──────────────────┘
+                              LangSmith trace
+</code></pre></div>
+
+<h2 id="trace-shape">Trace Shape</h2>
+<p>The code uses LangSmith annotations on the functions that are useful to inspect:</p>
+<table>
+<thead>
+<tr>
+<th>Span</th>
+<th>Run type</th>
+<th>Why it exists</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agent.run</code></td>
+<td><code>chain</code></td>
+<td>Root request trace and feedback target.</td>
+</tr>
+<tr>
+<td><code>agent.load_context</code></td>
+<td><code>retriever</code></td>
+<td>Loads short-term thread history and long-term user memories.</td>
+</tr>
+<tr>
+<td><code>thread_memory.get_history</code></td>
+<td><code>retriever</code></td>
+<td>Shows whether local thread memory contributed context.</td>
+</tr>
+<tr>
+<td><code>long_term_memory.postgres.recall</code></td>
+<td><code>retriever</code></td>
+<td>Shows durable user memory lookup.</td>
+</tr>
+<tr>
+<td><code>agent.stream_response</code></td>
+<td><code>chain</code></td>
+<td>Streams the graph and writer path.</td>
+</tr>
+<tr>
+<td><code>agent.route_request</code></td>
+<td><code>chain</code></td>
+<td>Records the graph routing decision.</td>
+</tr>
+<tr>
+<td><code>agent.render_prompt_messages</code></td>
+<td><code>chain</code></td>
+<td>Shows prompt assembly after memory injection.</td>
+</tr>
+<tr>
+<td><code>nebius.chat_stream</code></td>
+<td><code>llm</code></td>
+<td>Measures the Nebius model call and token usage.</td>
+</tr>
+<tr>
+<td><code>agent.persist_context</code></td>
+<td><code>tool</code></td>
+<td>Saves short-term and long-term memory after the answer.</td>
+</tr>
+<tr>
+<td><code>long_term_memory.extract_memories</code></td>
+<td><code>chain</code></td>
+<td>Shows deterministic memory extraction.</td>
+</tr>
+</tbody>
+</table>
+<p>The annotations use <code>process_inputs</code>, <code>process_outputs</code>, and stream reducers from <code>app/core/langsmith_annotations.py</code>.
+That keeps traces readable and prevents streamed token chunks, secrets, and common direct identifiers from being stored verbatim.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12+</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a></li>
+<li>Postgres 15+ running locally</li>
+<li>A Nebius API key from the <a href="https://nebius.com">Nebius console</a></li>
+<li>A LangSmith API key from <a href="https://docs.langchain.com/langsmith/home">LangSmith</a></li>
+</ul>
+<h2 id="run-it">Run it</h2>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Fill NEBIUS_API_KEY and LANGSMITH_API_KEY.</span>
+
+createdb<span class="w"> </span>nebius_cookbook
+uv<span class="w"> </span>sync
+make<span class="w"> </span>dev
+</code></pre></div>
+
+<p>Run the traced agent:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;thread_id&quot;:&quot;trace-demo&quot;,&quot;user_id&quot;:&quot;reader-42&quot;,&quot;prompt&quot;:&quot;Recommend one short book about observability.&quot;}&#39;</span>
+</code></pre></div>
+
+<p>When tracing is disabled, the response still works and <code>langsmithRunId</code> is <code>null</code>.
+When tracing is enabled, <code>memory_loaded</code> includes the LangSmith run id.</p>
+<div class="codehilite"><pre><span></span><code>event: status
+data: {&quot;phase&quot;:&quot;memory_loaded&quot;,&quot;threadId&quot;:&quot;trace-demo&quot;,&quot;userId&quot;:&quot;reader-42&quot;,&quot;langsmithRunId&quot;:&quot;...&quot;,&quot;messages&quot;:0,&quot;longTermMemories&quot;:0}
+</code></pre></div>
+
+<p>Attach feedback to a run:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/feedback<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;run_id&quot;:&quot;RUN_ID_FROM_STREAM&quot;,&quot;key&quot;:&quot;user_rating&quot;,&quot;score&quot;:1,&quot;comment&quot;:&quot;Useful answer.&quot;}&#39;</span>
+</code></pre></div>
+
+<h2 id="api-contract">API Contract</h2>
+<h3 id="post-agentrun"><code>POST /agent/run</code></h3>
+<p>Runs the inherited memory agent and optionally creates a LangSmith trace.</p>
+<p>Request:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;thread_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;trace-demo&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;reader-42&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;prompt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Recommend one short book about observability.&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;temperature&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1024</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;history&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Key SSE additions:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Location</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>langsmithRunId</code></td>
+<td><code>status.phase=memory_loaded</code></td>
+<td>LangSmith run id, or <code>null</code> when tracing is disabled.</td>
+</tr>
+<tr>
+<td><code>userId</code></td>
+<td><code>status.phase=memory_loaded</code></td>
+<td>User namespace used for memory recall and trace metadata.</td>
+</tr>
+<tr>
+<td><code>longTermMemories</code></td>
+<td><code>status.phase=memory_loaded</code></td>
+<td>Count of recalled memories.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="post-feedback"><code>POST /feedback</code></h3>
+<p>Attaches user or reviewer feedback to a LangSmith run.</p>
+<p>Request:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;run_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;6f1328d2-...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user_rating&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;comment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Useful answer.&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Response:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;runId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;6f1328d2-...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;accepted&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>If LangSmith is disabled, the endpoint returns <code>accepted: false</code> instead of failing local development.</p>
+<h3 id="inherited-endpoints">Inherited Endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/memory/{user_id}</code></td>
+<td>List inherited long-term memories.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/memory/{user_id}/summary</code></td>
+<td>Summarize what the agent knows about a user.</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/memory/{user_id}</code></td>
+<td>Delete inherited long-term memories.</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/threads/{thread_id}</code></td>
+<td>Delete inherited short-term thread memory.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/metrics</code></td>
+<td>Prometheus scrape endpoint.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/healthz</code></td>
+<td>Liveness probe.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/readyz</code></td>
+<td>Readiness probe.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration">Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LANGSMITH_TRACING</code></td>
+<td><code>true</code></td>
+<td>Enables LangSmith API calls.</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_API_KEY</code></td>
+<td>unset</td>
+<td>LangSmith API key.</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_PROJECT</code></td>
+<td><code>Agent Blueprint Recipes</code></td>
+<td>LangSmith project name.</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_ENDPOINT</code></td>
+<td><code>https://eu.api.smith.langchain.com</code></td>
+<td>LangSmith API URL.</td>
+</tr>
+<tr>
+<td><code>MEMORY_BACKEND</code></td>
+<td><code>postgres</code></td>
+<td>Inherited memory backend.</td>
+</tr>
+<tr>
+<td><code>POSTGRESQL_ADDON_URI</code></td>
+<td>local Postgres URL</td>
+<td>Inherited memory database. Clever Cloud injects this when a Postgres add-on is linked.</td>
+</tr>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>required</td>
+<td>Nebius API key.</td>
+</tr>
+</tbody>
+</table>
+<p>Cookbooks #6-#10 can share one Postgres database by using different schemas.
+The schema is derived from <code>ENV</code> and the cookbook number: <code>dev_cbk_07</code> locally, <code>prod_cbk_07</code> when <code>ENV=production</code>.
+The app creates <code>prod_cbk_07.user_memories</code> on first use, separate from cookbook #6's <code>prod_cbk_06.user_memories</code>.</p>
+<h2 id="implementation-notes">Implementation Notes</h2>
+<p><code>app/core/langsmith_observability.py</code> is a narrow adapter around <code>langsmith.Client</code> and the LangSmith trace context manager.
+It creates a root <code>agent.run</code> trace before memory recall and generation, closes it after the final answer, and stores feedback through <code>/feedback</code>.</p>
+<p>The adapter redacts emails and phone numbers before sending prompt and output previews.
+It records <code>cookbook</code>, <code>env</code>, <code>thread_id</code>, and <code>user_id</code> as metadata.
+Those identifiers are useful for debugging, but they still count as user-related data in many systems, so treat LangSmith as a production telemetry destination.</p>
+<p>The annotation pattern is intentionally small:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">langsmith</span><span class="w"> </span><span class="kn">import</span> <span class="n">traceable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.langsmith_annotations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">process_langsmith_inputs</span><span class="p">,</span>
+    <span class="n">process_langsmith_outputs</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="nd">@traceable</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;agent.route_request&quot;</span><span class="p">,</span>
+    <span class="n">run_type</span><span class="o">=</span><span class="s2">&quot;chain&quot;</span><span class="p">,</span>
+    <span class="n">process_inputs</span><span class="o">=</span><span class="n">process_langsmith_inputs</span><span class="p">,</span>
+    <span class="n">process_outputs</span><span class="o">=</span><span class="n">process_langsmith_outputs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">route_request</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">AgentState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="o">...</span>
+</code></pre></div>
+
+<p>For streaming functions, the cookbook uses a reducer so the trace captures a compact summary instead of every emitted chunk:</p>
+<div class="codehilite"><pre><span></span><code><span class="nd">@traceable</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;nebius.chat_stream&quot;</span><span class="p">,</span>
+    <span class="n">run_type</span><span class="o">=</span><span class="s2">&quot;llm&quot;</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;provider&quot;</span><span class="p">:</span> <span class="s2">&quot;nebius&quot;</span><span class="p">},</span>
+    <span class="n">process_inputs</span><span class="o">=</span><span class="n">process_langsmith_inputs</span><span class="p">,</span>
+    <span class="n">reduce_fn</span><span class="o">=</span><span class="n">summarize_chat_chunks</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_chat</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ChatStreamChunk</span><span class="p">]:</span>
+    <span class="o">...</span>
+</code></pre></div>
+
+<p>The route opens the request-level trace and lets annotated child spans attach to it:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">with</span> <span class="n">observer</span><span class="o">.</span><span class="n">trace_agent_run</span><span class="p">(</span>
+    <span class="n">prompt</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">prompt</span><span class="p">,</span>
+    <span class="n">thread_id</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">thread_id</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">nebius_model</span><span class="p">,</span>
+    <span class="n">env</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">env</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">trace_run</span><span class="p">:</span>
+    <span class="o">...</span>
+    <span class="n">trace_run</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="n">output</span><span class="o">=</span><span class="n">assistant_answer</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Tracing failures do not break the agent response.
+If LangSmith is unavailable, the service logs a warning and continues.
+That is intentional because observability should not become an availability dependency for the agent path.</p>
+<h2 id="using-traces-in-production">Using Traces in Production</h2>
+<p>Use traces when you need to answer request-level questions:</p>
+<ul>
+<li>Which memory records were recalled before the answer?</li>
+<li>Did the graph choose the direct path or the deliberate path?</li>
+<li>What prompt was assembled after context injection?</li>
+<li>How long did the Nebius stream take to produce the first token?</li>
+<li>Which model, environment, route, user namespace, and thread produced the run?</li>
+<li>Which feedback score or review comment belongs to the exact run?</li>
+</ul>
+<p>Use LangSmith projects as operational boundaries.
+Development, staging, and production should be separate projects, or at least consistently separated with tags and metadata.
+This cookbook defaults to the EU LangSmith endpoint and an <code>Agent Blueprint Recipes</code> project for the public demo, but a production rollout should choose project names that match the deployment environment.</p>
+<p>Keep Prometheus and LangSmith side by side.
+Prometheus should page you when aggregate latency, traffic, or error rates move.
+LangSmith should help you inspect the specific runs behind those metrics, compare traces, attach feedback, and turn failed runs into future evaluation examples.</p>
+<p>For sensitive deployments, decide the trace policy before launch.
+Common controls are redaction, hashed user identifiers, reduced output previews, environment-specific projects, trace sampling, and disabling tracing for regulated workflows.
+Never place raw secrets, access tokens, or full customer records in trace metadata.</p>
+<h2 id="production-checklist">Production Checklist</h2>
+<ul>
+<li>Use separate LangSmith projects for development, staging, and production.</li>
+<li>Redact or hash identifiers if your privacy policy requires it.</li>
+<li>Decide which prompt and output previews are allowed in traces.</li>
+<li>Attach deployment version, model id, and cookbook name to every trace.</li>
+<li>Use annotation reducers for streaming responses and large retrieved payloads.</li>
+<li>Keep Prometheus metrics for service-level latency and error rates.</li>
+<li>Use LangSmith for run-level debugging, feedback review, and qualitative failure analysis.</li>
+</ul>
+<h2 id="failure-modes">Failure Modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+<th>Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>langsmithRunId</code> is <code>null</code></td>
+<td>Tracing disabled or missing key</td>
+<td>Set <code>LANGSMITH_TRACING=true</code> and configure <code>LANGSMITH_API_KEY</code>.</td>
+</tr>
+<tr>
+<td>Feedback returns <code>accepted:false</code></td>
+<td>LangSmith disabled</td>
+<td>Enable tracing before using feedback in production.</td>
+</tr>
+<tr>
+<td>Traces contain sensitive data</td>
+<td>Overly broad previews or metadata</td>
+<td>Redact previews and avoid raw PII in metadata.</td>
+</tr>
+<tr>
+<td>Agent works but trace is missing</td>
+<td>LangSmith API error</td>
+<td>Check logs for <code>langsmith_*_failed</code> warnings.</td>
+</tr>
+<tr>
+<td>Prometheus looks healthy but answer is bad</td>
+<td>Aggregate metrics hide behavior</td>
+<td>Inspect the LangSmith trace and attach feedback.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="test-it">Test It</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check
+</code></pre></div>
+
+<p>Tests keep <code>LANGSMITH_TRACING=false</code>.
+They verify the disabled path and feedback endpoint without calling LangSmith.</p>
+<h2 id="going-further">Going Further</h2>
+<ul>
+<li>Add trace links to the web playground when <code>langsmithRunId</code> is present.</li>
+<li>Add evaluator feedback keys for correctness, helpfulness, and groundedness.</li>
+<li>Export failed-run examples into datasets for future evaluation.</li>
+<li>Continue to Cookbook #8 to enforce guardrails on the same observable agent.</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>LangSmith docs — <a href="https://docs.langchain.com/langsmith/home">docs.langchain.com/langsmith/home</a></li>
+<li>LangSmith custom instrumentation — <a href="https://docs.langchain.com/langsmith/annotate-code">docs.langchain.com/langsmith/annotate-code</a></li>
+<li>LangChain observability — <a href="https://docs.langchain.com/oss/python/langchain/observability">docs.langchain.com/oss/python/langchain/observability</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>MIT</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

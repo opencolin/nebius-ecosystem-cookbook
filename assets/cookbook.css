@@ -184,3 +184,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .cb-content .highlight .vi, .cb-content .codehilite .vi { color: #BB60D5 } /* Name.Variable.Instance */
 .cb-content .highlight .vm, .cb-content .codehilite .vm { color: #BB60D5 } /* Name.Variable.Magic */
 .cb-content .highlight .il, .cb-content .codehilite .il { color: #40A070 } /* Literal.Number.Integer.Long */
+
+/* ── Agent Blueprints ───────────────────────────────────────── */
+.bp-meta{margin:0 0 1.5rem;display:flex;flex-direction:column;gap:.55rem}
+.bp-row{display:flex;flex-wrap:wrap;gap:.4rem}
+.bp-quick{margin-top:.3rem;border:1px solid rgba(224,255,79,.25);border-radius:8px;padding:.45rem .75rem;background:rgba(255,255,255,.03)}
+.bp-quick summary{cursor:pointer;font:600 .82rem/1.4 "Space Mono",ui-monospace,monospace;color:#e0ff4f;list-style:none}
+.bp-quick pre{margin:.6rem 0 0;overflow:auto;font-size:.8rem}
+.bp-num{display:inline-flex;align-items:center;justify-content:center;min-width:1.5rem;height:1.5rem;border-radius:6px;background:#e0ff4f;color:#052b42;font:700 .8rem/1 "Space Mono",ui-monospace,monospace;padding:0 .4rem}
+.bp-card h3{margin:.35rem 0 .25rem}

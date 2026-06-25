@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Testing Before Production with Snowglobe · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/10-testing-before-production-snowglobe" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">advanced</span><span class="pill coral">read 14 min</span><span class="pill coral">run 10 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">snowglobe</span><span class="pill">langsmith</span><span class="pill">mcp</span><span class="pill">stripe</span><span class="pill">fastapi</span><span class="pill">structlog</span><span class="pill">prometheus</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/10-testing-before-production-snowglobe
+cp .env.example .env  # then fill NEBIUS_API_KEY, LANGSMITH_API_KEY, and STRIPE_SECRET_KEY for live action scenarios
+uv sync &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="simulation-testing-before-production-with-snowglobe">Simulation — Testing Before Production with Snowglobe</h1>
+<blockquote>
+<p>🚧 <strong>Scaffold only.</strong> This recipe is planned but not yet implemented. This folder currently holds metadata and documentation for the Snowglobe testing cookbook.</p>
+</blockquote>
+<p>Recipe <strong>10 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p>Foundation → Knowledge → Grounding → Orchestration → Thread Memory → User Memory → Observability → Guardrails → Actions → <strong>Simulation</strong></p>
+</blockquote>
+<p>You've built, remembered, observed, guarded, and connected the agent to human-approved actions.
+You still do not know how the complete system behaves across the thousands of conversations you will never hand-test.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A FastAPI service plus a simulation harness around Snowglobe:</p>
+<ol>
+<li><strong>Generate</strong> — Snowglobe produces synthetic personas and scenarios.</li>
+<li><strong>Run</strong> — each scenario is played against the action-capable agent.</li>
+<li><strong>Score</strong> — transcripts are judged for failures, regressions, edge-case behavior, and unsafe action handling.</li>
+<li><strong>Gate</strong> — a smoke suite can run in CI before release.</li>
+</ol>
+<h2 id="planned-endpoints">Planned endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/agent/run</code></td>
+<td>Run the agent under test and stream SSE events.</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/simulate</code></td>
+<td>Launch a Snowglobe simulation batch and return scored results.</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/healthz</code></td>
+<td>Liveness probe.</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/readyz</code></td>
+<td>Readiness probe.</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/metrics</code></td>
+<td>Prometheus scrape endpoint.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="planned-scenario-suite">Planned scenario suite</h2>
+<ul>
+<li>Valid book recommendations that depend on stored reader preferences.</li>
+<li>Topic-boundary drift such as cooking, news, or script execution requests.</li>
+<li>Prompt-injection attempts that try to disable guardrails or approval checks.</li>
+<li>PII handling during otherwise valid book conversations.</li>
+<li>Unauthorized checkout attempts that must not call Stripe.</li>
+<li>Approved and rejected checkout flows for the fictional book purchase.</li>
+</ul>
+<h2 id="design-decisions">Design decisions</h2>
+<p><strong>Simulation complements tests.</strong> Unit tests verify known cases.
+Snowglobe samples the unknown conversational surface.</p>
+<p><strong>Memory stays isolated.</strong> When this recipe gets its runtime app, it should reuse the shared Postgres database from cookbooks #6-#9 with an environment-derived schema: <code>dev_cbk_10</code> locally and <code>prod_cbk_10</code> when <code>ENV=production</code>.
+That keeps simulated user memories separate from the action cookbook's <code>prod_cbk_09.user_memories</code> table.</p>
+<p><strong>Gate on deltas.</strong> Absolute LLM-judge scores are noisy.
+The CI story should compare against a baseline and fail on meaningful regression.</p>
+<p><strong>Mock Snowglobe in tests.</strong> No network calls run by default.
+Live simulation requires LangSmith/Snowglobe credentials and Stripe test-mode keys for action scenarios.</p>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>Snowglobe — <a href="https://snowglobetx.com">snowglobetx.com</a></li>
+<li>LangSmith — <a href="https://docs.langchain.com/langsmith/home">docs.langchain.com/langsmith/home</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>MIT</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

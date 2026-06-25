@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Short-Term Memory with LangChain · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/05-short-term-memory-langchain" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">intermediate</span><span class="pill coral">read 12 min</span><span class="pill coral">run 6 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">langchain</span><span class="pill">langgraph</span><span class="pill">fastapi</span><span class="pill">openai-sdk</span><span class="pill">structlog</span><span class="pill">prometheus</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/05-short-term-memory-langchain
+cp .env.example .env  # then fill NEBIUS_API_KEY
+uv sync &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="thread-memory-short-term-memory-with-langchain">Thread Memory — Short-Term Memory with LangChain</h1>
+<blockquote>
+<p>Let the agent continue one conversation without forcing the client to replay every previous turn.</p>
+</blockquote>
+<p>Recipe <strong>05 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p>Foundation → Knowledge → Grounding → Orchestration → <strong>Thread Memory</strong> → User Memory → Observability → Guardrails → Actions → Simulation</p>
+</blockquote>
+<p>Cookbook #4 made orchestration explicit with LangGraph.
+This recipe keeps that orchestration and adds the next production capability: short-term memory inside one conversation thread.</p>
+<p>The boundary matters.
+Short-term memory is not a user profile and it is not durable personalization.
+It is the recent thread state that lets a user ask "what about the second one?" and get an answer that knows what "the second one" refers to.</p>
+<p>Durable memory starts in Cookbook #6.
+This cookbook intentionally uses process-local memory so the first memory concept is easy to inspect, test, and reset.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A production-shape FastAPI service that extends the orchestrated book agent:</p>
+<ol>
+<li><strong>Inherited orchestration</strong> — the <code>direct</code> / <code>deliberate</code> LangGraph route from Cookbook #4 still chooses the response path.</li>
+<li><strong>Thread identity</strong> — every agent call includes a stable <code>thread_id</code>.</li>
+<li><strong>Short-term state</strong> — the service remembers recent user and assistant turns for that thread.</li>
+<li><strong>Bounded context</strong> — only the most recent messages are injected into the next Nebius call.</li>
+<li><strong>Reset</strong> — <code>DELETE /threads/{thread_id}</code> clears local thread state.</li>
+<li><strong>Network-free tests</strong> — tests mock Nebius with <code>respx</code>.</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>POST /agent/run ──► thread_id ──► load recent turns ──► LangGraph route ──► Nebius stream ──► SSE
+                         ▲                                                        │
+                         └──────────────── save user + assistant turn ◄───────────┘
+
+DELETE /threads/{thread_id} ──► clear local thread state
+</code></pre></div>
+
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12+</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a></li>
+<li>A Nebius API key from the <a href="https://nebius.com">Nebius console</a></li>
+<li>Docker (optional)</li>
+</ul>
+<h2 id="run-it">Run it</h2>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Open .env and fill NEBIUS_API_KEY.</span>
+
+uv<span class="w"> </span>sync
+make<span class="w"> </span>dev
+</code></pre></div>
+
+<p>Start a thread:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;thread_id&quot;:&quot;demo-thread&quot;,&quot;prompt&quot;:&quot;Recommend three books about product strategy.&quot;}&#39;</span>
+</code></pre></div>
+
+<p>Follow up with the same <code>thread_id</code>:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;thread_id&quot;:&quot;demo-thread&quot;,&quot;prompt&quot;:&quot;Which of those is best for a founder?&quot;}&#39;</span>
+</code></pre></div>
+
+<p>The second request receives the first turn as thread context.
+The SSE stream includes memory status:</p>
+<div class="codehilite"><pre><span></span><code>event: status
+data: {&quot;phase&quot;:&quot;memory_loaded&quot;,&quot;threadId&quot;:&quot;demo-thread&quot;,&quot;messages&quot;:2}
+
+event: status
+data: {&quot;phase&quot;:&quot;routed&quot;,&quot;route&quot;:&quot;deliberate&quot;,&quot;contextNeed&quot;:&quot;curated_recommendation&quot;}
+
+event: token
+data: {&quot;text&quot;:&quot;...&quot;}
+
+event: status
+data: {&quot;phase&quot;:&quot;memory_saved&quot;,&quot;threadId&quot;:&quot;demo-thread&quot;,&quot;messages&quot;:4}
+</code></pre></div>
+
+<p>Reset the thread:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8000/threads/demo-thread
+</code></pre></div>
+
+<h2 id="api-contract">API Contract</h2>
+<h3 id="post-agentrun"><code>POST /agent/run</code></h3>
+<p>Runs the agent and streams named SSE events.</p>
+<p>Request:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;thread_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;demo-thread&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;prompt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Which of those is best for a founder?&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;temperature&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1024</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;history&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>thread_id</code></td>
+<td>yes</td>
+<td>Stable conversation key for server-side short-term memory.</td>
+</tr>
+<tr>
+<td><code>prompt</code></td>
+<td>yes</td>
+<td>Current user request.</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>no</td>
+<td>Passed to the Nebius chat call.</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>no</td>
+<td>Clamped by the inherited LangGraph route budget.</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>no</td>
+<td>Optional one-off context from the client. Server memory is loaded separately.</td>
+</tr>
+</tbody>
+</table>
+<p>SSE events:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td>Phase transitions such as <code>memory_loaded</code>, <code>routed</code>, <code>writing</code>, <code>first_token</code>, and <code>memory_saved</code>.</td>
+</tr>
+<tr>
+<td><code>token</code></td>
+<td>Nebius token deltas plus the final usage footer.</td>
+</tr>
+<tr>
+<td><code>done</code></td>
+<td>Stream completion.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>Recoverable API-level failure.</td>
+</tr>
+<tr>
+<td><code>heartbeat</code></td>
+<td>Long-running connection heartbeat.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="delete-threadsthread_id"><code>DELETE /threads/{thread_id}</code></h3>
+<p>Clears process-local memory for a thread.</p>
+<p>Response:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;threadId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;demo-thread&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;deleted&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="how-it-works">How It Works</h2>
+<p>The request model makes <code>thread_id</code> required.
+That is the only API shape change from Cookbook #4.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AgentRunRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Payload for POST /agent/run.&quot;&quot;&quot;</span>
+
+    <span class="n">thread_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;^[A-Za-z0-9_.:-]+$&quot;</span><span class="p">)</span>
+    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">8_000</span><span class="p">)</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">8192</span><span class="p">)</span>
+    <span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChatHistoryMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The memory store is deliberately small.
+It keeps recent messages per thread, trims old messages, and returns copies so route handlers cannot mutate internal state accidentally.</p>
+<div class="codehilite"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ThreadMemoryStore</span><span class="p">:</span>
+    <span class="n">max_messages_per_thread</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="n">_threads</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">_lock</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Lock</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Lock</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thread_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="p">[]))</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">append_turn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thread_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">assistant</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">user</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">assistant</span><span class="p">},</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">del</span> <span class="n">messages</span><span class="p">[:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_messages_per_thread</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The route composes stored thread memory with any client-provided history before invoking the inherited LangGraph agent.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">stored_history</span> <span class="o">=</span> <span class="k">await</span> <span class="n">memory</span><span class="o">.</span><span class="n">get_history</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">thread_id</span><span class="p">)</span>
+<span class="n">history</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">stored_history</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">history</span><span class="p">)]</span>
+
+<span class="k">async</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">payload</span><span class="o">.</span><span class="n">prompt</span><span class="p">,</span>
+    <span class="n">options</span><span class="o">=</span><span class="n">AgentRunOptions</span><span class="p">(</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
+        <span class="n">max_tokens</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
+        <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">cancel_event</span><span class="o">=</span><span class="n">cancel_event</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">yield</span> <span class="n">_sse</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+
+<p>After the stream completes, the route saves the new turn.
+It stores only the assistant answer text, not the operational metrics footer.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">retained</span> <span class="o">=</span> <span class="k">await</span> <span class="n">memory</span><span class="o">.</span><span class="n">append_turn</span><span class="p">(</span>
+    <span class="n">payload</span><span class="o">.</span><span class="n">thread_id</span><span class="p">,</span>
+    <span class="n">user</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">prompt</span><span class="p">,</span>
+    <span class="n">assistant</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">assistant_chunks</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="k">yield</span> <span class="n">_sse</span><span class="p">(</span>
+    <span class="s2">&quot;status&quot;</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;phase&quot;</span><span class="p">:</span> <span class="s2">&quot;memory_saved&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;threadId&quot;</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">thread_id</span><span class="p">,</span>
+        <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="n">retained</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The inherited prompt builder from Cookbook #4 already knows how to use recent history.
+If history exists, it wraps the current prompt with conversation context:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">history</span><span class="p">:</span>
+    <span class="n">recent</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">6</span><span class="p">:]</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;role&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">][:</span><span class="mi">800</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">recent</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;Recent conversation context:</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">Current user request:</span><span class="se">\n</span><span class="si">{</span><span class="n">prompt</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;Resolve references like &#39;that topic&#39; from the recent conversation.&quot;</span>
+    <span class="p">)</span>
+</code></pre></div>
+
+<p>That is the production move: memory stays outside the FastAPI transport layer, but the route remains explicit about when memory is loaded and saved.</p>
+<h2 id="configuration">Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>required</td>
+<td>Nebius API key.</td>
+</tr>
+<tr>
+<td><code>NEBIUS_BASE_URL</code></td>
+<td><code>https://api.studio.nebius.ai/v1/</code></td>
+<td>OpenAI-compatible Nebius endpoint.</td>
+</tr>
+<tr>
+<td><code>NEBIUS_MODEL</code></td>
+<td><code>meta-llama/Llama-3.3-70B-Instruct</code></td>
+<td>Chat model.</td>
+</tr>
+<tr>
+<td><code>DIRECT_RESPONSE_MAX_TOKENS</code></td>
+<td><code>384</code></td>
+<td>Fast-path output cap inherited from Cookbook #4.</td>
+</tr>
+<tr>
+<td><code>DELIBERATE_RESPONSE_MAX_TOKENS</code></td>
+<td><code>700</code></td>
+<td>Deliberate-path output cap inherited from Cookbook #4.</td>
+</tr>
+<tr>
+<td><code>FIRST_TOKEN_TARGET_MS</code></td>
+<td><code>1200</code></td>
+<td>Target exposed in routing status events.</td>
+</tr>
+<tr>
+<td><code>CORS_ORIGINS</code></td>
+<td><code>http://localhost:3000</code></td>
+<td>Browser allowlist.</td>
+</tr>
+<tr>
+<td><code>LOG_LEVEL</code></td>
+<td><code>info</code></td>
+<td>Structured logging level.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="design-decisions">Design Decisions</h2>
+<p><strong>Thread memory is scoped by <code>thread_id</code>.</strong> The server does not try to infer continuity from IP address, cookies, or prompt content.
+The client or application layer owns the conversation id.</p>
+<p><strong>Memory is process-local in this recipe.</strong> That keeps the first memory cookbook runnable in minutes and makes the concept easy to inspect.
+It also means memory disappears on restart and is not shared across replicas.
+Cookbook #6 introduces durable user memory with Postgres.</p>
+<p><strong>Recall is bounded.</strong> The store keeps a maximum of 12 messages per thread and the prompt builder uses only recent history.
+Unbounded transcript replay is a hidden latency and cost bug.</p>
+<p><strong>The route emits memory phases.</strong> <code>memory_loaded</code> and <code>memory_saved</code> make memory behavior observable in the SSE stream and web playground.</p>
+<h2 id="production-checklist">Production Checklist</h2>
+<ul>
+<li>Derive <code>thread_id</code> from an authenticated session or server-created conversation id.</li>
+<li>Do not let users read or delete arbitrary thread ids without authorization.</li>
+<li>Move thread state to a shared store before running multiple replicas.</li>
+<li>Add summarization once long threads exceed the prompt budget.</li>
+<li>Keep memory writes after successful model completion so failed runs do not pollute context.</li>
+<li>Redact sensitive content before storing thread messages if your product accepts PII.</li>
+</ul>
+<h2 id="failure-modes">Failure Modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+<th>Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Follow-up loses context</td>
+<td>Client changed <code>thread_id</code></td>
+<td>Keep one stable id per conversation.</td>
+</tr>
+<tr>
+<td>Different users see shared context</td>
+<td>Thread ids are guessable or reused</td>
+<td>Generate ids server-side and authorize access.</td>
+</tr>
+<tr>
+<td>Memory disappears after deploy</td>
+<td>Process-local store restarted</td>
+<td>Move persistence to a database-backed checkpoint or store.</td>
+</tr>
+<tr>
+<td>Latency grows over time</td>
+<td>Too much transcript replay</td>
+<td>Trim, summarize, or cap recent messages.</td>
+</tr>
+<tr>
+<td>Bad answer becomes future context</td>
+<td>Failed run was stored</td>
+<td>Store only after successful completion and consider moderation before save.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="test-it">Test It</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check
+</code></pre></div>
+
+<p>The tests mock the Nebius streaming endpoint with <code>respx</code>.
+They verify that a second request with the same <code>thread_id</code> receives stored context and that <code>DELETE /threads/{thread_id}</code> clears it.</p>
+<h2 id="going-further">Going Further</h2>
+<ul>
+<li>Add summarization once thread state grows beyond the context budget.</li>
+<li>Store checkpoints in Postgres for durable thread continuity.</li>
+<li>Derive <code>thread_id</code> from an authenticated session rather than trusting arbitrary client input.</li>
+<li>Add UI affordances for starting and clearing conversations.</li>
+<li>Continue to Cookbook #6 for durable user memory across threads.</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>LangChain short-term memory — <a href="https://docs.langchain.com/oss/python/langchain/short-term-memory">docs.langchain.com/oss/python/langchain/short-term-memory</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>MIT</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Your First Agent on Nebius · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/01-first-agent-on-nebius" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">beginner</span><span class="pill coral">read 8 min</span><span class="pill coral">run 5 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">fastapi</span><span class="pill">structlog</span><span class="pill">prometheus</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/01-first-agent-on-nebius
+cp .env.example .env  # then fill NEBIUS_API_KEY
+uv sync &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="your-first-agent-on-nebius">Your First Agent on Nebius</h1>
+<blockquote>
+<p>A production-grade FastAPI agent with streaming, observability, and zero magic.</p>
+</blockquote>
+<p>Recipe <strong>01 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p><strong>Foundation</strong> → Knowledge → Grounding → Orchestration → Thread Memory → User Memory → Observability → Guardrails → Actions → Simulation</p>
+</blockquote>
+<p>You called OpenAI from a Python script and it worked. Now what?</p>
+<p>This recipe is the bridge between that script and something you would actually deploy. It is a small FastAPI service that streams a Nebius chat completion as Server-Sent Events. The Nebius integration is one line. Everything else — the structured logs, the Prometheus metrics, the rate limit, the security headers, the Dockerfile, the tests — is the shape of a service you can hand to ops without blushing.</p>
+<p>It is deliberately <em>not</em> an agent framework. There is no planner, no tool loop, no graph. The point is to get the boundaries right — config, transport, observability, lifecycle — so that the recipes that follow can add capability without re-litigating infrastructure.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A single-endpoint API:</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /agent/run</code></td>
+<td>Streams <code>status</code>, <code>token</code>, <code>done</code> SSE events</td>
+</tr>
+<tr>
+<td><code>GET /healthz</code></td>
+<td>Liveness probe</td>
+</tr>
+<tr>
+<td><code>GET /readyz</code></td>
+<td>Readiness probe</td>
+</tr>
+<tr>
+<td><code>GET /metrics</code></td>
+<td>Prometheus scrape endpoint</td>
+</tr>
+<tr>
+<td><code>GET /docs</code></td>
+<td>OpenAPI / Swagger UI</td>
+</tr>
+</tbody>
+</table>
+<p>Everything is typed, every env var validated, every request tagged with a request ID, every Nebius call wrapped in tenacity-backed retries.
+This foundation recipe intentionally has no database dependency.
+It is also the deployment baseline that later recipes extend.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12+</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a> — <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></li>
+<li>A Nebius API key — get one from the <a href="https://nebius.com">Nebius console</a></li>
+<li>(optional) Docker, if you want to build the production image</li>
+</ul>
+<p>No partner service account is needed until the knowledge and memory recipes.</p>
+<h2 id="run-it">Run it</h2>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/nebius-partner-cookbook.git
+<span class="nb">cd</span><span class="w"> </span>nebius-cookbook/cookbooks/01-first-agent-on-nebius
+
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Open .env and fill NEBIUS_API_KEY</span>
+
+uv<span class="w"> </span>sync
+make<span class="w"> </span>dev
+</code></pre></div>
+
+<p>In another terminal:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;prompt&quot;:&quot;Explain Nebius in one paragraph.&quot;}&#39;</span>
+</code></pre></div>
+
+<p>You'll see SSE events arriving:</p>
+<div class="codehilite"><pre><span></span><code>event: status
+data: {&quot;phase&quot;:&quot;thinking&quot;}
+
+event: token
+data: {&quot;text&quot;:&quot;Nebius&quot;}
+
+event: token
+data: {&quot;text&quot;:&quot; Token&quot;}
+
+…
+
+event: status
+data: {&quot;phase&quot;:&quot;done&quot;}
+
+event: done
+data: {}
+</code></pre></div>
+
+<h3 id="multi-turn-requests">Multi-turn requests</h3>
+<p>The server is <strong>stateless</strong> — it keeps no session. To hold a conversation, the client replays prior turns in the request body:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">        &quot;prompt&quot;: &quot;And who maintains it?&quot;,</span>
+<span class="s1">        &quot;history&quot;: [</span>
+<span class="s1">          {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What is Nebius?&quot;},</span>
+<span class="s1">          {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;It is ...&quot;}</span>
+<span class="s1">        ]</span>
+<span class="s1">      }&#39;</span>
+</code></pre></div>
+
+<p><code>history</code> is optional and capped (40 turns, 8 KB per message) by the request schema. Statelessness is a deliberate architectural choice — see <em>Design decisions</em> below.
+Cookbook #5 adds thread memory after this baseline is clear.</p>
+<h2 id="walk-through">Walk-through</h2>
+<h3 id="the-directory">The directory</h3>
+<div class="codehilite"><pre><span></span><code>app/
+├── main.py              # FastAPI app, lifespan, middleware
+├── config.py            # Pydantic Settings, validated at boot
+├── routes/
+│   ├── agent.py         # POST /agent/run with SSE
+│   └── health.py        # /healthz, /readyz
+├── schemas/
+│   └── agent.py         # Pydantic I/O models
+├── core/
+│   ├── nebius_client.py # OpenAI SDK pointed at Nebius
+│   └── agent.py         # The agent logic
+└── observability/
+    ├── logging.py       # structlog (JSON in prod)
+    ├── metrics.py       # Prometheus counters/histograms
+    └── middleware.py    # Request IDs, security headers, body-size limit
+</code></pre></div>
+
+<p>The split is by <em>boundary</em>, not by layer: <code>core/</code> is the only place that knows about Nebius, <code>routes/</code> is the only place that knows about HTTP and SSE, <code>observability/</code> is cross-cutting. You can unit-test <code>core/agent.py</code> without standing up a server, and you can change the transport (SSE → WebSocket) without touching <code>core/</code>.</p>
+<h3 id="the-nebius-integration">The Nebius integration</h3>
+<p>The SDK swap is one line — <code>base_url</code> points at Nebius:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">AsyncOpenAI</span><span class="p">(</span>
+    <span class="n">api_key</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">nebius_api_key</span><span class="p">,</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">nebius_base_url</span><span class="p">),</span>  <span class="c1"># https://api.studio.nebius.ai/v1/</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="n">httpx</span><span class="o">.</span><span class="n">Timeout</span><span class="p">(</span><span class="n">connect</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">read</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">pool</span><span class="o">=</span><span class="mf">5.0</span><span class="p">),</span>
+    <span class="n">max_retries</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># retries are owned by tenacity, not the SDK</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>Nebius is OpenAI-wire-compatible, so the OpenAI SDK works unchanged — the same <code>chat.completions.create(...)</code> call, the same streaming protocol. That compatibility is the reason every recipe in this cookbook can stay on one client library.
+Later cookbooks keep this client boundary and add capabilities around it.</p>
+<p>Two decisions worth calling out:</p>
+<ul>
+<li><strong>Timeouts are split, not global.</strong> A 5 s connect timeout fails fast on a dead endpoint; a 60 s read timeout tolerates a slow generation. A single global timeout forces you to choose one or the other.</li>
+<li><strong><code>max_retries=0</code> on the SDK.</strong> Retry policy lives in <code>tenacity</code> (see below) so it is visible, testable, and swappable in one place. Two retry layers stacked silently is a production incident waiting to happen.</li>
+</ul>
+<p><code>build_nebius_client()</code> returns a <strong>process-wide singleton</strong>. The point is the underlying <code>httpx</code> connection pool: reusing it avoids a TLS handshake on every request. A fresh client per request is a common and expensive mistake.</p>
+<h3 id="retries">Retries</h3>
+<div class="codehilite"><pre><span></span><code><span class="nd">@retry</span><span class="p">(</span>
+    <span class="n">retry</span><span class="o">=</span><span class="n">retry_if_exception_type</span><span class="p">((</span><span class="n">httpx</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">,</span> <span class="n">httpx</span><span class="o">.</span><span class="n">TimeoutException</span><span class="p">)),</span>
+    <span class="n">wait</span><span class="o">=</span><span class="n">wait_exponential</span><span class="p">(</span><span class="n">multiplier</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">8.0</span><span class="p">),</span>
+    <span class="n">stop</span><span class="o">=</span><span class="n">stop_after_attempt</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+    <span class="n">reraise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>Retries fire on <strong>transport</strong> errors only. A 4xx (bad key, malformed request) or a content error is not retried — replaying it just burns quota and latency for the same failure. Exponential backoff with a cap keeps a struggling upstream from being hammered.</p>
+<h3 id="the-observability">The observability</h3>
+<p>Every request gets a UUID request ID, returned in the <code>x-request-id</code> header and bound to the structlog context so every log line for that request carries it. In production (<code>ENV=production</code>) logs render as JSON; in dev they render as human-readable lines. One renderer swap, same call sites.</p>
+<p>A sample log line in production:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;event&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agent_started&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;info&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;request_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9a8f3c…&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/agent/run&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;meta-llama/Llama-3.3-70B-Instruct&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-06-04T12:31:42.103Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Prometheus metrics include:</p>
+<ul>
+<li><code>http_requests_total{method,path,status}</code> — request counter</li>
+<li><code>http_request_duration_seconds{method,path}</code> — latency histogram</li>
+<li><code>nebius_tokens_total{model,type}</code> — tokens streamed back from Nebius</li>
+<li><code>nebius_request_duration_seconds{model}</code> — Nebius call duration</li>
+</ul>
+<p>The <code>path</code> label is the <strong>route template</strong> (<code>/agent/run</code>), not the raw URL — a deliberate choice, since high-cardinality labels (per-user, per-ID paths) are the fastest way to melt a Prometheus instance.
+Later recipes keep these same metrics while adding memory, guardrails, and actions.</p>
+<h3 id="the-streaming">The streaming</h3>
+<p>The route handler returns a <code>StreamingResponse</code> with <code>text/event-stream</code>. Events are <em>named</em> — <code>status</code>, <code>token</code>, <code>done</code>, <code>heartbeat</code>, <code>error</code> — rather than raw text, so a client can <code>switch</code> on the event name instead of parsing prose. The agent itself is an <code>async</code> generator yielding typed <code>Event</code>s; the route's only job is to serialise each one into the SSE wire format.</p>
+<p>Two production details that are easy to miss:</p>
+<ul>
+<li><strong>Heartbeats.</strong> A <code>heartbeat</code> event is emitted every 15 s of silence. Idle SSE streams are killed by load balancers and proxies; the heartbeat keeps the connection scored as live. The response also sets <code>x-accel-buffering: no</code> so nginx forwards chunks immediately instead of buffering the whole body.</li>
+<li><strong>Disconnect cancellation.</strong> A background task polls <code>request.is_disconnected()</code> and sets a <code>cancel_event</code>. The agent checks it between tokens and stops pulling from Nebius the moment the client goes away — otherwise a user closing a tab still costs you a full generation.</li>
+</ul>
+<h3 id="the-hardening">The hardening</h3>
+<ul>
+<li>The daily per-IP rate limiter protects backend routes before they call Nebius; it uses Redis when <code>RATE_LIMIT_REDIS_URL</code> is set and process-local memory otherwise (<code>RATE_LIMIT_REQUESTS_PER_DAY</code>, default 25).</li>
+<li>CORS is allowlist-based — <code>CORS_ORIGINS</code> is parsed and validated at boot, never <code>*</code>.</li>
+<li>Security headers: <code>x-content-type-options</code>, <code>referrer-policy</code>, <code>strict-transport-security</code>.</li>
+<li>Request bodies above 64 KB are rejected with 413 <em>before</em> the body is read, via a <code>content-length</code> check in middleware.</li>
+<li>Lifespan handlers log startup and shutdown; on shutdown the HTTP client is closed and in-flight requests are allowed to drain.</li>
+</ul>
+<p><strong>Middleware order is load-bearing.</strong> ASGI wraps middleware last-added-runs-first, so the stack is arranged so CORS, size checks, security headers, request IDs, metrics, and rate limiting all happen before route work. Re-ordering <code>add_middleware</code> calls silently changes behaviour — there is a comment in <code>main.py</code> spelling out the request path.</p>
+<h4 id="rate-limiting">Rate limiting</h4>
+<p>The limiter is enabled by default and allows 25 backend requests per IP per rolling 24-hour window.
+Set these values in <code>.env</code>:</p>
+<div class="codehilite"><pre><span></span><code>RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_DAY=25
+RATE_LIMIT_REDIS_URL=
+RATE_LIMIT_TRUST_PROXY_HEADERS=false
+</code></pre></div>
+
+<p>Leave <code>RATE_LIMIT_REDIS_URL</code> empty for local in-memory counters, or point it at Redis for a shared counter across replicas:</p>
+<div class="codehilite"><pre><span></span><code>RATE_LIMIT_REDIS_URL=redis://localhost:6379/0
+</code></pre></div>
+
+<p>When the quota is exceeded, the backend returns JSON <code>429</code> before opening an SSE stream:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;daily rate limit exceeded&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;window&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;24h&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;retryAfterSeconds&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12345</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>See the full deployment notes in <a href="https://github.com/nebius/nebius-partner-cookbook/blob/main/cookbooks/01-first-agent-on-nebius/docs/rate-limiting.md" target="_blank" rel="noopener"><code>docs/rate-limiting.md</code></a>.</p>
+<h2 id="design-decisions">Design decisions</h2>
+<p><strong>Why a stateless server?</strong> No session store means any instance can serve any request — horizontal scaling is just "add a replica," and a crash loses nothing. The cost is bandwidth: the client resends history each turn. For a chat workload that is a few KB; when it stops being cheap (long transcripts, RAG context), the answer is a server-side store keyed by session ID, not in-process state. Recipe #5 (Short-Term Memory) takes that step deliberately.</p>
+<p><strong>Why no agent framework?</strong> A framework would hide exactly the boundaries this recipe exists to show. <code>core/agent.py</code> is ~50 lines and is explicitly designed to be subclassed — the later recipes add planning, knowledge, and tools on top of this same shape.</p>
+<p><strong>Why duplicate infrastructure per cookbook?</strong> Every recipe is autonomous: cloning one directory is enough to run it, with no shared base package. That costs some duplication and buys a reader the ability to study one cookbook in isolation. It is a documentation decision, not an architectural recommendation — in a real monorepo, factor the common middleware into a shared library.</p>
+<h2 id="failure-modes">Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>500 on first request</td>
+<td><code>NEBIUS_API_KEY</code> unset or invalid</td>
+<td>Settings validate at boot; a bad key surfaces on first Nebius call as a non-retried 4xx</td>
+</tr>
+<tr>
+<td>Stream stalls, no tokens</td>
+<td>Upstream slow generation</td>
+<td>60 s read timeout, then a retried <code>httpx.TimeoutException</code>; client sees an <code>error</code> event</td>
+</tr>
+<tr>
+<td>Stream ends early</td>
+<td>Client disconnected</td>
+<td>Expected — disconnect watcher cancels the upstream call</td>
+</tr>
+<tr>
+<td>429 responses</td>
+<td>Daily per-IP rate limit hit</td>
+<td>Back off; raise <code>RATE_LIMIT_REQUESTS_PER_DAY</code> only behind authentication</td>
+</tr>
+<tr>
+<td>413 responses</td>
+<td>Body over 64 KB</td>
+<td>Raise <code>MAX_REQUEST_BYTES</code>, or trim client-side <code>history</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>except Exception</code> in the route logs the full stack trace but emits only <code>{"detail": "internal error"}</code> to the client — internal details never cross the wire.</p>
+<h2 id="test-it">Test it</h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span><span class="nb">test</span>
+</code></pre></div>
+
+<p>Tests use <a href="https://lundberg.github.io/respx/">respx</a> to mock every Nebius call. No network is hit. CI passes on a laptop in airplane mode — which also means the test suite is a faithful, runnable spec of the SSE contract.</p>
+<h2 id="ship-it">Ship it</h2>
+<p>Build the production image:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>docker
+</code></pre></div>
+
+<p>The Dockerfile is multi-stage, uses <a href="https://github.com/astral-sh/uv"><code>astral-sh/uv</code></a> for the build, and ends in a slim Python 3.12 image running as a non-root user with a healthcheck wired to <code>/healthz</code>.</p>
+<p>Deployment-specific instructions for Nebius Compute live in <a href="https://github.com/nebius/nebius-partner-cookbook/blob/main/cookbooks/01-first-agent-on-nebius/docs/deployment.md" target="_blank" rel="noopener"><code>docs/deployment.md</code></a>.</p>
+<h2 id="going-further">Going further</h2>
+<ul>
+<li><strong>Cookbook #2 — <a href="https://github.com/nebius/nebius-partner-cookbook/blob/main/cookbooks/01-first-agent-on-nebius/02-domain-knowledge-pinecone-nexus/" target="_blank" rel="noopener">Domain Knowledge with Pinecone Nexus</a></strong> — give the agent a grounded, compiled knowledge base instead of a frozen training cutoff.</li>
+<li><strong>Tracing.</strong> Feed an inbound <code>traceparent</code> into the request-ID middleware and emit OpenTelemetry spans around the Nebius call — the structlog context is already the right place to bind a trace ID.</li>
+<li><strong>Authentication.</strong> Drop a JWT verifier in as a FastAPI <code>Depends</code>; it composes cleanly with the existing rate limiter and request-ID middleware.</li>
+<li><strong>Backpressure.</strong> Under heavy fan-out, cap concurrent Nebius calls with an <code>asyncio.Semaphore</code> in the client so one traffic spike can't open unbounded upstream connections.</li>
+</ul>
+<h2 id="license">License</h2>
+<p>MIT — see <a href="https://github.com/nebius/nebius-partner-cookbook/blob/main/cookbooks/01-first-agent-on-nebius/LICENSE" target="_blank" rel="noopener"><code>LICENSE</code></a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

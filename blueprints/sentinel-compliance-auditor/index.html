@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Sentinel — Regulatory Compliance Auditor Agent · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/blueprints/sentinel-compliance-auditor" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="sentinel-regulatory-compliance-auditor-agent">Sentinel — Regulatory Compliance Auditor Agent</h1>
+<p>Sentinel is an AI-powered compliance auditor that assesses 200 enterprise SOPs against 36 regulation frameworks (HIPAA, SOC 2, GDPR, EU AI Act, NIST AI RMF, SR 11-7, California SB 53/SB 942/AB 853, BSA, ECOA, FCRA, PCI DSS, OWASP, FDA, NIST SP 800-series, EU AMLD4/ePrivacy/MDR/SCCs). Regulation text is retrieved from Pinecone via agentic RAG. Built for the <a href="https://nebius.com/">Nebius Blueprint for Agents</a> demo (Nebius Inflection, June 9, 2026).</p>
+<h2 id="architecture">Architecture</h2>
+<div class="codehilite"><pre><span></span><code>User Query (via UI or LangGraph API)
+    |
+    v
++-----------------------------------+
+|  Sentinel Outer Agent             |  LangGraph ReAct (+ deepagents)
+|  Prototype / Grounded / Optimized |  GPT-5.5 or DeepSeek-V4-Pro
+|  / Production (Nemotron Ultra)    |  or Nemotron-3-Ultra-550b
++-----------------------------------+
+    |
+    +---&gt; list_sops (search/discover SOPs, synonym mapping)
+    |
+    +---&gt; audit_sops / audit_all_sops (ThreadPoolExecutor fan-out)
+    |         |
+    |         v  (per SOP, up to MAX_AUDIT_WORKERS in parallel)
+    |    +----------------------------+
+    |    |  Sub-Agent (sop_auditor)   |  LangGraph ReAct
+    |    |  Same model as outer agent |  Retrieval capped at 30 calls
+    |    +----------------------------+
+    |         |
+    |         +---&gt; read_sop (full SOP text)
+    |         +---&gt; retrieve_regulation_rag (Pinecone semantic search)
+    |         +---&gt; search_web (Tavily, capped)
+    |         +---&gt; record_finding (per requirement, survives truncation)
+    |         |
+    |         v
+    |    Returns SopAuditResult(findings, tokens, status) — aggregated by
+    |    value per audit call (no shared global; concurrency-safe). Transient
+    |    failures retried per SOP (status-based, up to 4 attempts). Emits a
+    |    token line parsed by the UI + validate_run via token_accounting.py
+    |
+    +---&gt; create_jira_ticket / create_jira_tickets (batch)
+    |         |
+    |         v
+    |    Jira Cloud REST API → tickets on Kanban board
+    |
+    +---&gt; search_web (outer agent, for ad-hoc questions)
+    +---&gt; list_regulations / retrieve_regulation_text_tool
+</code></pre></div>
+
+<p><strong>Models:</strong> Nemotron-3-Ultra-550b (Production), DeepSeek-V4-Pro (Optimized), GPT-5.5 (Prototype/Grounded) on Nebius + OpenAI, all built via <code>build_chat_model</code> (<code>chat_model.py</code>)
+<strong>Orchestration:</strong> LangGraph ReAct agent with per-SOP sub-agents, optional deepagents upgrade
+<strong>Retrieval:</strong> Pinecone vector search (Qwen3-Embedding-8B, 4096 dims)
+<strong>Grounding:</strong> Tavily live regulation search
+<strong>Observability:</strong> LangSmith tracing with cost tracking — including per-SOP sub-agent traces parented under the audit tool's run (<code>SUBAGENT_TRACING=off</code> to disable); token-line emit/parse centralized in <code>sentinel/token_accounting.py</code> (summed per audit call by UI + <code>validate_run.py</code>)
+<strong>Actuation:</strong> Jira Cloud REST API for filing compliance gap tickets
+<strong>Deployment:</strong> LangGraph Cloud + UI (FastAPI + React)</p>
+<h2 id="quickstart">Quickstart</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python 3.11+</li>
+<li>API keys: Nebius, OpenAI, Pinecone, Tavily (optional), LangSmith (optional)</li>
+</ul>
+<h3 id="setup">Setup</h3>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>install<span class="w">   </span><span class="c1"># creates .venv and installs the package with all extras</span>
+</code></pre></div>
+
+<p>Copy <code>.env.example</code> to <code>.env</code> and fill in your API keys:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<h3 id="ingest-data">Ingest data</h3>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ingest<span class="w">               </span><span class="c1"># SOPs into Pinecone</span>
+make<span class="w"> </span>ingest-regulations<span class="w">   </span><span class="c1"># Regulation texts into Pinecone (namespace: regulations)</span>
+</code></pre></div>
+
+<h3 id="run-the-demo">Run the demo</h3>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>dev<span class="w">     </span><span class="c1"># LangGraph dev server on port 2024</span>
+make<span class="w"> </span>ui<span class="w">      </span><span class="c1"># UI on port 8080 (connects to LangGraph)</span>
+</code></pre></div>
+
+<p><code>UI_API_KEY</code> is <strong>required</strong> — set it in <code>.env</code> first (e.g. <code>openssl rand -hex 32</code>);
+the UI server refuses to start without it, even locally. Then open
+http://localhost:8080: the UI prompts for the key on load and sends it as an
+<code>X-API-Key</code> header on every request, and the server rejects any <code>/api/*</code> call
+without it (so no agent run, Pinecone, or Jira call happens for an unauthenticated
+caller).</p>
+<p>Three screens: <strong>Audit</strong> (composer + agent picker + live stream + Jira findings
+register), <strong>Compare</strong> (3-way agent race on one question), <strong>Eval</strong> (120-question
+benchmark dashboard). A running audit can be stopped from the composer — Stop
+aborts the stream and the server cancels the LangGraph run, so the spend actually
+stops. Agent labels and pricing come from <code>/agents.js</code>, generated by the server
+from <code>config.PRICING</code> — change prices in one place.</p>
+<h3 id="test">Test</h3>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span><span class="nb">test</span><span class="w">    </span><span class="c1"># Run all 158 regression tests</span>
+</code></pre></div>
+
+<p>Tests cover JSON parsing/repair, retry classification and the sub-agent fan-out, the benchmark parsing pipeline (including an emit↔parse round-trip against the real audit summary format), Jira ticket building (httpx mocked), SSE token accounting, SOP loading, metrics, and config validation. No API keys or external services required.</p>
+<h3 id="deploy">Deploy</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Local development</span>
+make<span class="w"> </span>dev<span class="w">          </span><span class="c1"># LangGraph dev server on port 2024</span>
+make<span class="w"> </span>ui<span class="w">           </span><span class="c1"># UI on port 8080</span>
+
+<span class="c1"># Cloud deployment</span>
+make<span class="w"> </span>deploy<span class="w">       </span><span class="c1"># Deploy to LangGraph Cloud</span>
+</code></pre></div>
+
+<p><strong>Exposing the UI publicly:</strong> <code>make ui</code> binds <code>0.0.0.0:8080</code>. Before putting it on
+a public address, set a strong <code>UI_API_KEY</code> (e.g. <code>openssl rand -hex 32</code>) to gate
+the API, and front the server with a reverse proxy / load balancer that
+terminates <strong>TLS</strong> and applies <strong>rate limiting</strong> — those are intentionally left to
+the proxy layer rather than the app.</p>
+<h2 id="audit-approach">Audit Approach</h2>
+<p>Sentinel fans out by SOP using a sub-agent architecture. Each SOP is audited by a dedicated LangGraph ReAct sub-agent that:</p>
+<ol>
+<li>Reads the full SOP text</li>
+<li>Determines which regulations apply based on content and business unit</li>
+<li>Queries the regulation knowledge base via Pinecone vector search (multiple keyword queries per regulation)</li>
+<li>Optionally searches the web for latest guidance</li>
+<li>Calls <code>record_finding</code> for each assessed requirement — findings are captured incrementally so partial progress survives truncation or errors</li>
+</ol>
+<p><code>audit_all_sops</code> fans out sub-agents through a <code>ThreadPoolExecutor</code> (configurable via <code>MAX_AUDIT_WORKERS</code>). Transient failures (e.g. provider 504s) are retried per SOP — up to 4 attempts with backoff, longer on rate limits — based on a structured status carried on each result, with tokens from failed attempts still counted. Retrieval is capped at 30 calls per sub-agent.</p>
+<p>Key tools:
+- <code>audit_all_sops</code> — full audit across all 200 SOPs in parallel
+- <code>audit_single_sop</code> — audit one SOP via a dedicated sub-agent
+- <code>list_sops</code> — search and discover SOPs by title, ID, or business unit
+- <code>list_regulations</code> — list all regulations in the knowledge base
+- <code>retrieve_regulation_text_tool</code> — look up specific regulation requirements
+- <code>create_jira_ticket</code> — file a Jira ticket for a compliance gap or partial finding</p>
+<h2 id="project-structure">Project Structure</h2>
+<div class="codehilite"><pre><span></span><code>sentinel_agent/
+├── sentinel/                  # Core agent package
+│   ├── config.py              # API keys, model config, pricing, paths
+│   ├── models.py              # Pydantic models (AuditFinding, SOPChunk, AuditMetrics)
+│   ├── chat_model.py          # build_chat_model() — single ChatOpenAI factory
+│   ├── token_accounting.py    # Token-line emit format + parser (shared by tools/UI/eval)
+│   ├── graph/
+│   │   ├── agent.py           # ReAct agent (deepagents fallback to LangGraph)
+│   │   ├── naive_agent.py     # Act 0 baseline: single retrieval + single LLM call
+│   │   └── tools.py           # LangChain tools: sub-agent auditing + retrieval
+│   ├── retrieval/
+│   │   ├── local.py           # SOP file loading and search (cached parse)
+│   │   ├── regulations.py     # Pinecone regulation text retrieval
+│   │   ├── ingest.py          # SOP -&gt; Pinecone ingestion + shared section chunker
+│   │   └── ingest_regulations.py  # Regulation text -&gt; Pinecone ingestion
+│   ├── eval/
+│   │   └── metrics.py         # Confusion-matrix / F1 scoring (single implementation)
+│   ├── actuation/
+│   │   └── jira_client.py     # Jira Cloud REST client
+├── ui/
+│   ├── server.py              # FastAPI backend: agent registry, SSE streaming, Jira findings
+│   └── static/                # React screens (Audit / Compare / Eval), served by server.py
+├── scripts/
+│   ├── validate_run.py        # Audit quality evaluation against compliance matrix
+│   ├── compare_audit_runs.py  # Side-by-side comparison of N audit runs
+│   ├── run_qa_eval.py         # 120-question Q&amp;A eval (naive vs agentic modes)
+│   ├── inspect_tool_calls.py  # LangSmith tool call inspector (args, timing, tokens)
+│   ├── generate_sops.py       # SOP generation (one-time)
+│   ├── extract_pdf_text.py    # PDF -&gt; text extraction for regulations
+│   └── sop_taxonomy.py        # SOP definitions + metadata
+├── tests/                     # 150 regression tests (no API keys needed)
+├── data/
+│   ├── sops/                  # 200 generated SOPs (10 business units)
+│   ├── regulations/           # 36 regulation frameworks (txt, md, pdf, xml)
+│   ├── company_profile.md     # Meridian Health Technologies background
+│   ├── compliance_matrix.json # Ground truth
+│   └── compliance_matrix_revised.json # Revised ground truth (16 SOC 2 corrections)
+├── langgraph.json             # LangGraph deployment config
+├── pyproject.toml             # Dependencies
+├── Makefile                   # Build/run targets
+└── .env.example               # API key template
+</code></pre></div>
+
+<h2 id="quality-evaluation">Quality Evaluation</h2>
+<p><code>scripts/validate_run.py</code> measures audit quality by comparing a LangSmith run's output against the compliance matrix ground truth.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Validate a single run (uses revised matrix by default)</span>
+python3<span class="w"> </span>scripts/validate_run.py<span class="w"> </span>&lt;langsmith-run-id&gt;
+
+<span class="c1"># Compare two runs side by side</span>
+python3<span class="w"> </span>scripts/validate_run.py<span class="w"> </span>&lt;run-id-1&gt;<span class="w"> </span>&lt;run-id-2&gt;
+
+<span class="c1"># Use original (uncorrected) matrix</span>
+python3<span class="w"> </span>scripts/validate_run.py<span class="w"> </span>--original<span class="w"> </span>&lt;run-id&gt;
+
+<span class="c1"># Compare 3+ runs (quality, cost, tokens, latency, tool-call counts)</span>
+python3<span class="w"> </span>scripts/compare_audit_runs.py<span class="w"> </span>&lt;run-id-1&gt;<span class="w"> </span>&lt;run-id-2&gt;<span class="w"> </span>&lt;run-id-3&gt;
+</code></pre></div>
+
+<p>The script fetches run data from LangSmith (model, timing, tokens, cost, audit content), parses the <code>audit_all_sops</code> output, classifies each finding by regulation, aggregates to worst compliance level per (SOP, regulation) pair, and reports:</p>
+<ul>
+<li><strong>Matched %</strong> — exact agreement with ground truth</li>
+<li><strong>False positive %</strong> — agent predicted stricter than ground truth (e.g. gap when matrix says partial)</li>
+<li><strong>False negative %</strong> — agent predicted more lenient than ground truth</li>
+<li><strong>Per-class F1</strong> — precision/recall/F1 for compliant, partial, and gap detection</li>
+<li><strong>Failed %</strong> — SOP-regulation pairs missing from run output (504 errors, no structured findings)</li>
+<li><strong>Per-regulation accuracy</strong> — breakdown across HIPAA, SOC 2, GDPR, etc.</li>
+<li><strong>Cost, tokens, latency</strong> — from LangSmith run metadata and parsed sub-agent token counts</li>
+</ul>
+<p><code>data/compliance_matrix_revised.json</code> contains 16 SOC 2 corrections (15 gap→partial, 1 partial→compliant) based on manual review of SOP content against the SOC 2 Trust Services Criteria.</p>
+<h2 id="company-profile">Company Profile</h2>
+<p><strong>Meridian Health Technologies</strong> is a fictional AI-powered healthcare fintech that:
+- Provides AI-driven clinical decision support and diagnostic tools
+- Operates healthcare payment processing, lending, and fraud detection
+- Manages patient data across EU and US jurisdictions
+- Deploys ML models for credit scoring and risk assessment</p>
+<h2 id="regulation-coverage">Regulation Coverage</h2>
+<p>9 core regulation frameworks with full text in the Pinecone index:</p>
+<ul>
+<li><strong>HIPAA Security Rule</strong> — Administrative (164.308), Physical (164.310), Technical (164.312) safeguards</li>
+<li><strong>SOC 2 Trust Services Criteria</strong> — CC1 through CC9</li>
+<li><strong>GDPR</strong> — Data protection, privacy rights, cross-border transfers</li>
+<li><strong>EU AI Act</strong> — High-risk AI system requirements, conformity assessments</li>
+<li><strong>NIST AI RMF</strong> — AI risk management framework</li>
+<li><strong>SR 11-7</strong> — Model risk management (banking/fintech)</li>
+<li><strong>California AI Laws</strong> — SB 53, SB 942, AB 853</li>
+</ul>
+<p>Historical editions are included for temporal analysis (e.g., HIPAA 2017/2020/2024, EU AI Act proposal vs. final).</p>
+<p>27 additional external standards referenced by SOPs are also available in <code>data/regulations/</code>: 11 NIST special publications (SP 800-53, 800-88, 800-61, CSF 2.0, 800-63B, 800-207, 800-34, 1270, Privacy Framework, 800-161, 800-218), 5 FDA/eCFR titles (21 CFR Parts 820, 11, 807 + AI/ML SaMD + CDS guidance), 5 EU directives (MDR, SCCs, ePrivacy, AMLD4, Funds Transfer), 2 OWASP guides (Top 10, API Security), and 4 financial laws (BSA, ECOA/Reg B, FCRA, PCI DSS). See <code>data/regulations/README.md</code> for full inventory.</p>
+<h2 id="data">Data</h2>
+<h3 id="sops">SOPs</h3>
+<p>Located in <code>data/sops/</code>, organized by business unit subdirectory (e.g. <code>data/sops/01_ai_ml_engineering/sop_aiml_001_*.md</code>). Each SOP is a Markdown file with YAML frontmatter containing <code>sop_id</code>, <code>title</code>, <code>business_unit</code>, and <code>regulations</code> fields.</p>
+<p>200 SOPs across 10 business units (AI/ML Engineering, Clinical AI Products, Customer Operations, Data Governance &amp; Privacy, Financial Services, Human Resources, IT Operations, Information Security, Legal &amp; Compliance, Product &amp; Engineering), 20 SOPs each.</p>
+<p>To regenerate SOPs (requires <code>NEBIUS_API_KEY</code>):</p>
+<div class="codehilite"><pre><span></span><code>python3<span class="w"> </span>scripts/generate_sops.py<span class="w">                    </span><span class="c1"># Generate all SOPs</span>
+python3<span class="w"> </span>scripts/generate_sops.py<span class="w"> </span>--resume<span class="w">            </span><span class="c1"># Skip already-generated files</span>
+python3<span class="w"> </span>scripts/generate_sops.py<span class="w"> </span>--concurrency<span class="w"> </span><span class="m">5</span><span class="w">     </span><span class="c1"># Parallel API calls</span>
+python3<span class="w"> </span>scripts/generate_sops.py<span class="w"> </span>--sop<span class="w"> </span>SOP-AIML-001<span class="w">  </span><span class="c1"># Generate a single SOP</span>
+</code></pre></div>
+
+<p>SOP definitions and metadata are in <code>scripts/sop_taxonomy.py</code>. The company profile used for generation is in <code>data/company_profile.md</code>.</p>
+<h3 id="regulations">Regulations</h3>
+<p>Located in <code>data/regulations/</code> as <code>.txt</code>, <code>.md</code>, <code>.pdf</code>, and <code>.xml</code> files. See <code>data/regulations/README.md</code> for the full inventory and sources. PDFs are extracted to <code>.txt</code> via <code>scripts/extract_pdf_text.py</code> (pypdf) before ingestion.</p>
+<p>To ingest into Pinecone:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>ingest-regulations<span class="w">   </span><span class="c1"># Chunks, embeds, upserts into Pinecone namespace &quot;regulations&quot;</span>
+</code></pre></div>
+
+<h3 id="compliance-matrix">Compliance matrix</h3>
+<p>420 ground-truth (SOP, regulation) pairs in <code>data/compliance_matrix_revised.json</code> across 6 regulations:</p>
+<table>
+<thead>
+<tr>
+<th>Regulation</th>
+<th>SOPs</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SOC 2</td>
+<td>121</td>
+<td>Trust Services Criteria CC1–CC9</td>
+</tr>
+<tr>
+<td>HIPAA</td>
+<td>94</td>
+<td>Security Rule administrative, physical, technical safeguards</td>
+</tr>
+<tr>
+<td>GDPR</td>
+<td>76</td>
+<td>Data protection and privacy</td>
+</tr>
+<tr>
+<td>EU AI Act</td>
+<td>63</td>
+<td>High-risk AI system requirements</td>
+</tr>
+<tr>
+<td>NIST AI RMF</td>
+<td>37</td>
+<td>AI risk management framework</td>
+</tr>
+<tr>
+<td>SR 11-7</td>
+<td>29</td>
+<td>Model risk management</td>
+</tr>
+</tbody>
+</table>
+<p>Compliance level distribution: 170 compliant (40%), 161 partial (38%), 89 gap (21%). SOPs are deliberately varied — compliant SOPs cite regulation articles and have specific controls, partial SOPs use vague language, gap SOPs are missing key requirements.</p>
+<h2 id="environment-variables">Environment Variables</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>Yes</td>
+<td>Nebius AI Studio API key</td>
+</tr>
+<tr>
+<td><code>NEBIUS_MODEL</code></td>
+<td>Optional</td>
+<td>Model for the Optimized agent (<code>deepseek-v4-pro</code> default, <code>nemotron</code>, <code>kimi-k2</code>, <code>glm-5</code>); unknown values fail fast at startup</td>
+</tr>
+<tr>
+<td><code>MAX_AUDIT_WORKERS</code></td>
+<td>Optional</td>
+<td>Sub-agent fan-out width for <code>audit_sops</code> / <code>audit_all_sops</code> (default 10)</td>
+</tr>
+<tr>
+<td><code>OPENAI_API_KEY</code></td>
+<td>Optional</td>
+<td>OpenAI API key (for Prototype agent)</td>
+</tr>
+<tr>
+<td><code>PINECONE_API_KEY</code></td>
+<td>Yes</td>
+<td>Pinecone vector DB key (agentic RAG)</td>
+</tr>
+<tr>
+<td><code>TAVILY_API_KEY</code></td>
+<td>Optional</td>
+<td>Live regulation grounding</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_API_KEY</code></td>
+<td>Optional</td>
+<td>LangSmith tracing + cloud auth</td>
+</tr>
+<tr>
+<td><code>LANGCHAIN_PROJECT</code></td>
+<td>Optional</td>
+<td>LangSmith project name used by the eval scripts (default <code>sentinel-agent</code>)</td>
+</tr>
+<tr>
+<td><code>JIRA_BASE_URL</code></td>
+<td>For Jira</td>
+<td>Atlassian site URL (e.g. <code>https://your-org.atlassian.net</code>)</td>
+</tr>
+<tr>
+<td><code>JIRA_EMAIL</code></td>
+<td>For Jira</td>
+<td>Atlassian account email tied to the API token</td>
+</tr>
+<tr>
+<td><code>JIRA_API_TOKEN</code></td>
+<td>For Jira</td>
+<td>API token from id.atlassian.com</td>
+</tr>
+<tr>
+<td><code>JIRA_PROJECT_KEY</code></td>
+<td>For Jira</td>
+<td>Target Jira project key (e.g. <code>SENT</code>)</td>
+</tr>
+<tr>
+<td><code>JIRA_DEFAULT_ISSUE_TYPE</code></td>
+<td>Optional</td>
+<td>Jira issue type for filed tickets (default <code>Task</code>)</td>
+</tr>
+<tr>
+<td><code>LANGGRAPH_URL</code></td>
+<td>Optional</td>
+<td>LangGraph server the UI talks to (default <code>http://localhost:2024</code>)</td>
+</tr>
+<tr>
+<td><code>UI_API_KEY</code></td>
+<td>Yes (UI)</td>
+<td>Shared secret that gates the UI's <code>/api/*</code> endpoints. The UI <strong>refuses to start</strong> without it (even locally); every API call must supply a matching <code>X-API-Key</code>. Generate with <code>openssl rand -hex 32</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cost">Cost</h2>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Model</th>
+<th>Tokens</th>
+<th>Cost</th>
+<th>Latency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full audit (Production)</td>
+<td>Nemotron-3-Ultra-550b (\$1.00/\$3.00 per M tokens)</td>
+<td>~12M</td>
+<td>~$12</td>
+<td>~23m</td>
+</tr>
+<tr>
+<td>Full audit (Optimized)</td>
+<td>DeepSeek-V4-Pro (\$1.75/\$3.50 per M tokens)</td>
+<td>~36M</td>
+<td>~$64</td>
+<td>~53m</td>
+</tr>
+<tr>
+<td>Full audit (Prototype)</td>
+<td>GPT-5.5 (\$5.00/\$30.00 per M tokens)</td>
+<td>~18M</td>
+<td>~$140</td>
+<td>~13m</td>
+</tr>
+<tr>
+<td>SOP ingestion</td>
+<td>Qwen3-Embedding-8B</td>
+<td>~2M</td>
+<td>~$0.02</td>
+<td>~5m</td>
+</tr>
+</tbody>
+</table>
+<p>Each SOP audit fans out a dedicated sub-agent with multiple tool calls (regulation retrieval, web search), so token counts are dominated by sub-agent usage across 200 SOPs. Token usage and cost are displayed live in the UI. Use <code>scripts/validate_run.py</code> to get exact cost/token/latency breakdowns for any LangSmith run.</p>
+<h2 id="integrations">Integrations</h2>
+<h3 id="jira-cloud">Jira Cloud</h3>
+<p>The <code>create_jira_ticket</code> tool files compliance findings as tickets on a Jira Kanban board via the <a href="https://developer.atlassian.com/cloud/jira/platform/rest/v3/">Jira Cloud REST API v3</a>. Tickets are created for gap or partial findings at medium+ severity.</p>
+<ul>
+<li><strong>Client:</strong> <code>sentinel/actuation/jira_client.py</code> — sync REST client with basic auth (email + API token)</li>
+<li><strong>Description format:</strong> Atlassian Document Format (ADF)</li>
+<li><strong>Labels:</strong> <code>sentinel</code>, <code>compliance-finding</code>, severity, regulation slug, SOP slug</li>
+<li><strong>Priority mapping:</strong> critical → Highest, high → High, medium → Medium, low → Low</li>
+</ul>
+<p>Setup: create an API token at <a href="https://id.atlassian.com">id.atlassian.com</a>, then set in <code>.env</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">JIRA_BASE_URL</span><span class="o">=</span>https://your-org.atlassian.net
+<span class="nv">JIRA_EMAIL</span><span class="o">=</span>your-email@example.com
+<span class="nv">JIRA_API_TOKEN</span><span class="o">=</span>your-api-token
+<span class="nv">JIRA_PROJECT_KEY</span><span class="o">=</span>SENT
+</code></pre></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

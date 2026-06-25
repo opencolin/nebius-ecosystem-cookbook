@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Agent Blueprints · Nebius</title>
+<meta name="description" content="Production-grade, runnable agent recipes on Nebius — Pinecone, Tavily, LangChain/LangGraph, LangSmith, Stripe, Snowglobe — rendered and browsable."/>
+<link rel="stylesheet" href="../assets/css/main.css"/>
+<link rel="stylesheet" href="../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../index.html">Ecosystem</a>
+      <a href="../cookbook/index.html">Cookbook</a>
+      <a href="../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<header class="hero">
+  <div class="container">
+    <span class="hero-eyebrow">Runnable reference · the Agent Blueprint Recipes</span>
+    <h1>Production-shaped agents, on Nebius.</h1>
+    <p class="lede">The <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius-partner-cookbook</a> — 10 sequenced recipes + 1 full blueprint, each integrating a partner (Pinecone, Tavily, LangChain/LangGraph, LangSmith, Stripe, Snowglobe) on Nebius. Typed, observable, containerized, tested — clone one directory and deploy in minutes.</p>
+  </div>
+</header>
+<div class="container cb-index">
+  <section class="cb-cat"><div class="section-eyebrow">Recipes · 10</div><p class="section-lede">A sequenced arc — each recipe is a typed, observable, containerized FastAPI agent you can clone and deploy in minutes, building on the one before it.</p><div class="cb-grid"><a class="cb-card bp-card" href="first-agent-on-nebius/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">01</span><span class="pill">Foundation</span><span class="pill coral">beginner</span></div>
+    <h3>Your First Agent on Nebius</h3>
+    <p>A production-grade FastAPI agent with streaming, observability, and zero magic.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span></div>
+  </div></a><a class="cb-card bp-card" href="domain-knowledge-pinecone-nexus/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">02</span><span class="pill">Knowledge</span><span class="pill coral">intermediate</span></div>
+    <h3>Domain Knowledge with Pinecone Nexus</h3>
+    <p>Compile your data into task-ready knowledge artifacts with Pinecone Nexus — and ground answers with typed, per-field citations.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">pinecone-nexus</span></div>
+  </div></a><a class="cb-card bp-card" href="real-time-data-tavily/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">03</span><span class="pill">Grounding</span><span class="pill coral">intermediate</span></div>
+    <h3>Real-Time Data with Tavily</h3>
+    <p>Add Tavily fresh web context to a Pinecone-backed book recommender so stale vectors can answer current questions.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">pinecone</span><span class="pill">tavily</span></div>
+  </div></a><a class="cb-card bp-card" href="stronger-agents-langchain-langgraph/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">04</span><span class="pill">Orchestration</span><span class="pill coral">intermediate</span></div>
+    <h3>Stronger Agents with LangChain and LangGraph</h3>
+    <p>Use a typed LangGraph to route requests, cap work, and reduce time to first useful response.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">langchain</span><span class="pill">langgraph</span></div>
+  </div></a><a class="cb-card bp-card" href="short-term-memory-langchain/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">05</span><span class="pill">Thread Memory</span><span class="pill coral">intermediate</span></div>
+    <h3>Short-Term Memory with LangChain</h3>
+    <p>Let a Nebius-backed LangChain agent remember prior turns inside one conversation thread.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">langchain</span><span class="pill">langgraph</span></div>
+  </div></a><a class="cb-card bp-card" href="long-term-memory-langchain-postgres/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">06</span><span class="pill">User Memory</span><span class="pill coral">advanced</span></div>
+    <h3>Long-Term Memory with LangChain and Postgres</h3>
+    <p>Persist user preferences and facts across threads with LangChain stores backed by Postgres.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">langchain</span><span class="pill">postgres</span></div>
+  </div></a><a class="cb-card bp-card" href="observability-langsmith/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">07</span><span class="pill">Observability</span><span class="pill coral">advanced</span></div>
+    <h3>Observability with LangSmith</h3>
+    <p>Trace, inspect, monitor, and improve a Nebius-backed LangChain agent with LangSmith.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">langsmith</span><span class="pill">langchain</span></div>
+  </div></a><a class="cb-card bp-card" href="adding-guardrails-langchain/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">08</span><span class="pill">Guardrails</span><span class="pill coral">advanced</span></div>
+    <h3>Adding Guardrails with LangChain</h3>
+    <p>Stop unsafe or malformed agent behavior with LangChain guardrail middleware.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">langchain</span></div>
+  </div></a><a class="cb-card bp-card" href="actions-with-mcp-stripe/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">09</span><span class="pill">Actions</span><span class="pill coral">advanced</span></div>
+    <h3>Making Actions with MCP and Stripe</h3>
+    <p>Let a book agent take a real test-mode action by creating a Stripe checkout link through MCP.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">mcp</span><span class="pill">stripe</span></div>
+  </div></a><a class="cb-card bp-card" href="testing-before-production-snowglobe/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="bp-num">10</span><span class="pill">Simulation</span><span class="pill coral">advanced</span></div>
+    <h3>Testing Before Production with Snowglobe</h3>
+    <p>Generate scenarios, run conversations, and score failures before users find them.</p>
+    <div class="cb-tags"><span class="pill">nebius-agentkit</span><span class="pill">snowglobe</span></div>
+  </div></a></div></section><section class="cb-cat"><div class="section-eyebrow">Blueprints · 1</div><p class="section-lede">Complete, deployable reference applications that combine many recipe concepts into something you could put in front of users.</p><div class="cb-grid"><a class="cb-card bp-card" href="sentinel-compliance-auditor/index.html">
+  <div class="cb-card-body">
+    <div class="cb-tags"></div>
+    <h3>Sentinel — Regulatory Compliance Auditor Agent</h3>
+    <p>Sentinel is an AI-powered compliance auditor that assesses 200 enterprise SOPs against 36 regulation frameworks (HIPAA, SOC 2, GDPR, EU AI Act, NIST AI RMF, SR 11-7, California SB 53/SB 942/AB 853, BSA, ECOA, FCRA, PCI DSS, OWASP, FDA, NIST</p>
+    <div class="cb-tags"></div>
+  </div></a></div></section>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../assets/js/main.js"></script>
+<script src="../assets/nav-logo.js"></script>
+</body></html>

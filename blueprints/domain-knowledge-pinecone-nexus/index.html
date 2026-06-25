@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Domain Knowledge with Pinecone Nexus · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/02-domain-knowledge-pinecone-nexus" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">intermediate</span><span class="pill coral">read 13 min</span><span class="pill coral">run 6 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">pinecone-nexus</span><span class="pill">fastapi</span><span class="pill">structlog</span><span class="pill">prometheus</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/02-domain-knowledge-pinecone-nexus
+cp .env.example .env  # then fill NEBIUS_API_KEY and PINECONE_API_KEY
+uv sync &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="knowledge-domain-knowledge-with-pinecone-nexus">Knowledge — Domain Knowledge with Pinecone Nexus</h1>
+<p>Recipe <strong>02 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p>Foundation → <strong>Knowledge</strong> → Grounding → Orchestration → Thread Memory → User Memory → Observability → Guardrails → Actions → Simulation</p>
+</blockquote>
+<p>Cookbook #1 gave you a fluent agent. But fluency isn't knowledge — ask it about
+your own product or internal docs and it will guess. Classic RAG patches this
+by handing the model raw document chunks at inference time, which burns tokens,
+adds latency, and still invites hallucination. This recipe takes a different
+route: a <strong>knowledge engine</strong>.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A FastAPI service that uses <a href="https://www.pinecone.io/blog/knowledge-infrastructure-for-agents/">Pinecone Nexus</a>
+as the agent's knowledge layer. Nexus moves reasoning <em>upstream into knowledge
+compilation</em> — so the agent queries curated, task-ready knowledge
+instead of sifting raw chunks.</p>
+<p>At the time this cookbook is being written, <strong>Pinecone Nexus is not yet
+generally available</strong>.
+That matters for the implementation.
+The recipe is framed around the Nexus mental model and architecture, but the
+runnable fallback is <strong>standard Pinecone-backed RAG knowledge</strong>: embed your
+records on Nebius, store them in Pinecone, look up the most relevant context at
+request time, and pass that context to the answer model.</p>
+<p>So this cookbook should be read in two layers:</p>
+<ol>
+<li><strong>Target architecture:</strong> Nexus as the long-term knowledge engine.</li>
+<li><strong>Practical implementation today:</strong> classic Pinecone knowledge as the
+   production-available substitute.</li>
+</ol>
+<p>The three Nexus pieces this recipe leans on:</p>
+<ol>
+<li><strong>Context Compiler</strong> — turns a raw data estate into task-specific <em>knowledge
+   artifacts</em> (one estate, many agents, distinct artifacts per task).</li>
+<li><strong>Composable Retriever</strong> — serves those artifacts with low latency, typed
+   fields, per-field citations, and confidence scores.</li>
+<li><strong>KnowQL</strong> — a declarative query language; the agent expresses <em>what it
+   needs</em> via six primitives: intent, filter, provenance, output shape,
+   confidence, and budget.</li>
+</ol>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12+</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a></li>
+<li>A Nebius API key — get one from the <a href="https://nebius.com">Nebius console</a></li>
+<li>A Pinecone API key with Nexus access — <a href="https://www.pinecone.io">pinecone.io</a></li>
+</ul>
+<h2 id="planned-architecture">Planned architecture</h2>
+<div class="codehilite"><pre><span></span><code>documents ──► /ingest ──► Nexus Context Compiler ──► knowledge artifacts
+                                                            │
+question ──► KnowQL query ──► Composable Retriever ──► typed, cited context
+                                                            │
+                                                            ▼
+                                          chat model (Nebius) ──► SSE answer
+</code></pre></div>
+
+<ul>
+<li><strong>Answer model:</strong> <code>meta-llama/Llama-3.3-70B-Instruct</code> on Nebius.</li>
+<li><strong>Embedding model:</strong> <code>Qwen/Qwen3-Embedding-8B</code> on Nebius — the vector
+  representation behind compilation and KnowQL knowledge. Served from the
+  OpenAI-compatible embeddings endpoint, <code>POST {NEBIUS_BASE_URL}/embeddings</code>.</li>
+<li><strong>Knowledge engine:</strong> Pinecone Nexus — compilation, knowledge, and governance
+  (PII tagging, versioning, RBAC) happen here, not in app code.</li>
+</ul>
+<p>Until Nexus reaches GA, the actual recipe implementation should be understood as
+the compatible fallback shape:</p>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    A[Documents] --&gt; B[Normalize and vectorize]
+    B --&gt; C[Pinecone index]
+    D[Question] --&gt; E[Vector knowledge and filters]
+    C --&gt; E
+    E --&gt; F[Cited context]
+    F --&gt; G[Nebius answer model]
+    G --&gt; H[SSE answer]
+</code></pre></div>
+
+<p>The ingest path and the query path are <strong>deliberately separate</strong>. Compilation is
+expensive and write-time; querying is cheap and read-time. Splitting them lets
+you recompile on a schedule (or a data-change webhook) without coupling it to
+request latency.</p>
+<h2 id="data-sources-and-vectorization">Data sources and vectorization</h2>
+<p>The knowledge layer starts with a <strong>structured data estate</strong>, not an ad hoc pile
+of Markdown files.
+The current vectorization notes use Goodreads exports as the concrete example,
+because they give you enough relational structure to demonstrate how raw records
+turn into compiled knowledge.</p>
+<p>The expected source files are:</p>
+<ul>
+<li><code>goodreads_books.json</code> or <code>goodreads_books.json.gz</code></li>
+<li><code>goodreads_book_authors.json</code> or <code>goodreads_book_authors.json.gz</code></li>
+<li><code>goodreads_book_genres_initial.json</code> or <code>goodreads_book_genres_initial.json.gz</code></li>
+</ul>
+<p>Those files are not treated as three independent corpora.
+The pipeline first inspects what is available, then joins books with author
+and genre data so each vectorizable unit carries richer domain context
+than a single raw row.
+Books are prioritized, then enriched with author names and genre labels when
+those sources are present.</p>
+<p>The vectorization flow is intentionally simple and production-shaped:</p>
+<ol>
+<li>Analyze the available JSON or gzipped JSON dumps in a data directory.</li>
+<li>Build the text payload for each record from books, authors, and genres.</li>
+<li>Generate embeddings with Nebius using <code>Qwen/Qwen3-Embedding-8B</code>.</li>
+<li>Upsert vectors into Pinecone in fixed-size batches.</li>
+</ol>
+<p>That split matters.
+Embedding is the expensive semantic step, while Pinecone upsert is the indexing
+step, so the script exposes separate knobs for each.
+For normal ingestion throughput, the practical default is to batch embeddings in
+groups of <code>100</code> and Pinecone writes in groups of <code>200</code>.
+That amortizes network overhead on the Nebius side without making Pinecone
+upserts unwieldy.</p>
+<p>There is also an <strong>analysis-only</strong> mode before you write anything.
+That gives you a way to inspect the dataset footprint and confirm the estate is
+usable before paying for embeddings or mutating an index.
+For partial runs, the pipeline can skip individual source families
+(<code>books</code>, <code>authors</code>, <code>genres</code>), keep empty-text records if needed, and
+emit periodic progress updates while vectors are being written.</p>
+<p>To run the current vectorization script with the cookbook's <code>uv</code> environment,
+sync dependencies first, then load the required API keys:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>cookbooks/02-domain-knowledge-pinecone-nexus
+uv<span class="w"> </span>sync
+cp<span class="w"> </span>.env.vectorize.example<span class="w"> </span>.env.local
+</code></pre></div>
+
+<p><code>uv</code> creates the local environment for you.
+There is no separate <code>.venv_vectorize</code> workflow to maintain or commit.
+The script loads <code>.env.local</code> or <code>.env</code> automatically if present.</p>
+<p>For a normal ingestion run, use batched embeddings and batched Pinecone upserts:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/vectorize_goodreads_to_pinecone.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-dir<span class="w"> </span>../../data<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--embed-batch-size<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--embed-concurrency<span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pinecone-batch-size<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--progress-interval<span class="w"> </span><span class="m">1000</span>
+</code></pre></div>
+
+<p>The script now pipelines those phases instead of running them in strict lockstep.
+While one batch is being upserted into Pinecone, the next embedding requests can
+already be in flight to Nebius.
+For bigger runs, <code>--embed-concurrency</code> is the main throughput lever, and
+<code>--max-pending-embed-batches</code> lets you cap memory and backpressure the pipeline.</p>
+<p>If you want a slower, more granular debug mode, you can still force one
+embedding request per record with <code>--embed-batch-size 1</code>.
+That is useful for inspection and troubleshooting, but it is not the right
+setting for high-throughput ingestion because it pays the full API round-trip
+cost for every single vector.</p>
+<p>The point is not Goodreads specifically.
+This cookbook pattern is meant to transfer to <strong>your own domain data</strong> too:
+product catalogs, support tickets, internal documentation, CRM exports, policy
+libraries, or any other structured source you can normalize into records,
+compose into text payloads, embed on Nebius, and upsert into Pinecone.
+Goodreads is just the example estate used to make the ingestion and
+vectorization flow concrete.</p>
+<h2 id="querying-the-book-rag">Querying the book RAG</h2>
+<p>Once the Goodreads book vectors are stored in Pinecone, the query script runs a
+simple RAG loop:</p>
+<ol>
+<li>Embed the user's book request with Nebius.</li>
+<li>Look up matching <code>book</code> vectors from Pinecone.</li>
+<li>Expand around the first matches with related knowledge for the same author,
+   same theme, and same publication year.</li>
+<li>Pass the book knowledge context to the Nebius chat model.</li>
+<li>Return grounded recommendations with citation markers.</li>
+</ol>
+<p>That supports two common reader workflows:</p>
+<ul>
+<li>asking for books on a topic, such as books about Cold War espionage or
+  climate fiction</li>
+<li>asking what to read after a book, such as recommendations after <em>Dune</em> or
+  <em>The Left Hand of Darkness</em></li>
+</ul>
+<p>For example:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/query_goodreads_pinecone.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;Recommend books about political intrigue and empire-building for someone who liked Dune&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--top-k<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--related-top-k<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--show-matches
+</code></pre></div>
+
+<p>By default, knowledge lookup is filtered to <code>record_type=book</code>, so author and genre
+helper vectors do not leak into the answer set.
+The related pass uses metadata from the first retrieved books.
+Same-author and same-year knowledge lookup work with the existing book metadata.
+Same-theme knowledge lookup uses the <code>genres</code> metadata written by the current
+vectorizer, so older vectors created before that field was added need to be
+upserted again before explicit theme filtering can work.</p>
+<p>This is the main knowledge lesson of the cookbook: <strong>vectorization is not just
+"chunk and embed."</strong>
+The quality of the final knowledge engine depends on source selection, record
+joining, text construction, and batching strategy long before the serving path
+ever sees a KnowQL query.</p>
+<h2 id="design-decisions">Design decisions</h2>
+<p><strong>Why a knowledge engine instead of classic RAG?</strong> RAG's failure mode is
+structural: it retrieves <em>then</em> reasons, so the model pays — in tokens, latency,
+and hallucination risk — to re-derive structure from raw chunks on every call.
+Nexus compiles that structure once, write-time, into typed artifacts. The agent
+reads a fact with a confidence score; it does not infer a fact from prose.</p>
+<p><strong>Why KnowQL over a raw vector query?</strong> A <code>top_k</code> similarity search returns
+"things that look like the question" — you get back nearest neighbors and
+re-derive everything else yourself.
+KnowQL turns knowledge into a contract: the agent states its intent, applies a
+filter, sets provenance requirements, specifies an output shape and confidence
+threshold, and caps a budget.
+Two of those are what a raw vector query simply can't express — provenance
+requirements and a confidence gate — which is also why the result is auditable:
+the query is a declarative object you can log, diff, and replay.</p>
+<p><strong>Where governance lives.</strong> PII tagging, versioning, and RBAC are Nexus
+concerns, not app concerns. Keeping them in the knowledge layer means every
+consumer of an artifact inherits the same policy — you cannot accidentally ship
+an agent that bypasses redaction by querying differently.</p>
+<p><strong>Trade-off to accept.</strong> A knowledge engine adds a compilation step and a
+freshness window: an artifact is only as current as its last compile. For
+slowly-changing domain knowledge that is the right trade. For <em>fast</em>-changing
+facts, that is the wrong tool — which is exactly why Cookbook #3 reaches for
+live web search instead.</p>
+<h2 id="failure-modes-to-design-for">Failure modes to design for</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent answers from stale facts</td>
+<td>Data estate changed, artifacts not recompiled</td>
+<td>Recompile on a data-change event; surface artifact <code>compiledAt</code> in the answer</td>
+</tr>
+<tr>
+<td>Low-confidence knowledge</td>
+<td>The question has no good artifact coverage</td>
+<td>Gate on the KnowQL <code>confidence</code> primitive; fall back to "I don't have that" rather than guess</td>
+</tr>
+<tr>
+<td>Conflicting facts</td>
+<td>Two sources disagree</td>
+<td>Lean on Nexus's deterministic conflict resolution; expose the resolved provenance in citations</td>
+</tr>
+<tr>
+<td>Cold start — no artifacts</td>
+<td>Service deployed before first <code>/ingest</code></td>
+<td><code>/readyz</code> should report not-ready until at least one artifact set is compiled</td>
+</tr>
+</tbody>
+</table>
+<h2 id="run-the-fastapi-book-recommender">Run the FastAPI book recommender</h2>
+<p>After vectorizing books into Pinecone, run the cookbook backend:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>cookbooks/02-domain-knowledge-pinecone-nexus
+uv<span class="w"> </span>sync
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+make<span class="w"> </span>dev
+</code></pre></div>
+
+<p>Then call the SSE endpoint:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;prompt&quot;: &quot;Recommend books about political intrigue and empire-building for someone who liked Dune&quot;,</span>
+<span class="s1">    &quot;top_k&quot;: 10,</span>
+<span class="s1">    &quot;related_top_k&quot;: 4,</span>
+<span class="s1">    &quot;include_related&quot;: true</span>
+<span class="s1">  }&#39;</span>
+</code></pre></div>
+
+<p>The backend emits named SSE events:</p>
+<div class="codehilite"><pre><span></span><code>event: status
+data: {&quot;phase&quot;: &quot;sending_to_nebius&quot;,&quot;message&quot;:&quot;Sending to Nebius Token Factory&quot;}
+
+event: status
+data: {&quot;phase&quot;: &quot;knowledge&quot;,&quot;message&quot;:&quot;Requesting Pinecone Knowledge&quot;}
+
+event: context
+data: {&quot;books&quot;: [...]}
+
+event: status
+data: {&quot;phase&quot;: &quot;synthesizing&quot;,&quot;message&quot;:&quot;Synthesizing&quot;}
+
+event: answer
+data: {&quot;text&quot;: &quot;...&quot;}
+
+event: status
+data: {&quot;phase&quot;:&quot;done&quot;,&quot;message&quot;:&quot;Done (742 token in | 219 token out | Cost: 0.000000 USD)&quot;,&quot;usage&quot;:{...}}
+
+event: done
+data: {&quot;embeddingTokens&quot;:31,&quot;inputTokens&quot;:742,&quot;outputTokens&quot;:219,&quot;totalTokens&quot;:992,&quot;costUsd&quot;:0.0}
+</code></pre></div>
+
+<p>The model sees more retrieved candidates than it returns, but the answer is
+limited to at most <strong>5 recommended books</strong>.
+Cost is estimated from Nebius <code>GET /v1/models?verbose=true</code> when the model
+catalog exposes pricing fields.
+If lookup fails, the app falls back to optional pricing env vars in <code>.env</code>:
+<code>NEBIUS_INPUT_PRICE_PER_MILLION_TOKENS</code>,
+<code>NEBIUS_OUTPUT_PRICE_PER_MILLION_TOKENS</code>, and
+<code>NEBIUS_EMBEDDING_PRICE_PER_MILLION_TOKENS</code>.</p>
+<h2 id="endpoints">Endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/agent/run</code></td>
+<td>Recommend books from Pinecone-backed Goodreads knowledge, streamed as SSE.</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/healthz</code></td>
+<td>Liveness probe.</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/readyz</code></td>
+<td>Readiness probe.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="status">Status</h2>
+<ul>
+<li>[x] <code>recipe.json</code> metadata</li>
+<li>[x] Documentation</li>
+<li>[x] <code>app/</code> implementation</li>
+<li>[x] Makefile</li>
+<li>[ ] Tests</li>
+<li>[ ] Dockerfile</li>
+<li>[ ] <code>docs/deployment.md</code></li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>Pinecone — <a href="https://www.pinecone.io/blog/knowledge-infrastructure-for-agents/">Knowledge infrastructure for agents</a></li>
+</ul>
+<h2 id="going-further">Going further</h2>
+<p>Next in the arc: <strong><a href="https://github.com/nebius/nebius-partner-cookbook/blob/main/cookbooks/02-domain-knowledge-pinecone-nexus/03-real-time-data-tavily/" target="_blank" rel="noopener">Grounding — Real-Time Data with Tavily</a></strong> —
+once your agent knows your compiled domain knowledge, teach it to reach for
+fresh facts on the open web.</p>
+<h2 id="license">License</h2>
+<p>MIT</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

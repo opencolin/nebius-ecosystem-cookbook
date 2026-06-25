@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Real-Time Data with Tavily · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/03-real-time-data-tavily" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">intermediate</span><span class="pill coral">read 12 min</span><span class="pill coral">run 6 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">pinecone</span><span class="pill">tavily</span><span class="pill">fastapi</span><span class="pill">openai-sdk</span><span class="pill">sse</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/03-real-time-data-tavily
+cp .env.example .env  # then fill NEBIUS_API_KEY, PINECONE_API_KEY, and TAVILY_API_KEY
+uv sync &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="grounding-real-time-data-with-tavily">Grounding — Real-Time Data with Tavily</h1>
+<p>Recipe <strong>03 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p>Foundation → Knowledge → <strong>Grounding</strong> → Orchestration → Thread Memory → User Memory → Observability → Guardrails → Actions → Simulation</p>
+</blockquote>
+<p>Cookbook #2 gave us a Pinecone-backed book recommender over a Goodreads-style
+corpus.
+That is useful domain memory, but it is still a snapshot.
+The data stops around 2017, which is almost a decade old for a reader asking
+what to buy, what edition exists, what is newly released, or what is currently
+available.</p>
+<p>A static vector dataset is also the wrong place for commercial facts.
+Pricing, availability, bestseller context, formats, editions, and review buzz
+change constantly.
+Trying to bake those into the vector index would make ingestion heavier while
+still going stale quickly.</p>
+<p>So cookbook #3 keeps the book memory from cookbook #2 and adds the missing
+layer: <strong>live grounding with Tavily</strong>, a Nebius partner.
+Pinecone answers "what in my curated corpus is semantically relevant?".
+Tavily answers "what changed on the web since this corpus was built?".
+Nebius then synthesizes both into one streamed recommendation.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A FastAPI service that answers book recommendation questions with this fixed
+pipeline:</p>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    A[User book request] --&gt; B[Nebius embedding]
+    B --&gt; C[Pinecone book knowledge]
+    C --&gt; D[Related books by author, theme, year]
+    D --&gt; E[Tavily fresh web search]
+    E --&gt; F[Nebius answer model]
+    F --&gt; G[SSE recommendation]
+</code></pre></div>
+
+<p>The route streams each phase to the client:</p>
+<ul>
+<li><code>agent_message</code> events for human-readable progress</li>
+<li><code>status</code> events for machine-readable phase changes</li>
+<li><code>context</code> with the Pinecone book candidates</li>
+<li><code>sources</code> with the Tavily web sources</li>
+<li><code>token</code> events for the final answer</li>
+<li><code>done</code> with elapsed time, token usage, and estimated cost</li>
+</ul>
+<h2 id="why-tavily-here">Why Tavily here?</h2>
+<p>The vector index is intentionally curated and stable.
+That makes it good for semantic recommendations, same-author expansion,
+same-theme expansion, and same-year expansion.
+It is not good for facts that move every week.</p>
+<p>Tavily is used for freshness signals only:</p>
+<ul>
+<li>newer books adjacent to the reader's request</li>
+<li>current editions or formats</li>
+<li>availability and pricing context</li>
+<li>current discussion, reviews, awards, or bestseller context</li>
+</ul>
+<p>The answer model receives both contexts and is instructed to keep them separate:
+Goodreads/Pinecone citations use <code>[1]</code>, <code>[2]</code>, <code>[3]</code>; Tavily web citations use
+<code>[W1]</code>, <code>[W2]</code>, <code>[W3]</code>.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12+</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a></li>
+<li>A Nebius API key</li>
+<li>A Pinecone API key</li>
+<li>A Tavily API key</li>
+<li>The Goodreads book vectors from cookbook #2 already upserted into Pinecone</li>
+</ul>
+<h2 id="run-it">Run it</h2>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>cookbooks/03-real-time-data-tavily
+uv<span class="w"> </span>sync
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Fill:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>...
+<span class="nv">PINECONE_API_KEY</span><span class="o">=</span>...
+<span class="nv">PINECONE_INDEX_NAME</span><span class="o">=</span>books-demo
+<span class="nv">TAVILY_API_KEY</span><span class="o">=</span>...
+</code></pre></div>
+
+<p>Then start the backend:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>dev
+</code></pre></div>
+
+<p>Send a request:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;prompt&quot;: &quot;Find cozy fantasy books launched after 2021 with recent review context&quot;,</span>
+<span class="s1">    &quot;top_k&quot;: 10,</span>
+<span class="s1">    &quot;related_top_k&quot;: 4,</span>
+<span class="s1">    &quot;include_related&quot;: true</span>
+<span class="s1">  }&#39;</span>
+</code></pre></div>
+
+<h2 id="sample-sse-flow">Sample SSE flow</h2>
+<div class="codehilite"><pre><span></span><code>event: agent_message
+data: {&quot;text&quot;:&quot;I am mapping your Dune request into the book index.&quot;}
+
+event: status
+data: {&quot;phase&quot;:&quot;embedding&quot;,&quot;message&quot;:&quot;Preparing the semantic query&quot;}
+
+event: status
+data: {&quot;phase&quot;:&quot;knowledge&quot;,&quot;message&quot;:&quot;Requesting Pinecone Knowledge&quot;}
+
+event: context
+data: {&quot;books&quot;:[...]}
+
+event: status
+data: {&quot;phase&quot;:&quot;searching&quot;,&quot;message&quot;:&quot;Requesting Tavily Results&quot;}
+
+event: sources
+data: {&quot;items&quot;:[...]}
+
+event: status
+data: {&quot;phase&quot;:&quot;synthesizing&quot;,&quot;message&quot;:&quot;Synthesizing&quot;}
+
+event: token
+data: {&quot;text&quot;:&quot;If you liked Dune...&quot;}
+
+event: token
+data: {&quot;text&quot;:&quot;\n\n---\nTime: 4.31s | Tokens: 36 embed, 1420 in, 390 out | Cost: $0.000312&quot;}
+
+event: done
+data: {&quot;embeddingTokens&quot;:36,&quot;inputTokens&quot;:1420,&quot;outputTokens&quot;:390,&quot;totalTokens&quot;:1846,&quot;costUsd&quot;:0.000312,&quot;elapsedSeconds&quot;:4.31}
+</code></pre></div>
+
+<h2 id="how-it-differs-from-cookbook-2">How it differs from cookbook #2</h2>
+<p>Cookbook #2 stops after Pinecone knowledge.
+That is enough when the answer should stay inside the static corpus.</p>
+<p>Cookbook #3 adds one more step before synthesis:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">fresh_sources</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">search_fresh_context</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">books</span><span class="p">)</span>
+<span class="n">stream</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">stream_synthesis</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">books</span><span class="p">,</span> <span class="n">fresh_sources</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The Tavily query is built from the original user request plus the strongest
+retrieved book titles.
+That gives Tavily enough context to search for current information around the
+reader's intent instead of doing a generic web search.</p>
+<h2 id="data-and-vectorization">Data and vectorization</h2>
+<p>This recipe reuses the same Pinecone index created in cookbook #2.
+If you have not built it yet, run the vectorization flow there first:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>cookbooks/02-domain-knowledge-pinecone-nexus
+uv<span class="w"> </span>sync
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/vectorize_goodreads_to_pinecone.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-dir<span class="w"> </span>../../data<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--embed-batch-size<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--embed-concurrency<span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pinecone-batch-size<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--progress-interval<span class="w"> </span><span class="m">1000</span>
+</code></pre></div>
+
+<p>You can use your own data instead of Goodreads.
+The only requirement is that your vectors carry enough metadata for the serving
+path to render useful context: title, authors, themes or genres, ratings or
+quality signals, and publication year when available.</p>
+<h2 id="configuration">Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th style="text-align: right;">Required</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td style="text-align: right;">yes</td>
+<td>Nebius Token Factory API key</td>
+</tr>
+<tr>
+<td><code>NEBIUS_MODEL</code></td>
+<td style="text-align: right;">no</td>
+<td>Chat model for progress and synthesis</td>
+</tr>
+<tr>
+<td><code>NEBIUS_EMBEDDING_MODEL</code></td>
+<td style="text-align: right;">no</td>
+<td>Embedding model for Pinecone knowledge</td>
+</tr>
+<tr>
+<td><code>PINECONE_API_KEY</code></td>
+<td style="text-align: right;">yes</td>
+<td>Pinecone API key</td>
+</tr>
+<tr>
+<td><code>PINECONE_INDEX_NAME</code></td>
+<td style="text-align: right;">yes</td>
+<td>Index containing the book vectors</td>
+</tr>
+<tr>
+<td><code>PINECONE_NAMESPACE</code></td>
+<td style="text-align: right;">no</td>
+<td>Namespace for the Goodreads vectors</td>
+</tr>
+<tr>
+<td><code>TAVILY_API_KEY</code></td>
+<td style="text-align: right;">yes</td>
+<td>Tavily API key</td>
+</tr>
+<tr>
+<td><code>TAVILY_SEARCH_DEPTH</code></td>
+<td style="text-align: right;">no</td>
+<td><code>basic</code> or <code>advanced</code></td>
+</tr>
+<tr>
+<td><code>TAVILY_MAX_RESULTS</code></td>
+<td style="text-align: right;">no</td>
+<td>Fresh web sources to fetch per request</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-modes-to-design-for">Failure modes to design for</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Good semantic matches but stale answer</td>
+<td>Pinecone corpus is old</td>
+<td>Tavily adds fresh web context before synthesis</td>
+</tr>
+<tr>
+<td>Fresh sources are noisy</td>
+<td>Web results are broader than the corpus</td>
+<td>Keep Tavily capped and use it only for freshness claims</td>
+</tr>
+<tr>
+<td>No Tavily results</td>
+<td>Query is too narrow or web is unavailable</td>
+<td>Still answer from Pinecone and avoid fresh claims</td>
+</tr>
+<tr>
+<td>Missing citations</td>
+<td>Model ignored the format</td>
+<td>Add a critic/eval step in a later cookbook</td>
+</tr>
+</tbody>
+</table>
+<h2 id="test-it">Test it</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check
+uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check
+</code></pre></div>
+
+<p>The tests monkeypatch Nebius, Pinecone, and Tavily, so they do not call the
+network by default.</p>
+<h2 id="going-further">Going further</h2>
+<ul>
+<li>Add a dedicated small-model query planner before Tavily if you want multiple
+  live searches per request.</li>
+<li>Cache Tavily responses for a few minutes to avoid repeat searches during demos.</li>
+<li>Add a critic pass that rejects uncited fresh claims before streaming <code>done</code>.</li>
+<li>Cookbook #4 rewrites the hand-wired flow as a LangGraph so planning,
+  retrieval, writing, and memory have explicit state boundaries.</li>
+</ul>
+<h2 id="license">License</h2>
+<p>MIT — see <a href="https://github.com/nebius/nebius-partner-cookbook/blob/main/cookbooks/03-real-time-data-tavily/LICENSE" target="_blank" rel="noopener"><code>LICENSE</code></a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>

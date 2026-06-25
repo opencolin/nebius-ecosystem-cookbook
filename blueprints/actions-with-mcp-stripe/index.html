@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Making Actions with MCP and Stripe · Nebius Agent Blueprints</title>
+<link rel="stylesheet" href="../../assets/css/main.css"/>
+<link rel="stylesheet" href="../../assets/cookbook.css"/>
+</head><body>
+<nav class="nav"><div class="nav-inner">
+    <a class="brand" href="../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../index.html">Ecosystem</a>
+      <a href="../../cookbook/index.html">Cookbook</a>
+      <a href="../../blueprints/index.html" class="active">Agent Blueprints</a>
+      <a href="../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">Blueprints repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div></div></nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../blueprints/index.html">← Agent Blueprints</a><a class="btn secondary" href="https://github.com/nebius/nebius-partner-cookbook/tree/main/cookbooks/09-actions-with-mcp-stripe" target="_blank" rel="noopener">View recipe on GitHub ↗</a></div>
+  <div class="bp-meta"><div class="bp-row"><span class="pill coral">advanced</span><span class="pill coral">read 18 min</span><span class="pill coral">run 10 min</span></div><div class="bp-row"><span class="pill">nebius-agentkit</span><span class="pill">mcp</span><span class="pill">stripe</span><span class="pill">langchain</span><span class="pill">langgraph</span><span class="pill">langsmith</span><span class="pill">fastapi</span><span class="pill">structlog</span><span class="pill">prometheus</span><span class="pill">docker</span></div><details class="bp-quick"><summary>Run it locally</summary><pre><code>git clone https://github.com/nebius/nebius-partner-cookbook &amp;&amp; cd nebius-cookbook/cookbooks/09-actions-with-mcp-stripe
+cp .env.example .env  # then fill NEBIUS_API_KEY, STRIPE_SECRET_KEY, and STRIPE_MCP_API_KEY
+docker compose up -d postgres &amp;&amp; uv sync &amp;&amp; make seed-stripe-books &amp;&amp; make dev</code></pre></details></div>
+  <article class="cb-content">
+<h1 id="actions-making-actions-with-mcp-and-stripe">Actions — Making Actions with MCP and Stripe</h1>
+<blockquote>
+<p>Let a guarded book agent create a Stripe test-mode checkout link, but only after explicit user approval.</p>
+</blockquote>
+<p>Recipe <strong>09 of 10</strong> in the Agent Blueprint Recipes arc:</p>
+<blockquote>
+<p>Foundation → Knowledge → Grounding → Orchestration → Thread Memory → User Memory → Observability → Guardrails → <strong>Actions</strong> → Simulation</p>
+</blockquote>
+<p>Cookbook #8 taught the agent to refuse unsafe or off-topic requests.
+This recipe keeps that full stack and adds one new production capability: the agent can propose an external action.
+The model never gets uncontrolled authority.
+It can request a checkout action, but the FastAPI service owns approval, policy, audit events, and the Stripe MCP call.</p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A FastAPI service that extends the guarded memory agent:</p>
+<ol>
+<li><strong>Inherited agent stack</strong> — LangGraph routing, thread memory, Postgres user memory, LangSmith tracing, guardrails, SSE, and metrics stay in place.</li>
+<li><strong>Seeded book catalog</strong> — three fictional books live in <code>scripts/data/books.json</code>, with illustration paths ready for your assets.</li>
+<li><strong>Stripe setup script</strong> — <code>make seed-stripe-books</code> creates Stripe test-mode Products and Prices through Stripe REST and writes <code>data/stripe_books.json</code>.</li>
+<li><strong>Remote Stripe MCP runtime</strong> — approved actions call <code>https://mcp.stripe.com</code> with the <code>create_payment_link</code> tool.</li>
+<li><strong>Human approval</strong> — <code>/agent/run</code> emits <code>approval_required</code>; <code>/approvals/{approval_id}</code> approves or rejects the side effect.</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>book purchase prompt
+  └─► input guardrails
+      └─► select seeded book
+          └─► create pending approval
+              ├─► reject: no Stripe call
+              └─► approve: Stripe MCP create_payment_link
+</code></pre></div>
+
+<h2 id="quickstart">Quickstart</h2>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>cookbooks/09-actions-with-mcp-stripe
+uv<span class="w"> </span>sync
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Fill these values in <code>.env</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>...
+<span class="nv">STRIPE_SECRET_KEY</span><span class="o">=</span>sk_test_or_sandbox_seed_key
+<span class="nv">STRIPE_MCP_API_KEY</span><span class="o">=</span>rk_test_or_sandbox_restricted_key
+</code></pre></div>
+
+<p>Start Postgres for inherited long-term memory:</p>
+<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>postgres
+</code></pre></div>
+
+<p>Create the Stripe test catalog:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>seed-stripe-books
+</code></pre></div>
+
+<p>Run the app:</p>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span>dev
+</code></pre></div>
+
+<p>In the web playground, open recipe 09 and ask:</p>
+<div class="codehilite"><pre><span></span><code>I want to buy The Nebius Cloud Atlas.
+</code></pre></div>
+
+<p>The assistant will emit an approval card.
+Approving it calls Stripe MCP and returns a test checkout URL.</p>
+<h2 id="environment">Environment</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>required</td>
+<td>Nebius API key.</td>
+</tr>
+<tr>
+<td><code>STRIPE_SECRET_KEY</code></td>
+<td><code>sk_test_replace_me</code></td>
+<td>Setup-only key used by <code>make seed-stripe-books</code>.</td>
+</tr>
+<tr>
+<td><code>STRIPE_MCP_API_KEY</code></td>
+<td><code>rk_test_replace_me</code></td>
+<td>Runtime key used to call remote Stripe MCP.</td>
+</tr>
+<tr>
+<td><code>STRIPE_MCP_BASE_URL</code></td>
+<td><code>https://mcp.stripe.com</code></td>
+<td>Remote Stripe MCP endpoint.</td>
+</tr>
+<tr>
+<td><code>BOOK_CATALOG_PATH</code></td>
+<td><code>data/stripe_books.json</code></td>
+<td>Generated catalog with Stripe Product and Price IDs.</td>
+</tr>
+<tr>
+<td><code>APPROVAL_TTL_SECONDS</code></td>
+<td><code>900</code></td>
+<td>Time window for approving a pending action.</td>
+</tr>
+<tr>
+<td><code>MEMORY_BACKEND</code></td>
+<td><code>postgres</code></td>
+<td>Inherited long-term memory backend.</td>
+</tr>
+<tr>
+<td><code>POSTGRESQL_ADDON_URI</code></td>
+<td>local Postgres URL</td>
+<td>Inherited memory database. Clever Cloud injects this when a Postgres add-on is linked.</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_TRACING</code></td>
+<td><code>false</code></td>
+<td>Enables LangSmith SaaS traces when credentials are configured.</td>
+</tr>
+</tbody>
+</table>
+<p>Cookbooks #6-#10 can share one Postgres database by using different schemas.
+The schema is derived from <code>ENV</code> and the cookbook number: <code>dev_cbk_09</code> locally, <code>prod_cbk_09</code> when <code>ENV=production</code>.
+The app creates <code>prod_cbk_09.user_memories</code> on first use, separate from the memory tables used by the previous cookbooks.</p>
+<h2 id="stripe-mcp-and-sandboxes">Stripe MCP and Sandboxes</h2>
+<p>Stripe MCP exposes Stripe API operations as MCP tools, including <code>create_payment_link</code>.
+This cookbook uses the remote MCP endpoint instead of a local <code>npx @stripe/mcp</code> subprocess so the Python service stays simple to run and easy to mock in tests.</p>
+<p><strong>Use a Stripe Sandbox or test-mode account.</strong>
+<strong>Never use live keys for this cookbook.</strong></p>
+<p>Stripe Sandboxes are newer than the classic global test-mode toggle.
+Think of a Sandbox as an isolated Stripe environment with its own API keys, objects, settings, and test data.
+That is useful for agent work because you can give the agent a realistic account shape without letting it touch your real Stripe account or pollute a shared test-mode setup.</p>
+<p>Classic test mode is still enough for local experimentation.
+A Sandbox is the stronger choice when you want repeatable demos, CI smoke tests, or multiple isolated agent environments.
+For this cookbook, the recommended setup is:</p>
+<ul>
+<li>one Sandbox dedicated to the cookbook demo;</li>
+<li>one setup key for creating the fake Products and Prices;</li>
+<li>one restricted runtime key for the remote MCP server;</li>
+<li>no live-mode objects, prices, customers, or checkout links.</li>
+</ul>
+<p>This separation mirrors a production control boundary.
+Operators prepare the commerce catalog.
+The agent can only request a narrow runtime action after the user approves it.</p>
+<p>Recommended key model:</p>
+<ul>
+<li>Use <code>STRIPE_SECRET_KEY</code> only for the operator seed step.</li>
+<li>Use <code>STRIPE_MCP_API_KEY</code> for the running app.</li>
+<li>Prefer a restricted key for MCP that can create Payment Links from existing Prices and cannot perform broad account operations.</li>
+<li>Rotate both keys after demos or CI smoke tests.</li>
+</ul>
+<p>The seed script deliberately uses Stripe REST instead of MCP.
+Seeding is an operator task: create Products and multi-currency Prices once, then let the runtime agent use MCP only for the approved action.
+Each book gets one Stripe Price with USD as the default currency and EUR, GBP, and SGD configured through Stripe <code>currency_options</code>.</p>
+<h2 id="why-stripe-mcp-here">Why Stripe MCP here?</h2>
+<p>Stripe is a good final cookbook action because it is concrete, high stakes, and easy to keep safe in test mode.
+Creating a checkout link is visibly different from answering a question, but it is still small enough to understand in one recipe.
+It also makes the approval pattern obvious: payment-related side effects should never happen just because the model suggested them.</p>
+<p>Other MCP servers could participate in the same flow:</p>
+<ul>
+<li><strong>Catalog or CMS MCP</strong> to fetch approved book metadata before checkout.</li>
+<li><strong>Inventory MCP</strong> to confirm a book or bundle is available.</li>
+<li><strong>CRM MCP</strong> to associate the approved action with a demo user or account.</li>
+<li><strong>Email MCP</strong> to send the checkout link after approval.</li>
+<li><strong>Ticketing or audit MCP</strong> to record the approval trail for compliance.</li>
+<li><strong>Knowledge-base MCP</strong> to fetch refund, tax, or shipping policy before the agent explains the checkout.</li>
+</ul>
+<p>The important pattern stays the same regardless of the MCP provider:</p>
+<div class="codehilite"><pre><span></span><code>model proposes action → backend validates policy → user approves → MCP tool executes
+</code></pre></div>
+
+<p>Do not let tool discovery become tool authority.
+MCP gives the agent a standardized way to reach tools, but your application still decides which tools are allowed, what arguments are valid, who can approve them, and what gets logged.</p>
+<h2 id="seed-catalog">Seed catalog</h2>
+<p>The source catalog is committed at:</p>
+<div class="codehilite"><pre><span></span><code>scripts/data/books.json
+</code></pre></div>
+
+<p>It contains ten fictional books that will be created in the Stripe Sandbox.
+Each book uses a single Stripe Price with USD as the default and EUR, GBP, and SGD as multi-currency options:</p>
+<table>
+<thead>
+<tr>
+<th>Book</th>
+<th>Author</th>
+<th>ISBN-13</th>
+<th style="text-align: right;">USD</th>
+<th style="text-align: right;">EUR</th>
+<th style="text-align: right;">GBP</th>
+<th style="text-align: right;">SGD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>The Nebius Cloud Atlas</code></td>
+<td>Nia Vector</td>
+<td><code>9781600000010</code></td>
+<td style="text-align: right;">$14.99</td>
+<td style="text-align: right;">€13.99</td>
+<td style="text-align: right;">£11.99</td>
+<td style="text-align: right;">S$19.99</td>
+</tr>
+<tr>
+<td><code>Pinecones in the Vector Garden</code></td>
+<td>Ada Embedding</td>
+<td><code>9781600000027</code></td>
+<td style="text-align: right;">$12.99</td>
+<td style="text-align: right;">€11.99</td>
+<td style="text-align: right;">£10.99</td>
+<td style="text-align: right;">S$17.99</td>
+</tr>
+<tr>
+<td><code>Agent at the End of the Prompt</code></td>
+<td>Lila Chain</td>
+<td><code>9781600000034</code></td>
+<td style="text-align: right;">$10.99</td>
+<td style="text-align: right;">€9.99</td>
+<td style="text-align: right;">£8.99</td>
+<td style="text-align: right;">S$14.99</td>
+</tr>
+<tr>
+<td><code>The Checkout Graph</code></td>
+<td>Max Token</td>
+<td><code>9781600000041</code></td>
+<td style="text-align: right;">$15.99</td>
+<td style="text-align: right;">€14.99</td>
+<td style="text-align: right;">£12.99</td>
+<td style="text-align: right;">S$21.99</td>
+</tr>
+<tr>
+<td><code>Embeddings &amp; Espresso</code></td>
+<td>Clara Context</td>
+<td><code>9781600000058</code></td>
+<td style="text-align: right;">$13.99</td>
+<td style="text-align: right;">€12.99</td>
+<td style="text-align: right;">£10.99</td>
+<td style="text-align: right;">S$18.99</td>
+</tr>
+<tr>
+<td><code>The Retrieval Society</code></td>
+<td>Jonas Index</td>
+<td><code>9781600000065</code></td>
+<td style="text-align: right;">$16.99</td>
+<td style="text-align: right;">€15.99</td>
+<td style="text-align: right;">£13.99</td>
+<td style="text-align: right;">S$22.99</td>
+</tr>
+<tr>
+<td><code>Guardrails for Dreaming Machines</code></td>
+<td>Mira Policy</td>
+<td><code>9781600000072</code></td>
+<td style="text-align: right;">$9.99</td>
+<td style="text-align: right;">€8.99</td>
+<td style="text-align: right;">£7.99</td>
+<td style="text-align: right;">S$13.99</td>
+</tr>
+<tr>
+<td><code>Ten Thousand Tiny Agents</code></td>
+<td>Theo Router</td>
+<td><code>9781600000089</code></td>
+<td style="text-align: right;">$14.99</td>
+<td style="text-align: right;">€13.99</td>
+<td style="text-align: right;">£11.99</td>
+<td style="text-align: right;">S$19.99</td>
+</tr>
+<tr>
+<td><code>The Sandbox Bookshop</code></td>
+<td>Samira Stripe</td>
+<td><code>9781600000096</code></td>
+<td style="text-align: right;">$12.99</td>
+<td style="text-align: right;">€11.99</td>
+<td style="text-align: right;">£10.99</td>
+<td style="text-align: right;">S$17.99</td>
+</tr>
+<tr>
+<td><code>When the Model Learned to Read</code></td>
+<td>Lucie Latency</td>
+<td><code>9781600000102</code></td>
+<td style="text-align: right;">$11.99</td>
+<td style="text-align: right;">€10.99</td>
+<td style="text-align: right;">£9.99</td>
+<td style="text-align: right;">S$15.99</td>
+</tr>
+</tbody>
+</table>
+<p>Each item includes a <code>cover_image_path</code> in the same folder as <code>books.json</code>.
+The same PNG files are duplicated in the catalog web app at:</p>
+<div class="codehilite"><pre><span></span><code>app/public/assets/09-book-covers/
+</code></pre></div>
+
+<p>After deployment, they are publicly available under:</p>
+<div class="codehilite"><pre><span></span><code>https://nebius-partners-cookbooks.cleverapps.io/assets/09-book-covers/&lt;cover-filename&gt;.png
+</code></pre></div>
+
+<p>Each ISBN is fictional but has a valid ISBN-13 check digit and is added to Stripe Product and Price metadata as <code>isbn</code>.
+The seed script also uses that ISBN to create deterministic Stripe Product IDs in this format:</p>
+<div class="codehilite"><pre><span></span><code>nebius_partners_book_&lt;isbn&gt;
+</code></pre></div>
+
+<p>For example, <code>The Nebius Cloud Atlas</code> is created as:</p>
+<div class="codehilite"><pre><span></span><code>nebius_partners_book_9781600000010
+</code></pre></div>
+
+<p>The seed script stores the cover filename in Stripe metadata as <code>cover_image_path</code>.
+Stripe Product images are public URLs, not local file uploads.
+If you set <code>STRIPE_IMAGE_BASE_URL</code>, the seed script sends <code>images[0]</code> for each Stripe Product by joining that public base URL with the cover filename.
+If <code>data/stripe_books.json</code> already exists, rerunning the seed script with <code>STRIPE_IMAGE_BASE_URL</code> set backfills the image URL on each existing Stripe Product without creating new Products or Prices.
+If an older generated catalog contains random <code>prod_...</code> Product IDs, rerunning the seed script creates or updates the deterministic <code>nebius_partners_book_&lt;isbn&gt;</code> Products and writes a fresh catalog.</p>
+<p>For the hosted cookbook site, use:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">STRIPE_IMAGE_BASE_URL</span><span class="o">=</span>https://nebius-partners-cookbooks.cleverapps.io/assets/09-book-covers
+</code></pre></div>
+
+<p>The generated catalog is:</p>
+<div class="codehilite"><pre><span></span><code>data/stripe_books.json
+</code></pre></div>
+
+<p>It is gitignored because Stripe Price IDs are still generated by Stripe and are account-specific.
+The Product IDs are deterministic; the Price IDs are the runtime handles passed to Stripe MCP when creating a Payment Link.</p>
+<p>Useful commands:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/seed_stripe_books.py<span class="w"> </span>--dry-run
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/seed_stripe_books.py<span class="w"> </span>--force
+</code></pre></div>
+
+<h2 id="api">API</h2>
+<h3 id="post-agentrun"><code>POST /agent/run</code></h3>
+<p>Normal book prompts still use the guarded Nebius agent.
+Purchase prompts create a pending approval instead of calling Stripe.</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/agent/run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;thread_id&quot;:&quot;checkout-demo&quot;,&quot;user_id&quot;:&quot;reader-42&quot;,&quot;prompt&quot;:&quot;I want to buy The Nebius Cloud Atlas.&quot;}&#39;</span>
+</code></pre></div>
+
+<p>Relevant SSE events:</p>
+<div class="codehilite"><pre><span></span><code>event: status
+data: {&quot;phase&quot;:&quot;input_guardrail&quot;,&quot;rule&quot;:&quot;all&quot;,&quot;outcome&quot;:&quot;passed&quot;}
+
+event: approval_required
+data: {&quot;approvalId&quot;:&quot;...&quot;,&quot;action&quot;:&quot;stripe.create_payment_link&quot;,&quot;book&quot;:{&quot;title&quot;:&quot;The Nebius Cloud Atlas&quot;,&quot;amount&quot;:1499,&quot;currency&quot;:&quot;usd&quot;}}
+
+event: answer
+data: {&quot;text&quot;:&quot;I can create a Stripe test-mode checkout link ... but I need your approval first.&quot;}
+</code></pre></div>
+
+<h3 id="post-approvalsapproval_id"><code>POST /approvals/{approval_id}</code></h3>
+<p>Approve:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/approvals/<span class="nv">$APPROVAL_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;decision&quot;:&quot;approve&quot;}&#39;</span>
+</code></pre></div>
+
+<p>Reject:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/approvals/<span class="nv">$APPROVAL_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;decision&quot;:&quot;reject&quot;}&#39;</span>
+</code></pre></div>
+
+<p>Approvals are process-local in this recipe.
+Move them to Postgres or Redis before using this pattern across replicas.</p>
+<h2 id="github-actions-and-live-keys">GitHub Actions and live keys</h2>
+<p>Default CI must stay network-free.
+Tests mock Nebius, Stripe REST, and Stripe MCP with <code>respx</code>.</p>
+<p>If you add an optional manual smoke workflow, keep it opt-in and use a Stripe Sandbox.
+Suggested GitHub Actions secrets:</p>
+<ul>
+<li><code>NEBIUS_API_KEY</code></li>
+<li><code>STRIPE_SECRET_KEY</code></li>
+<li><code>STRIPE_MCP_API_KEY</code></li>
+</ul>
+<p>Keep live Stripe smoke tests out of pull requests unless the workflow is explicitly marked as sandbox-only.
+It is fine to expose generated <code>data/stripe_books.json</code> for this demo because it only contains fictional books and sandbox object IDs.</p>
+<h2 id="observability">Observability</h2>
+<p>Inherited metrics remain available on <code>/metrics</code>.
+This recipe adds:</p>
+<ul>
+<li><code>approval_events_total{status}</code></li>
+<li><code>stripe_mcp_requests_total{tool,outcome}</code></li>
+<li><code>stripe_mcp_duration_seconds{tool}</code></li>
+</ul>
+<p>LangSmith traces record the prompt, thread, user, environment, and model when tracing is enabled.
+The Stripe key values and checkout URLs are not logged by the app.</p>
+<h2 id="tests">Tests</h2>
+<div class="codehilite"><pre><span></span><code>make<span class="w"> </span><span class="nb">test</span>
+make<span class="w"> </span>lint
+</code></pre></div>
+
+<p>The test suite covers:</p>
+<ul>
+<li>guarded normal book answers</li>
+<li>non-book refusal</li>
+<li>prompt-injection refusal</li>
+<li>PII redaction</li>
+<li>approval creation without Stripe calls</li>
+<li>rejected approvals</li>
+<li>approved Stripe MCP calls</li>
+<li>idempotent completed approvals</li>
+<li>expired approvals</li>
+<li>Stripe REST seed script behavior</li>
+</ul>
+<h2 id="going-further">Going further</h2>
+<ul>
+<li>Persist approvals in Postgres with row-level ownership by authenticated user.</li>
+<li>Add webhook handling for <code>checkout.session.completed</code>.</li>
+<li>Use Stripe restricted keys per environment and rotate them from CI.</li>
+<li>Continue to Cookbook #10 to test the complete action-capable agent with Snowglobe.</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>Stripe MCP — <a href="https://docs.stripe.com/mcp">docs.stripe.com/mcp</a></li>
+<li>Stripe Sandboxes — <a href="https://docs.stripe.com/sandboxes">docs.stripe.com/sandboxes</a></li>
+<li>Stripe test mode — <a href="https://docs.stripe.com/test-mode">docs.stripe.com/test-mode</a></li>
+<li>Stripe API keys — <a href="https://docs.stripe.com/keys">docs.stripe.com/keys</a></li>
+<li>LangChain MCP — <a href="https://docs.langchain.com/oss/python/langchain/mcp">docs.langchain.com/oss/python/langchain/mcp</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>MIT</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/nebius-partner-cookbook" target="_blank" rel="noopener">nebius/nebius-partner-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../assets/js/main.js"></script>
+<script src="../../assets/nav-logo.js"></script>
+</body></html>
