@@ -29,13 +29,23 @@
   <article class="cb-content">
 <h1 id="llm-snake-battle">🐍 LLM Snake Battle</h1>
 <p>A visual snake battle game where two LLMs compete against each other! Watch as AI models control their snakes in a battle of survival.</p>
+<p><strong>Key feature:</strong> each snake moves <strong>independently and asynchronously</strong> — the moment its model responds — so faster models move more often. Game speed is driven by model latency, not a fixed turn delay.</p>
 <h2 id="features">Features</h2>
 <ul>
-<li><strong>Two AI Players</strong>: Pit any two LLM models against each other</li>
-<li><strong>Real-time Visualization</strong>: Watch the snakes move, grow, and compete</li>
-<li><strong>Game Log</strong>: Track each turn's decisions and events</li>
+<li><strong>Two AI Players</strong>: Pit any two LLM models against each other (searchable dropdowns)</li>
+<li><strong>Independent Movement</strong>: Each snake moves as soon as its LLM responds; faster models move more frequently</li>
+<li><strong>Real-time Visualization</strong>: Watch the snakes move, grow, and compete on a 30×30 canvas</li>
+<li><strong>Game Log</strong>: Per-move event tracking with color-coded API latency (teal/yellow/red) and smart auto-scroll</li>
+<li><strong>Latency Graphs</strong>: Interactive per-player time-series graph (hover for exact move + latency) with Min/Median/P90/Max stats</li>
 <li><strong>Configurable</strong>: Choose models from any OpenAI-compatible API</li>
-<li><strong>Fancy UI</strong>: Beautiful dark theme with glowing effects</li>
+<li><strong>Loop Mode</strong>: Auto-restart with a 5-second countdown after each game ends (on by default)</li>
+<li><strong>Collision Avoidance Toggle</strong>: Enable/disable LLM safe-move hints and automatic override (on by default)</li>
+<li><strong>Thinking Mode</strong>: Optionally let models reason before answering via <code>enable_thinking</code> (off by default)</li>
+<li><strong>Visibility Radius</strong>: Adjustable snake vision (1–30 cells, default 5; 30 = full grid)</li>
+<li><strong>Debug Mode</strong>: Console logging with masked auth headers and timestamped request/response correlation</li>
+<li><strong>Model Benchmarking</strong>: Dual-benchmark Speed Test with tabbed results, sortable headers, and sort-by-benchmark menu</li>
+<li><strong>Capped Game Log</strong>: Keeps the 100 most recent entries (older ones trimmed) to stay light over long games</li>
+<li><strong>Fancy UI</strong>: Dark theme with glowing effects and glass panels</li>
 <li><strong>Unique Fruit Visuals</strong>: Each fruit type has distinct appearance with animated effects:</li>
 <li>🍎 Apple: Classic red circle with leaf</li>
 <li>🍇 Grapes: Cluster of purple grapes with stem</li>
@@ -45,21 +55,35 @@
 <li>💎 Diamond: Sparkling gem with pulse effect and sparkles</li>
 <li>🎁 Present: Gift box with ribbon and sparkle particles</li>
 <li><strong>Wall Wrapping</strong>: Snakes pass through walls to the opposite side</li>
-<li><strong>Smart AI</strong>: LLMs get visual board views and safety overrides</li>
+<li><strong>Smart AI</strong>: LLMs get ASCII board views and collision-avoidance safety overrides</li>
+<li><strong>Robust API Layer</strong>: 30s per-request timeout with retries (2s backoff; exponential backoff on HTTP 429); exponential backoff on move timeouts (2s→4s→8s→16s→32s) with forfeit after 5 consecutive timeouts; adaptive <code>max_tokens</code>; automatic stripping of <code>&lt;thinking&gt;</code> tags; forfeit after 3 consecutive non-timeout failures</li>
 </ul>
 <h2 id="how-to-play">How to Play</h2>
 <ol>
-<li>Open <code>snake-1.html</code> in your web browser</li>
+<li>Open <code>snake.html</code> in your web browser</li>
 <li>Enter your <strong>API URL</strong> (already filled with Nebius Token Factory endpoint)</li>
 <li>Paste your <strong>API Key</strong></li>
 <li>Click <strong>Load Models</strong> to fetch available models</li>
-<li>Select different models for Player 1 (Red) and Player 2 (Blue)</li>
-<li>Click <strong>Start Battle!</strong></li>
+<li>Select different models for Player 1 (Red) and Player 2 (Blue) via the searchable dropdowns</li>
+<li>(Optional) Adjust <strong>Options</strong> — Visibility Radius, Collision Avoidance, Thinking Mode, Debug Mode</li>
+<li>Click <strong>Start</strong> to begin the battle</li>
 </ol>
+<p>Controls in the left pane: <strong>Start</strong>, <strong>Pause</strong> ⏸️, <strong>Restart</strong> 🔄, and a <strong>Loop</strong> toggle. The <strong>🔧 Extra</strong> section has the <strong>Speed Test</strong> benchmark and sort buttons.</p>
+<h2 id="whats-new-v1-v2">What's New (v1 → v2)</h2>
+<ul>
+<li><strong>Per-request timeout raised to 30s</strong> (was 15s), giving slower reasoning models room to respond.</li>
+<li><strong>Thinking-mode toggle</strong> — optionally pass <code>chat_template_kwargs.enable_thinking</code> to let models reason before answering (default <strong>off</strong>; takes effect on the next API call).</li>
+<li><strong>Move-timeout backoff + forfeit</strong> — a model that times out on a move now retries with exponential backoff (2s → 4s → 8s → 16s → 32s); after <strong>5 consecutive timeouts</strong> it forfeits the round and its opponent is declared the winner. Previously a persistent timeout had no terminator.</li>
+<li><strong>Looser model filter</strong> — models are now included based on their <strong>output</strong> modality (<code>-&gt;text</code>), so vision-capable text LLMs like <code>moonshotai/Kimi-K2.6</code> (<code>"text+image-&gt;text"</code>) are selectable. Pure image/audio <em>generation</em> models are still excluded. v1's strict <code>=== 'text-&gt;text'</code> check had wrongly dropped these.</li>
+<li><strong>Dual-benchmark system</strong> — the Speed Test now runs a dual benchmark with tabbed results, sortable headers, and a sort-by-benchmark menu.</li>
+<li><strong>Game log cap</strong> — the log DOM is trimmed to the 100 most recent entries (oldest removed first), so a long game or a resumed loop session can't accumulate unbounded nodes. Full wipes on restart/loop round are unchanged.</li>
+</ul>
 <h2 id="game-rules">Game Rules</h2>
 <ul>
 <li>Each snake starts with 3 segments on opposite sides of the grid</li>
-<li>Snakes automatically move forward; LLMs choose direction (up/down/left/right)</li>
+<li>Snakes move <strong>independently</strong> — each moves the moment its LLM responds (no shared turns)</li>
+<li>LLMs choose direction (up/down/left/right); a snake cannot reverse direction</li>
+<li><strong>30-second timeout</strong>: if a model doesn't respond within 30s, the move times out and is retried with exponential backoff (2s→4s→8s→16s→32s); after 5 consecutive timeouts the model forfeits the round</li>
 <li><strong>Wall Wrapping</strong>: Going through any wall teleports you to the opposite side! (Left ↔ Right, Top ↔ Bottom)</li>
 <li>Walls are SAFE - only snake collisions cause death</li>
 <li><strong>Multiple Fruits</strong> appear on the board (3 at a time by default) - eating them makes the snake grow</li>
@@ -76,7 +100,7 @@
 <li>Hitting the enemy snake</li>
 <li>Walls are SAFE (you wrap through!)</li>
 <li><strong>Head-on collision</strong>: Both snakes crash simultaneously</li>
-<li><strong>Winner</strong>: The snake that survives longer. If both crash in same turn, the longer snake wins.</li>
+<li><strong>Winner</strong>: The snake that survives longer. If both crash in the same turn, the longer snake wins (draw if equal length).</li>
 </ul>
 <p><strong>Tip</strong>: Wall wrapping creates interesting strategies - you might wrap around the board quickly to reach a far-away fruit or trap your opponent!</p>
 <h2 id="tech-stack">Tech Stack</h2>
@@ -84,46 +108,60 @@
 <li>Pure HTML/CSS/JavaScript (no build tools required)</li>
 <li>Canvas API for game rendering</li>
 <li>OpenAI-compatible API for LLM calls</li>
-<li>Responsive design</li>
+<li>Responsive design (stacks vertically on narrow screens)</li>
 </ul>
 <h2 id="file-structure">File Structure</h2>
-<div class="codehilite"><pre><span></span><code>├── snake-1.html    # Main HTML structure
+<div class="codehilite"><pre><span></span><code>├── snake.html      # Main HTML structure
 ├── style.css       # Styling and animations
-├── game.js         # Game logic and API integration
+├── game.js         # Game logic, rendering, and API integration
+├── benchmark.js    # Model performance testing system
 └── README.md       # This file
 </code></pre></div>
 
 <h2 id="customization">Customization</h2>
 <p>You can modify the game by editing <code>game.js</code>:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1">// Grid size</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">GRID_SIZE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">30</span><span class="p">;</span><span class="w">       </span><span class="c1">// Try 20 for faster games, 40 for more space</span>
+<div class="codehilite"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">GRID_SIZE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">30</span><span class="p">;</span><span class="w">                 </span><span class="c1">// Board dimensions (30×30). Try 20 for faster games, 40 for more space</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">NUM_FRUITS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3</span><span class="p">;</span><span class="w">                 </span><span class="c1">// Fruits on the board at once</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">LLM_TIMEOUT_MS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">30000</span><span class="p">;</span><span class="w">         </span><span class="c1">// Per-request LLM timeout (30s)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">API_RETRY_DELAY_MS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2000</span><span class="p">;</span><span class="w">      </span><span class="c1">// Base retry delay (also seeds timeout backoff)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">MAX_TOKENS_CASCADE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mf">10</span><span class="p">,</span><span class="w"> </span><span class="mf">100</span><span class="p">,</span><span class="w"> </span><span class="mf">1000</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">];</span><span class="w"> </span><span class="c1">// Adaptive token limits per player</span>
+<span class="kd">let</span><span class="w">   </span><span class="nx">VIEW_RADIUS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">5</span><span class="p">;</span><span class="w">                </span><span class="c1">// Default snake vision radius (1–30, adjustable from UI)</span>
+<span class="kd">let</span><span class="w">   </span><span class="nx">collisionAvoidanceEnabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span><span class="w"> </span><span class="c1">// LLM hints + auto safe-move override</span>
+<span class="kd">let</span><span class="w">   </span><span class="nx">thinkingModeEnabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w">    </span><span class="c1">// Pass enable_thinking to chat_template_kwargs</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">MAX_LOG_ENTRIES</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100</span><span class="p">;</span><span class="w">          </span><span class="c1">// Cap on game-log &lt;p&gt; entries (oldest trimmed)</span>
 
-<span class="c1">// Turn delay (milliseconds)</span>
-<span class="nx">gameState</span><span class="p">.</span><span class="nx">turnDelay</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1000</span><span class="p">;</span><span class="w"> </span><span class="c1">// Lower = faster, Higher = more time for LLM thinking</span>
-
-<span class="c1">// Snake starting positions (controlled in initializeGame function)</span>
-
-<span class="c1">// Prompting logic (in getBoardState function)</span>
+<span class="c1">// Snake starting positions (controlled in initializeGame)</span>
+<span class="c1">// LLM prompting logic (in getBoardState)</span>
 </code></pre></div>
 
+<blockquote>
+<p><strong>Note:</strong> There is no fixed "turn delay" — snakes move at the natural speed of their model's responses. If you want to add artificial pacing, you would add a delay inside <code>moveSnakeWithLLM</code> before it recurses.</p>
+</blockquote>
 <h2 id="api-compatibility">API Compatibility</h2>
 <p>Works with any OpenAI-compatible API that supports:
-- <code>GET /models</code> endpoint
+- <code>GET /models</code> endpoint (verbose metadata is tried first for modality filtering, with plain fallback)
 - <code>POST /chat/completions</code> endpoint
 - Standard message format</p>
-<p>Tested with Nebius Token Factory but should work with other providers.</p>
+<p>Tested with Nebius Token Factory but should work with others (OpenAI, compatible proxies, Ollama, LM Studio). Models are filtered by <strong>output modality</strong>: any model that produces text output is included (so vision-capable text LLMs like <code>moonshotai/Kimi-K2.6</code> are selectable), while pure image/audio generation models are excluded.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <p><strong>"Failed to load models" error:</strong>
 - Check your API URL ends with <code>/</code>
 - Verify your API key is correct
-- Check browser console (F12) for detailed errors</p>
+- Check browser console (F12) for detailed errors
+- Some APIs require CORS to be configured to work from the browser</p>
 <p><strong>Snakes don't seem smart:</strong>
 - Try different models - some are better at this task than others
-- Increase turn delay to give models more time to "think"
-- The prompt is simple - complex strategic behavior may need prompting adjustments</p>
+- Models get the full 30s timeout to respond; slower models simply move less often
+- Keep Collision Avoidance on for safer gameplay, or turn it off to see raw LLM decisions
+- The prompt is intentionally simple - complex strategic behavior may need prompting adjustments</p>
 <p><strong>Game too slow/fast:</strong>
-- Adjust the Turn Delay in the setup screen
+- Game speed is determined by model response times — faster models move more often
+- Try a faster model for comparison (the move counters and latency graph make speed differences visible)
 - Smaller grid sizes (edit <code>GRID_SIZE</code> in game.js) result in quicker games</p>
+<p><strong>One snake barely moves:</strong>
+- That model is slow to respond — it will move less frequently (intended behavior)
+- Check the latency graph/stats for that player
+- After 3 consecutive API failures (or 5 consecutive timeouts) a model forfeits the round</p>
 <p>Enjoy watching AI snake battles! 🐍⚔️🐍</p>
   </article>
 </div>
