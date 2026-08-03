@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pixeltable + Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/pixeltable" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="pixeltable-nebius-token-factory">Pixeltable + Nebius Token Factory</h1>
+<p><a href="https://pixeltable.com/">Pixeltable</a> is open-source multimodal AI data infrastructure. You declare tables with images, video, audio, documents, and text; computed columns and embedding indexes run incrementally as data arrives. Pixeltable includes a <strong>native Nebius Token Factory provider</strong> (<code>pixeltable.functions.nebius</code>) for chat completions and embeddings—no custom base-URL wiring required.</p>
+<h2 id="why-token-factory">Why Token Factory?</h2>
+<ul>
+<li><strong>Native UDFs</strong> — <code>nebius.chat_completions</code> and <code>nebius.embeddings</code> call Token Factory directly.</li>
+<li><strong>Open models</strong> — Llama, Qwen, DeepSeek, and more behind one API key.</li>
+<li><strong>Incremental pipelines</strong> — insert rows; Pixeltable fills computed columns and maintains indexes automatically.</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A Nebius Token Factory API key — see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/pixeltable/getting-started.md" target="_blank" rel="noopener">Getting Started</a>.</li>
+<li>Python 3.10+ (local, Colab, etc.).</li>
+</ul>
+<h2 id="1-install">1. Install</h2>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pixeltable<span class="w"> </span>openai
+</code></pre></div>
+
+<p>Nebius uses an OpenAI-compatible API, so the <code>openai</code> package is required alongside Pixeltable.</p>
+<h2 id="2-set-your-api-key">2. Set your API key</h2>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your_key_here
+</code></pre></div>
+
+<p>Or in Python:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NEBIUS_API_KEY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;your_key_here&#39;</span>
+</code></pre></div>
+
+<h2 id="3-chat-completions">3. Chat completions</h2>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pixeltable</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pxt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pixeltable.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">nebius</span>
+
+<span class="n">pxt</span><span class="o">.</span><span class="n">drop_dir</span><span class="p">(</span><span class="s1">&#39;nebius_demo&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">pxt</span><span class="o">.</span><span class="n">create_dir</span><span class="p">(</span><span class="s1">&#39;nebius_demo&#39;</span><span class="p">)</span>
+
+<span class="n">chat_t</span> <span class="o">=</span> <span class="n">pxt</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">&#39;nebius_demo/chat&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="n">pxt</span><span class="o">.</span><span class="n">String</span><span class="p">})</span>
+<span class="n">messages</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;role&#39;</span><span class="p">:</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="n">chat_t</span><span class="o">.</span><span class="n">input</span><span class="p">}]</span>
+
+<span class="n">chat_t</span><span class="o">.</span><span class="n">add_computed_column</span><span class="p">(</span>
+    <span class="n">output</span><span class="o">=</span><span class="n">nebius</span><span class="o">.</span><span class="n">chat_completions</span><span class="p">(</span>
+        <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="s1">&#39;meta-llama/Llama-3.3-70B-Instruct&#39;</span><span class="p">,</span>
+        <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max_tokens&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s1">&#39;temperature&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="n">chat_t</span><span class="o">.</span><span class="n">add_computed_column</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="n">chat_t</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+<span class="n">chat_t</span><span class="o">.</span><span class="n">insert</span><span class="p">([{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;What is the capital of France?&#39;</span><span class="p">}])</span>
+<span class="n">chat_t</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">chat_t</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">chat_t</span><span class="o">.</span><span class="n">response</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+</code></pre></div>
+
+<p>Model IDs use the <code>org/model</code> form. Browse the catalog at <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a> or the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/pixeltable/models/" target="_blank" rel="noopener">Models guides</a> in this cookbook.</p>
+<h2 id="4-embeddings">4. Embeddings</h2>
+<p>Token Factory currently serves <code>Qwen/Qwen3-Embedding-8B</code>. By default it returns <strong>4096-dimensional</strong> vectors, which exceed Pixeltable’s embedding-index limit of 4000. Request a truncated size when you need an index:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">emb_t</span> <span class="o">=</span> <span class="n">pxt</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">&#39;nebius_demo/embeddings&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="n">pxt</span><span class="o">.</span><span class="n">String</span><span class="p">})</span>
+<span class="n">emb_t</span><span class="o">.</span><span class="n">add_computed_column</span><span class="p">(</span>
+    <span class="n">embedding</span><span class="o">=</span><span class="n">nebius</span><span class="o">.</span><span class="n">embeddings</span><span class="p">(</span>
+        <span class="nb">input</span><span class="o">=</span><span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">&#39;Qwen/Qwen3-Embedding-8B&#39;</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># For similarity search / RAG indexes, truncate to an indexable size:</span>
+<span class="n">indexed</span> <span class="o">=</span> <span class="n">nebius</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">using</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;Qwen/Qwen3-Embedding-8B&#39;</span><span class="p">,</span>
+    <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;dimensions&#39;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">emb_t</span><span class="o">.</span><span class="n">add_embedding_index</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="n">embedding</span><span class="o">=</span><span class="n">indexed</span><span class="p">)</span>
+
+<span class="n">emb_t</span><span class="o">.</span><span class="n">insert</span><span class="p">([{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;Nebius Token Factory provides open models via API.&#39;</span><span class="p">}])</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="n">string</span><span class="o">=</span><span class="s1">&#39;open models API&#39;</span><span class="p">)</span>
+<span class="n">emb_t</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">sim</span><span class="o">=</span><span class="n">sim</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">sim</span><span class="p">,</span> <span class="n">asc</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+</code></pre></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>401 Unauthorized</strong> — confirm <code>NEBIUS_API_KEY</code> is set in the environment.</li>
+<li><strong>404 / model not found</strong> — check the model ID (<code>org/model</code>, case-sensitive) against your Token Factory catalog.</li>
+<li><strong>Embedding index errors</strong> — use <code>model_kwargs={'dimensions': 1024}</code> (or another size ≤ 4000) with <code>Qwen/Qwen3-Embedding-8B</code>.</li>
+</ul>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://docs.pixeltable.com/">Pixeltable docs</a></li>
+<li><a href="https://docs.pixeltable.com/howto/providers/working-with-nebius">Pixeltable Nebius provider guide</a></li>
+<li><a href="https://docs.pixeltable.com/sdk/latest/nebius">Pixeltable Nebius SDK reference</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/">Token Factory docs</a></li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/pixeltable/getting-started.md" target="_blank" rel="noopener">Cookbook: Getting Started</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

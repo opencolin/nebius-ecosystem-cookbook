@@ -7983,19 +7983,19 @@ a.anchor-link {
 <li>Go to <strong>models</strong> tab in <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a></li>
 <li>Select <strong>text to text</strong> models</li>
 <li>Select <strong>function calling</strong> filter</li>
-<li>Copy the model name.  For example <strong><code>openai/gpt-oss-20b</code></strong></li>
+<li>Copy the model name.  For example <strong><code>openai/gpt-oss-120b</code></strong></li>
 </ol>
 <p>See screenshot here:</p>
 <p><img alt="" src="https://github.com/nebius/token-factory-cookbook/raw/main/tool-calling/function-calling-1.png"/></p>
 <p><strong>Recomended models:</strong></p>
 <ul>
 <li>Qwen3 family<ul>
-<li>openai/gpt-oss-20b</li>
+<li>openai/gpt-oss-120b</li>
 <li>Qwen/Qwen3-235B-A22B</li>
 </ul>
 </li>
 <li>Deepseek family<ul>
-<li>deepseek-ai/DeepSeek-R1-0528</li>
+<li>deepseek-ai/DeepSeek-V4-Pro</li>
 </ul>
 </li>
 <li>Llama<ul>
@@ -8118,7 +8118,7 @@ Wall time: 612 ms
   <span class="p">]</span>
 
 <span class="n">chat_completion</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-  <span class="n">model</span> <span class="o">=</span> <span class="s2">"openai/gpt-oss-20b"</span><span class="p">,</span>
+  <span class="n">model</span> <span class="o">=</span> <span class="s2">"openai/gpt-oss-120b"</span><span class="p">,</span>
   <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
   <span class="n">tools</span> <span class="o">=</span> <span class="n">tools</span><span class="p">,</span>
   <span class="n">tool_choice</span> <span class="o">=</span> <span class="p">{</span>

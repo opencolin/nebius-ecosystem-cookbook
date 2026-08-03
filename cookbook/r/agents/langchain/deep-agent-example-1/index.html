@@ -58,7 +58,7 @@ powered by an LLM served by <a href="https://tokenfactory.nebius.com/">Nebius To
 </tr>
 </tbody>
 </table>
-<p>Both use the <code>moonshotai/Kimi-K2.5</code> model on Nebius; swap it for any tool-calling capable Nebius model in the source.</p>
+<p>Both scripts use tool-calling capable Nebius models via <code>langchain-nebius</code> and are currently configured with <code>MiniMaxAI/MiniMax-M3</code>. Swap either model in the source.</p>
 <h2 id="setup">Setup</h2>
 <p>This project uses <a href="https://docs.astral.sh/uv/">uv</a> for dependency management.</p>
 <div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>agents/langchain/deep-agent-example-1
@@ -72,23 +72,26 @@ uv<span class="w"> </span>sync
 <p>Edit <code>.env</code>:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># https://tokenfactory.nebius.com/</span>
 <span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your-nebius-api-key
-
-<span class="c1"># https://tavily.com/  (only needed for tavily_agent.py)</span>
-<span class="nv">TAVILY_API_KEY</span><span class="o">=</span>your-tavily-api-key<span class="w">   </span>
 </code></pre></div>
 
-<h2 id="run">Run</h2>
+<h2 id="run-agent">Run Agent</h2>
 <p>Bare deep agent (no external tools):</p>
 <div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>research_agent_1.py
 </code></pre></div>
 
+<p>The report is written to <code>output.md</code>, and a short summary is printed to stdout. You can view a sample output <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/deep-agent-example-1/output-sample.md" target="_blank" rel="noopener">here</a>.</p>
+<h2 id="run-agent-with-tavily-real-time-search">Run Agent with Tavily Real time Search</h2>
+<p>Add Tavily API key to <code>.env</code> file</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># https://tavily.com/  (only needed for tavily_agent.py)</span>
+<span class="nv">TAVILY_API_KEY</span><span class="o">=</span>your-tavily-api-key
+</code></pre></div>
+
 <p>Deep agent with Tavily web search:</p>
-<p>(Make sure you have <code>TAVILY_API_KEY</code> defined in <code>.env</code>)</p>
 <div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>tavily_agent.py
 </code></pre></div>
 
-<p>Each script prints the full message trace (including planning steps,
-sub-agent calls, and the final report) as JSON.</p>
+<p><code>tavily_agent.py</code> prints the full message trace
+(including planning steps, sub-agent calls, and the final report) as JSON.</p>
 <h2 id="files">Files</h2>
 <ul>
 <li><code>research_agent_1.py</code> — minimal deep agent on a Nebius LLM</li>

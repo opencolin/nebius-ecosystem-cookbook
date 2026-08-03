@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Run Models on Nebius Token Factory using APIs — api_native.ipynb · Nebius Token Factory Cookbook</title>
+<title>Models on Nebius Token Factory — kimi-k3-1.ipynb · Nebius Token Factory Cookbook</title>
 <link rel="stylesheet" href="../../../assets/css/main.css" />
 <link rel="stylesheet" href="../../../assets/cookbook.css" />
 </head>
@@ -24,7 +24,7 @@
   </div>
 </nav>
 <div class="cb-recipe container">
-  <div class="cb-crumb"><a href="../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/blob/main/api/api_native.ipynb" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  <div class="cb-crumb"><a href="../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/blob/main/models/kimi-k3-1.ipynb" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
   
   <article class="cb-content">
 <!DOCTYPE html>
@@ -7824,48 +7824,62 @@ a.anchor-link {
 </style>
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<main><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<main>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span> 
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h1 id="Run-Kimi-K3-model-on-Nebius-Token-Factory">Run Kimi K3 model on Nebius Token Factory<a class="anchor-link" href="#Run-Kimi-K3-model-on-Nebius-Token-Factory">¶</a></h1><p><a href="https://colab.research.google.com/github/nebius/token-factory-cookbook/blob/main/models/kimi-k3-1.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"/></a>
+<a href="http://tokenfactory.nebius.com/"><img alt="" src="https://img.shields.io/badge/Powered%20by-Nebius-orange?style=flat&amp;labelColor=darkblue&amp;color=orange"/></a></p>
+<p>Kimi K3 is Moonshot AI's flagship reasoning model, released July 2026 — a major step up in intelligence over the Kimi K2.5 / K2.6 / K2.7 lineage, with multimodal (text + image) input and a 1M-token context window.</p>
+<ul>
+<li><strong>Provider:</strong> Moonshot AI (Kimi)</li>
+<li><strong>Architecture:</strong> Proprietary — 2.8T parameters</li>
+<li><strong>Context window:</strong> 1M tokens</li>
+<li><strong>Strengths:</strong> Reasoning, knowledge, mathematics, coding, agentic tasks, multimodal (image) understanding</li>
+<li><strong>License:</strong> Proprietary (Moonshot AI)</li>
+</ul>
+<h3 id="Key-highlights">Key highlights<a class="anchor-link" href="#Key-highlights">¶</a></h3><ul>
+<li>First Open weights model to approach 3 T parameter count.</li>
+<li>Scores 57 on the Artificial Analysis Intelligence Index, ranking #7 of 190 models (category median: 32)</li>
+<li>Multimodal input — supports text and image; outputs text</li>
+</ul>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/models/kimi-k3.md">Read more here</a></p>
+<h2 id="References">References<a class="anchor-link" href="#References">¶</a></h2><ul>
+<li><a href="https://huggingface.co/moonshotai/Kimi-K3">Model card on HF</a></li>
+<li><a href="https://tokenfactory.nebius.com/endpoints?modals=endpoint-details&amp;model-id=moonshotai/Kimi-K3">Try it on Nebius Token Factory</a></li>
+</ul>
+<h2 id="Pre-requisites">Pre requisites<a class="anchor-link" href="#Pre-requisites">¶</a></h2><ul>
+<li>Nebius API key.  Sign up for free at <a href="https://tokenfactory.nebius.com/">Token Factory</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="1---Getting-Started">1 - Getting Started<a class="anchor-link" href="#1---Getting-Started">¶</a></h2><h3 id="1.1---Get-your-Nebius-API-key-at-Nebius-Token-Factory">1.1 - Get your Nebius API key at <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a><a class="anchor-link" href="#1.1---Get-your-Nebius-API-key-at-Nebius-Token-Factory">¶</a></h3><h3 id="1.2---If-running-on-Google-Colab-...">1.2 - If running on Google Colab ...<a class="anchor-link" href="#1.2---If-running-on-Google-Colab-...">¶</a></h3><p>Add <code>NEBIUS_API_KEY</code> to <strong>Secrets</strong> panel on the left as follows</p>
+<p><img alt="" src="https://github.com/nebius/token-factory-cookbook/raw/main/images/google-colab-1.png"/></p>
+<h3 id="1.3---If-running-locally">1.3 - If running locally<a class="anchor-link" href="#1.3---If-running-locally">¶</a></h3><p>Create an <code>.env</code> file with NEBIUS_API_KEY as follows</p>
+<div class="highlight"><pre><span></span>NEBIUS_API_KEY=your_api_key_goes_here
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Run-models-on-Nebius-Token-Factory-(Native)">Run models on Nebius Token Factory (Native)<a class="anchor-link" href="#Run-models-on-Nebius-Token-Factory-(Native)">¶</a></h1><p><a href="https://colab.research.google.com/github/nebius/token-factory-cookbook/blob/main/api/api_native.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"/></a>
-<a href="http://tokenfactory.nebius.com/"><img alt="" src="https://img.shields.io/badge/Powered%20by-Nebius-orange?style=flat&amp;labelColor=darkblue&amp;color=orange"/></a></p>
-<p>This the recommended API.  The API uses OpenAI library.</p>
-<h2 id="References-and-Acknowledgements">References and Acknowledgements<a class="anchor-link" href="#References-and-Acknowledgements">¶</a></h2><ul>
-<li><a href="https://docs.tokenfactory.nebius.com//inference/quickstart">API documentation</a></li>
-</ul>
-<h2 id="Pre-requisites">Pre requisites<a class="anchor-link" href="#Pre-requisites">¶</a></h2><ul>
-<li>Nebius API key.  Sign up for free at <a href="https://tokenfactory.nebius.com/">Token Factory</a></li>
-<li>And complete <a href="https://github.com/nebius/token-factory-cookbook/blob/main/getting-started.md">the setup</a></li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1---Install-Dependencies">1 - Install Dependencies<a class="anchor-link" href="#1---Install-Dependencies">¶</a></h2>
+<h2 id="2---Install-Dependencies">2 - Install Dependencies<a class="anchor-link" href="#2---Install-Dependencies">¶</a></h2>
 </div>
 </div>
 </div>
@@ -7877,9 +7891,7 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="n">capture</span>
-
-<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">openai</span>   <span class="n">python</span><span class="o">-</span><span class="n">dotenv</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">openai</span> <span class="n">python</span><span class="o">-</span><span class="n">dotenv</span>
 </pre></div>
 </div>
 </div>
@@ -7915,11 +7927,6 @@ a.anchor-link {
    <span class="nb">print</span><span class="p">(</span><span class="s2">"NOT running in Colab"</span><span class="p">)</span>
 
    <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
-
-   <span class="n">this_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
-   <span class="n">parent_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">this_dir</span><span class="p">)</span>
-   <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span> <span class="p">(</span><span class="n">parent_dir</span><span class="p">))</span>
-
    <span class="n">load_dotenv</span><span class="p">()</span>
    <span class="n">NEBIUS_API_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">'NEBIUS_API_KEY'</span><span class="p">)</span>
 
@@ -7958,11 +7965,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3---Pick-a-Model">3 - Pick a Model<a class="anchor-link" href="#3---Pick-a-Model">¶</a></h2><ol>
-<li>Go to <strong>models</strong> tab in <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a></li>
-<li>Copy the model name.  For example <strong><code>openai/gpt-oss-120b-Instruct-2507</code></strong></li>
-</ol>
-<p><img alt="" src="https://raw.githubusercontent.com/nebius/token-factory-cookbook/main/images/token-factory-1-models.png"/></p>
+<h2 id="3---Run-the-Model">3 - Run the Model<a class="anchor-link" href="#3---Run-the-Model">¶</a></h2>
 </div>
 </div>
 </div>
@@ -7973,7 +7976,42 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="4---Run-the-Model">4 - Run the Model<a class="anchor-link" href="#4---Run-the-Model">¶</a></h2>
+<h3 id="3.1---Initialize-the-client">3.1 - Initialize the client<a class="anchor-link" href="#3.1---Initialize-the-client">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1">## Create a client</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.tokenfactory.nebius.com/v1/"</span><span class="p">,</span>
+    <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'NEBIUS_API_KEY'</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1">## Select a model</span>
+<span class="n">MODEL_NAME</span> <span class="o">=</span>  <span class="s2">"moonshotai/Kimi-K3"</span> 
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="3.2---Find-out-the-model's-capabilities">3.2 - Find out the model's capabilities<a class="anchor-link" href="#3.2---Find-out-the-model's-capabilities">¶</a></h3>
 </div>
 </div>
 </div>
@@ -7982,22 +8020,108 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span>
-    <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.tokenfactory.nebius.com/v1/"</span><span class="p">,</span>
-    <span class="n">api_key</span><span class="o">=</span><span class="n">NEBIUS_API_KEY</span><span class="p">,</span>
+<span class="n">completion</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+  <span class="n">model</span> <span class="o">=</span> <span class="n">MODEL_NAME</span><span class="p">,</span>
+  <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+      <span class="p">{</span>
+          <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"system"</span><span class="p">,</span>
+          <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"You are a helpful AI assistant"</span>
+      <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span>
+        <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"What are your capabilities?"</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="n">temperature</span><span class="o">=</span><span class="mf">0.6</span>
 <span class="p">)</span>
 
+<span class="nb">print</span> <span class="p">(</span><span class="s1">'----model answer -----'</span><span class="p">)</span>
+<span class="nb">print</span> <span class="p">(</span><span class="n">completion</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>----model answer -----
+I can help with a wide range of tasks. Here's an overview:
+
+**Writing &amp; Communication**
+- Drafting, editing, and proofreading (emails, essays, reports, creative writing)
+- Summarizing long documents or articles
+- Adjusting tone and style for different audiences
+
+**Analysis &amp; Problem-Solving**
+- Answering questions across science, history, philosophy, current events, and more
+- Breaking down complex topics into understandable explanations
+- Working through logic problems, math, and step-by-step reasoning
+
+**Coding &amp; Technical Work**
+- Writing and debugging code in many programming languages
+- Explaining code and technical concepts
+- Helping with system design and architecture decisions
+
+**Learning &amp; Creativity**
+- Tutoring and explaining concepts at any level
+- Brainstorming ideas, names, and approaches
+- Translating between languages
+
+**Document &amp; Image Understanding**
+- Analyzing text, documents, and images you share with me
+
+**Some limitations to keep in mind:**
+- My knowledge has a cutoff date, so I may not know very recent events
+- I can't browse the internet in real-time (in this conversation)
+- I don't retain memory between separate conversations
+- I can't take actions in the real world (send emails, make calls, etc.)
+
+Is there something specific you'd like help with? I'm happy to demonstrate any of these!
+CPU times: user 140 ms, sys: 28.6 ms, total: 169 ms
+Wall time: 13.1 s
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="3.3---Ask-a-factual-question">3.3 - Ask a factual question<a class="anchor-link" href="#3.3---Ask-a-factual-question">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="n">time</span>
+
 <span class="n">completion</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-  <span class="n">model</span> <span class="o">=</span> <span class="s2">"openai/gpt-oss-120b-Instruct-2507"</span><span class="p">,</span>
+  <span class="n">model</span> <span class="o">=</span> <span class="n">MODEL_NAME</span><span class="p">,</span>
   <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+      <span class="p">{</span>
+          <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"system"</span><span class="p">,</span>
+          <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"You are a helpful AI assistant"</span>
+      <span class="p">},</span>
     <span class="p">{</span>
         <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span>
         <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"What is the capital of France?"</span>
@@ -8024,49 +8148,50 @@ a.anchor-link {
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>----model answer -----
-The capital of France is Paris.
+The capital of France is **Paris**. It's also the country's largest city and has served as its capital for centuries. Paris is renowned for landmarks like the Eiffel Tower, the Louvre Museum, and Notre-Dame Cathedral.
 
 ----- full response ----
 {
-  "id": "chatcmpl-50f7bcb284ed40cbb45d67225acbb97d",
+  "id": "587aab965588448eb3980995908f42b8",
   "choices": [
     {
       "finish_reason": "stop",
       "index": 0,
       "logprobs": null,
       "message": {
-        "content": "The capital of France is Paris.",
+        "content": "The capital of France is **Paris**. It's also the country's largest city and has served as its capital for centuries. Paris is renowned for landmarks like the Eiffel Tower, the Louvre Museum, and Notre-Dame Cathedral.",
         "refusal": null,
         "role": "assistant",
         "annotations": null,
         "audio": null,
         "function_call": null,
-        "tool_calls": [],
-        "reasoning_content": null
+        "tool_calls": null,
+        "reasoning_content": "The user is asking a simple factual question: what is the capital of France? The answer is Paris. This is a straightforward factual question that deserves a concise, direct answer. I don't need to overthink this one."
       },
-      "stop_reason": null,
-      "token_ids": null
+      "matched_stop": 163586
     }
   ],
-  "created": 1762232990,
-  "model": "openai/gpt-oss-120b-Instruct-2507",
+  "created": 1785167554,
+  "model": "moonshotai/Kimi-K3",
   "object": "chat.completion",
+  "moderation": null,
   "service_tier": null,
   "system_fingerprint": null,
   "usage": {
-    "completion_tokens": 8,
-    "prompt_tokens": 15,
-    "total_tokens": 23,
+    "completion_tokens": 102,
+    "prompt_tokens": 112,
+    "total_tokens": 214,
     "completion_tokens_details": null,
-    "prompt_tokens_details": null
+    "prompt_tokens_details": null,
+    "reasoning_tokens": 0
   },
-  "prompt_logprobs": null,
-  "prompt_token_ids": null,
-  "kv_transfer_params": null
+  "metadata": {
+    "weight_version": "default"
+  }
 }
 ---------
-CPU times: user 235 ms, sys: 62.5 ms, total: 298 ms
-Wall time: 1.94 s
+CPU times: user 13.7 ms, sys: 5.41 ms, total: 19.1 ms
+Wall time: 1.76 s
 </pre>
 </div>
 </div>
@@ -8079,7 +8204,7 @@ Wall time: 1.94 s
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="5---Try-a-Reasoning-Model">5 - Try a Reasoning Model<a class="anchor-link" href="#5---Try-a-Reasoning-Model">¶</a></h2>
+<h3 id="3.4---Ask-a-reasoning-question">3.4 - Ask a reasoning question<a class="anchor-link" href="#3.4---Ask-a-reasoning-question">¶</a></h3>
 </div>
 </div>
 </div>
@@ -8088,18 +8213,18 @@ Wall time: 1.94 s
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="c1"># try another model</span>
 <span class="n">completion</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-  <span class="n">model</span> <span class="o">=</span> <span class="s2">"openai/gpt-oss-120b-Thinking-2507"</span><span class="p">,</span> <span class="c1"># this is a reasoning model</span>
+  <span class="n">model</span> <span class="o">=</span> <span class="n">MODEL_NAME</span><span class="p">,</span>
   <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
     <span class="p">{</span>
         <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span>
-        <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"""What are your capabilities?"""</span>
+        <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"Which is bigger, 9.9 or 9.11?"</span>
     <span class="p">}</span>
   <span class="p">],</span>
   <span class="n">temperature</span><span class="o">=</span><span class="mf">0.6</span>
@@ -8119,57 +8244,20 @@ Wall time: 1.94 s
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
+<pre>**9.9 is bigger.**
 
-I'm Qwen3, the latest large language model developed by Tongyi Lab! Here's a quick overview of what I can do for you:
+Here's why: 9.9 is the same as 9.90, and 9.90 is greater than 9.11.
 
----
+You can think of it in terms of money: $9.90 (nine dollars and ninety cents) is more than $9.11 (nine dollars and eleven cents).
 
-### ✨ **Key Capabilities**
-1. **Language Understanding &amp; Generation**  
-   - Answer questions (e.g., "Explain quantum computing simply")  
-   - Summarize long documents or articles  
-   - Write stories, emails, scripts, and creative content  
-   - *Example:* "Write a 200-word poem about autumn in the style of Shakespeare."
+The confusion often comes from thinking "11 is bigger than 9," but in decimals, the digits after the point represent fractions — tenths, then hundredths. So:
+- 9.9 = 9 and 90 hundredths
+- 9.11 = 9 and 11 hundredths
 
-2. **Code Writing &amp; Debugging**  
-   - Generate code in **Python, JavaScript, Java, C++, SQL**, and more  
-   - Fix errors and optimize existing code  
-   - *Example:* "Debug this Python function that’s causing a `KeyError`."
-
-3. **Multilingual Support**  
-   - Translate between **100+ languages** (e.g., Chinese ↔ English, Spanish ↔ French)  
-   - Understand and respond in your preferred language  
-   - *Example:* "Translate this paragraph into Japanese."
-
-4. **Long-Context Processing**  
-   - Handle inputs up to **128,000 tokens** (e.g., process a full book or lengthy research paper).
-
-5. **Logical Reasoning &amp; Math**  
-   - Solve puzzles, math problems, and logical sequences  
-   - *Example:* "Solve this equation: 3x + 5 = 20."
-
-6. **Role-Playing &amp; Creative Tasks**  
-   - Simulate characters or scenarios (e.g., "Act as a travel guide for Paris")  
-   - Generate business plans, marketing copy, or technical documentation.
-
----
-
-### 💡 **Why It Matters**
-- **No internet access**: I rely on my training data (up to 2024), so I can’t fetch real-time info—but I’m great for *structured* tasks like writing, coding, and analysis.  
-- **Efficient &amp; Cost-Effective**: Optimized for speed and affordability, whether you’re a developer, student, or business user.
-
----
-
-**Try me out!** Ask anything like:  
-- "Write a Python script to scrape a website."  
-- "Explain blockchain to a 10-year-old."  
-- "Help me draft a resignation email."  
-
-Let me know what you’d like to tackle! 😊
+(One caveat: if these were **version numbers**, like software releases, then 9.11 would come *after* 9.9, since version numbering treats them as separate integers — version 9, release 11 versus version 9, release 9.)
 ----------
-CPU times: user 5.25 ms, sys: 2.43 ms, total: 7.68 ms
-Wall time: 35.1 s
+CPU times: user 16.4 ms, sys: 3.59 ms, total: 20 ms
+Wall time: 7.54 s
 </pre>
 </div>
 </div>
@@ -8182,13 +8270,27 @@ Wall time: 35.1 s
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="6---Try-Your-Queries">6 - Try Your Queries<a class="anchor-link" href="#6---Try-Your-Queries">¶</a></h2><p>Go ahead and experiment with your queries.  Here are some to get you started.</p>
+<h2 id="5---Try-Your-Queries">5 - Try Your Queries<a class="anchor-link" href="#5---Try-Your-Queries">¶</a></h2><p>Go ahead and experiment with your queries.  Here are some to get you started.</p>
 <blockquote>
 <p>Write python code to read a csv file</p>
 </blockquote>
 <blockquote>
 <p>write a haiku about cats</p>
 </blockquote>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+</div>
 </div>
 </div>
 </div>

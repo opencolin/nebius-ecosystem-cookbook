@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🗂️ Briefing Room — Pre-Meeting Intel Agent · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/meeting_briefing_agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="briefing-room-pre-meeting-intel-agent">🗂️ Briefing Room — Pre-Meeting Intel Agent</h1>
+<blockquote>
+<p>You have a call with a company in 30 minutes. What do you need to know?</p>
+</blockquote>
+<p>Enter a <strong>company name</strong> (and optionally the <strong>attendee</strong>) and the agent researches the live web and produces a one-page, fully cited pre-meeting brief: <strong>three things to know, a company snapshot, three questions to ask, and one thing to avoid.</strong></p>
+<p>Built with <strong>LangGraph</strong>, <strong>Tavily</strong>, and <strong>Nebius Token Factory</strong>.</p>
+<h2 id="features">🚀 Features</h2>
+<ul>
+<li><strong>LangGraph research loop, not a chain</strong> — the graph plans research questions, searches the web with Tavily, then a <em>reflection</em> node checks coverage and loops back with follow-up queries if it finds gaps (up to your iteration budget).</li>
+<li><strong>Cited output</strong> — every claim in the brief is grounded in the collected evidence with inline <code>[n]</code> citations and a sources list.</li>
+<li><strong>Live graph progress</strong> — the Streamlit UI streams node-by-node updates (plan → research → reflect → write) as the run happens.</li>
+<li><strong>Structured intermediate outputs</strong> — planning and reflection use Pydantic structured output (<code>with_structured_output</code>), so the control flow is data-driven, not prompt-parsing.</li>
+<li><strong>CLI + Streamlit UI</strong> — run it headless in a terminal or interactively in the browser.</li>
+<li><strong>Optional LangSmith tracing</strong> — flip two env vars to watch every graph step in LangSmith.</li>
+</ul>
+<h2 id="tech-stack">🛠️ Tech Stack</h2>
+<ul>
+<li><strong>Python 3.10+</strong></li>
+<li><strong><a href="https://github.com/langchain-ai/langgraph">LangGraph</a></strong> — state machine with a conditional reflect→research cycle</li>
+<li><strong><a href="https://pypi.org/project/langchain-tavily/">langchain-tavily</a></strong> — Tavily web search as a LangChain tool</li>
+<li><strong>langchain-openai</strong> — OpenAI-compatible client pointed at <a href="https://dub.sh/nebius">Nebius Token Factory</a></li>
+<li><strong>Streamlit</strong> — web UI</li>
+<li><strong>Pydantic</strong> — structured outputs</li>
+</ul>
+<h2 id="workflow">Workflow</h2>
+<div class="codehilite"><pre><span></span><code>        ┌────────┐     ┌──────────┐     ┌─────────┐
+START ─▶│  plan  │ ──▶ │ research │ ──▶ │ reflect │ ──┐ gaps + budget left
+        └────────┘     └──────────┘     └─────────┘   │
+              ▲                                       │
+              └───────────────────────────────────────┘
+                                                   │ sufficient
+                                                   ▼
+                                              ┌────────┐
+                                              │  write │ ──▶ END
+                                              └────────┘
+</code></pre></div>
+
+<ol>
+<li><strong>plan</strong> — decomposes "meeting with <em>company</em>" into 4–6 search-ready research questions (structured output).</li>
+<li><strong>research</strong> — runs each question through Tavily, dedupes by URL, and accumulates evidence in graph state.</li>
+<li><strong>reflect</strong> — an editor-persona LLM judges coverage (structured output: <code>sufficient</code>, <code>gaps</code>). Gaps route the graph <em>back</em> to research; otherwise it proceeds.</li>
+<li><strong>write</strong> — synthesizes the markdown brief with inline citations from the numbered evidence.</li>
+</ol>
+<h2 id="getting-started">📦 Getting Started</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python 3.10+</li>
+<li><a href="https://github.com/astral-sh/uv">uv</a> (recommended) or pip</li>
+<li>API keys:</li>
+<li><a href="https://dub.sh/nebius">Nebius Token Factory</a> — serves the LLM</li>
+<li><a href="https://tavily.com/">Tavily</a> — powers web research</li>
+</ul>
+<h3 id="installation">Installation</h3>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/token-factory-cookbook
+<span class="nb">cd</span><span class="w"> </span>token-factory-cookbook/agents/langchain/meeting_briefing_agent
+
+uv<span class="w"> </span>sync<span class="w">          </span><span class="c1"># or: pip install -e .</span>
+cp<span class="w"> </span>env.example<span class="w"> </span>.env<span class="w">   </span><span class="c1"># add your NEBIUS_API_KEY and TAVILY_API_KEY</span>
+</code></pre></div>
+
+<p>The app resolves <code>.env</code> from the <code>meeting_briefing_agent</code> directory, regardless
+of the directory from which Streamlit is launched. The sidebar keeps the
+original password-masked fields and fills them from <code>.env</code> when configured.</p>
+<h2 id="usage">⚙️ Usage</h2>
+<p><strong>Streamlit UI:</strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
+</code></pre></div>
+
+<p>Open http://localhost:8501, enter a company (e.g. <code>LangChain</code>), optionally an attendee and your meeting goal, and hit <strong>Generate brief</strong>. Watch the graph work through its nodes, then read the brief and inspect the evidence table. Download the brief as Markdown with one click.</p>
+<p><strong>CLI:</strong></p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>main.py<span class="w"> </span><span class="s2">&quot;LangChain&quot;</span><span class="w"> </span>--attendee<span class="w"> </span><span class="s2">&quot;Harrison Chase, CEO&quot;</span><span class="w"> </span>--context<span class="w"> </span><span class="s2">&quot;exploring an integration partnership&quot;</span>
+</code></pre></div>
+
+<p><strong>LangSmith (optional):</strong> add these to <code>.env</code> to trace every run:</p>
+<div class="codehilite"><pre><span></span><code>LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=your_langsmith_api_key
+</code></pre></div>
+
+<h2 id="project-structure">📂 Project Structure</h2>
+<div class="codehilite"><pre><span></span><code>meeting_briefing_agent/
+├── graph.py          # LangGraph state machine (plan → research → reflect ⇄ → write)
+├── app.py            # Streamlit UI with live node progress + evidence table
+├── main.py           # CLI entrypoint
+├── pyproject.toml    # Dependencies (uv/pip)
+├── test_graph.py     # Deterministic graph tests (no API calls)
+├── env.example       # Required/optional environment variables
+└── README.md
+</code></pre></div>
+
+<h2 id="technical-notes">🔍 Technical Notes</h2>
+<ul>
+<li><strong>Default model:</strong> <code>Qwen/Qwen3-30B-A3B-Instruct-2507</code> on Nebius Token Factory (an economical MoE model with structured-output support). Switch to <code>Qwen/Qwen3.5-397B-A17B</code>, <code>deepseek-ai/DeepSeek-V4-Pro</code>, or <code>zai-org/GLM-5.2</code> in the sidebar for higher-quality reasoning and writing, or set <code>NEBIUS_MODEL</code>.</li>
+<li><strong>Iteration budget:</strong> the reflect→research loop runs at most <code>max_iterations</code> times (default 2, configurable) so a run always terminates.</li>
+<li><strong>Evidence dedupe:</strong> sources are deduplicated by URL across all research passes.</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

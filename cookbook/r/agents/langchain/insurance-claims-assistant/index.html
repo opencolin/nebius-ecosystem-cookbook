@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Insurance Claims Assistant · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/insurance-claims-assistant" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="insurance-claims-assistant">Insurance Claims Assistant</h1>
+<p>A multimodal claims-triage agent built on <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a>.
+<strong>Drop in a folder of claim documents — in any shape</strong> — and the agent reads everything
+(PDFs, photos, forms), works out what the claim is, confirms its understanding with you,
+then reconciles what the claimant <em>stated</em> against what the evidence actually <em>shows</em> and
+hands a human assessor a structured summary with a recommendation.</p>
+<p>It wires <strong>two</strong> Token Factory models together, using <strong>LangChain</strong> to drive the reasoning:</p>
+<ul>
+<li><strong><code>nvidia/Llama-3_1-Nemotron-Ultra-253B-v1</code></strong> — the reasoning brain. It classifies the
+  documents, infers the claim, and produces the final typed assessment.</li>
+<li><strong><code>nvidia/Cosmos3-Super-Reasoner</code></strong> — the eyes. The Cosmos 3 vision-language model that
+  reads accident photos and any scanned/photographed documents.</li>
+</ul>
+<h2 id="features">Features</h2>
+<ul>
+<li>📂 <strong>Drop any folder</strong> — no fixed filenames or structure. PDFs (invoices, policy
+  declarations, verification records, incident reports), photos, JSON forms, loose text.</li>
+<li>📄 <strong>Reads PDFs</strong> — extracts the text layer for exact amounts/names/dates, and falls back
+  to the vision model for scanned/image-only PDFs.</li>
+<li>🧠 <strong>Auto-classifies documents &amp; claim type</strong> — figures out what each file is and whether
+  it's an auto or property claim from <em>content</em>, not filenames.</li>
+<li>🙋 <strong>Confirms before judging</strong> — shows you what it understood ("this looks like an auto
+  claim by … for … — correct?"), takes your corrections, and asks follow-up questions.</li>
+<li>⚖️ <strong>Four assessor checks</strong> — document completeness, damage-vs-description, amount
+  consistency, and identity consistency — tuned for <em>materiality</em> (won't flag a $14 rounding
+  difference, will flag a $350-vs-$5,000 one).</li>
+<li>🚩 <strong>Inconsistency &amp; gap detection</strong> — mismatched severity, inflated invoices, name
+  mismatches, missing required documents.</li>
+<li>📋 <strong>Assessor-ready output</strong> — a validated <code>ClaimAssessment</code> (JSON) + markdown report with
+  a recommendation (<code>approve</code> / <code>request_more_info</code> / <code>manual_review</code> / <code>deny</code>), fraud-risk,
+  and confidence.</li>
+<li>🖥️ <strong>Two interfaces</strong> — an interactive CLI (with <code>--yes</code> for batch/CI) and a Streamlit app.</li>
+</ul>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li><strong>Nebius Token Factory</strong> — <code>nvidia/Llama-3_1-Nemotron-Ultra-253B-v1</code> (reasoning) +
+  <code>nvidia/Cosmos3-Super-Reasoner</code> (vision)</li>
+<li><strong>LangChain</strong> — <code>langchain-openai</code> <code>ChatOpenAI</code> against the Token Factory OpenAI-compatible endpoint</li>
+<li><strong>PyMuPDF</strong> — PDF text extraction + page rasterisation</li>
+<li><strong>Pydantic</strong> — typed schemas, validated at every step</li>
+<li><strong>Streamlit</strong> — the interactive UI</li>
+</ul>
+<h2 id="how-it-works">How it works</h2>
+<div class="codehilite"><pre><span></span><code>   any claim folder            ┌─────────────── perceive ───────────────┐
+  (pdf / jpg / json / txt) ──▶ │ text PDFs  → extract text               │
+                               │ scanned PDF/images → Cosmos3 VLM        │
+                               │ json / txt → read directly              │
+                               └────────────────────┬────────────────────┘
+                                                    ▼
+                          ┌──────── understand (Nemotron) ────────┐
+                          │ classify docs · infer claim type ·    │
+                          │ &quot;this looks like … — correct?&quot; + Qs   │
+                          └────────────────────┬───────────────────┘
+                                       confirm / correct / answer  ◀── you
+                                                    ▼
+                          ┌──────── assess (Nemotron) ────────────┐
+                          │ 4 checks · inconsistencies · verdict  │
+                          └────────────────────┬───────────────────┘
+                                                    ▼
+                          ClaimAssessment (JSON) + assessor report
+</code></pre></div>
+
+<p>Perception reads <em>every</em> file up front, so the reasoning steps are always fully grounded —
+the model never has to remember to look at a document, and can't fabricate one. Every model
+call returns a single JSON object validated with Pydantic (with a retry on malformed output).</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.11 or higher</li>
+<li>Nebius API key (get it from <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a>)</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/token-factory-cookbook/
+
+<span class="nb">cd</span><span class="w"> </span>token-factory-cookbook/agents/langchain/insurance-claims-assistant
+
+uv<span class="w"> </span>sync<span class="w">                         </span><span class="c1"># or: pip install -r requirements.txt</span>
+
+cp<span class="w"> </span>env.example<span class="w"> </span>.env<span class="w">             </span>
+<span class="c1"># then edit .env and set NEBIUS_API_KEY</span>
+</code></pre></div>
+
+<h2 id="running">Running</h2>
+<p><strong>CLI</strong> (interactive — shows its understanding, asks you to confirm):</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>main.py<span class="w"> </span>--claim<span class="w"> </span>path/to/claim_folder/<span class="w">     </span><span class="c1"># or: python main.py --claim …</span>
+</code></pre></div>
+
+<p>Batch / non-interactive (auto-confirm), and JSON-only:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>--claim<span class="w"> </span>path/to/claim_folder/<span class="w"> </span>--yes
+python<span class="w"> </span>main.py<span class="w"> </span>--claim<span class="w"> </span>path/to/claim_folder/<span class="w"> </span>--yes<span class="w"> </span>--json-only
+</code></pre></div>
+
+<p>Running with no <code>--claim</code> uses the bundled <code>sample_claim/</code>.</p>
+<p><strong>Try the showcase</strong> — three full claim bundles (PDFs + photos) that demonstrate every
+outcome, with expected verdicts included:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>--claim<span class="w"> </span>showcase/CLM-2026-0142_clean_auto<span class="w"> </span>--yes<span class="w">        </span><span class="c1"># → approve</span>
+python<span class="w"> </span>main.py<span class="w"> </span>--claim<span class="w"> </span>showcase/CLM-2026-0143_suspicious_auto<span class="w"> </span>--yes<span class="w">   </span><span class="c1"># → deny</span>
+python<span class="w"> </span>main.py<span class="w"> </span>--claim<span class="w"> </span>showcase/CLM-2026-0144_property_manual_review<span class="w">  </span><span class="c1"># → manual_review</span>
+</code></pre></div>
+
+<p>See <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/insurance-claims-assistant/showcase/README.md" target="_blank" rel="noopener"><code>showcase/README.md</code></a> for the story behind each one.</p>
+<p><strong>Streamlit app</strong> (drop a folder path, upload files, or run the sample):</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>streamlit<span class="w"> </span>run<span class="w"> </span>app.py<span class="w">     </span><span class="c1"># or: streamlit run app.py</span>
+</code></pre></div>
+
+<h2 id="what-goes-in-a-claim-folder">What goes in a claim folder</h2>
+<p><strong>Anything</strong> — there is no required layout. Put in whatever the claimant submitted:</p>
+<ul>
+<li><strong>Damage photos</strong> — <code>.jpg/.png/.webp</code> (vehicle or property).</li>
+<li><strong>Documents</strong> — <code>.pdf</code> (repair invoice/estimate, policy declaration, identity/verification
+  record, incident report, registration) or images of them.</li>
+<li><strong>A claim form</strong> — <code>claim_form.json</code> if you have structured stated facts (optional), or
+  just include the claim-form PDF.</li>
+<li>Loose <code>.txt</code> notes are read too.</li>
+</ul>
+<p>Filenames don't matter — the agent classifies each document by its <strong>content</strong>. Files that
+are clearly test scaffolding (<code>expected_verdict*</code>, <code>ground_truth*</code>, <code>README</code>, <code>MANIFEST</code>,
+screenshots, dotfiles) are ignored so they can't leak answers.</p>
+<p>The bundled <code>sample_claim/</code> is a small vehicle claim (a "minor scratch / $350" statement
+against photos of severe damage and a $4,820 invoice, with no ID) — a good first run.</p>
+<h2 id="configuration">Configuration</h2>
+<p>All configurable via <code>.env</code> (see <code>env.example</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>—</td>
+<td>Your Token Factory API key (required)</td>
+</tr>
+<tr>
+<td><code>NEBIUS_BASE_URL</code></td>
+<td><code>https://api.tokenfactory.nebius.com/v1/</code></td>
+<td>Inference endpoint</td>
+</tr>
+<tr>
+<td><code>TEXT_MODEL</code></td>
+<td><code>nvidia/Llama-3_1-Nemotron-Ultra-253B-v1</code></td>
+<td>Reasoning model</td>
+</tr>
+<tr>
+<td><code>VISION_MODEL</code></td>
+<td><code>nvidia/Cosmos3-Super-Reasoner</code></td>
+<td>Vision model</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>If your workspace serves the Cosmos vision model under a different id (for example
+<code>nvidia/Cosmos3-Super</code>), just set <code>VISION_MODEL</code> in your <code>.env</code> — no code changes needed.</p>
+</blockquote>
+<h2 id="project-layout">Project layout</h2>
+<div class="codehilite"><pre><span></span><code>insurance-claims-assistant/
+├── main.py                    # CLI (perceive → understand → confirm → assess)
+├── app.py                     # Streamlit UI (staged confirm/assess)
+├── claims_assistant/
+│   ├── config.py              # endpoint, model ids, ChatOpenAI factories
+│   ├── models.py              # Pydantic schemas (DocumentInsight, ClaimUnderstanding, ClaimAssessment)
+│   ├── llm.py                 # vision (chat_vision) helper + JSON extraction
+│   ├── ingest.py              # discover files, extract PDF text, rasterise, encode images
+│   ├── perception.py          # read every file → DocumentInsight (deterministic)
+│   ├── agent.py               # understand() + assess() reasoning steps
+│   └── report.py              # understanding &amp; assessment → markdown
+└── sample_claim/              # a ready-to-run example claim
+</code></pre></div>
+
+<h2 id="notes">Notes</h2>
+<ul>
+<li>Not legal or underwriting advice — this is an educational example. Keep a human assessor
+  in the loop for real claims, and never upload real identity documents to a demo.</li>
+<li>The sample photos are freely licensed; see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/langchain/insurance-claims-assistant/sample_claim/ATTRIBUTIONS.md" target="_blank" rel="noopener"><code>sample_claim/ATTRIBUTIONS.md</code></a>.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a></li>
+<li><a href="https://docs.langchain.com/">LangChain</a> · <a href="https://python.langchain.com/docs/integrations/chat/openai/"><code>ChatOpenAI</code></a></li>
+<li><a href="https://tokenfactory.nebius.com/">Nemotron Ultra 253B</a> · <a href="https://developer.nvidia.com/cosmos">NVIDIA Cosmos</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

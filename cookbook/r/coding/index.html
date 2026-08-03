@@ -28,58 +28,122 @@
   
   <article class="cb-content">
 <h1 id="using-token-factory-models-with-coding-agents">Using Token Factory Models with Coding Agents</h1>
-<p>Token Factory has integrations with many coding agents and allows you to run state of the art open source models.</p>
-<p>Checkout <a href="https://docs.tokenfactory.nebius.com/integrations/overview#coding-assistants">all coding integrations</a> for instrcutions</p>
+<p>Token Factory has integrations with many coding agents and allows you to run state-of-the-art open-source models.</p>
+<p>Check out <a href="https://docs.tokenfactory.nebius.com/integrations/overview#coding-assistants">all coding integrations</a> for instructions.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#top-coding-models-token-factory">Top Coding Models @ Token Factory</a></li>
+<li><a href="#coding-agent-integrations">Coding Agent Integrations</a></li>
+<li><a href="#cursor">Cursor</a></li>
+<li><a href="#cline">Cline</a></li>
+<li><a href="#claude-code">Claude Code</a></li>
+<li><a href="#codex">Codex</a></li>
+<li><a href="#opencode">OpenCode</a></li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A <a href="https://tokenfactory.nebius.com/">Token Factory</a> account and API key.</li>
+<li>A supported coding agent installed (Cursor, Cline, Claude Code, Codex, or OpenCode).</li>
+</ul>
+<h2 id="top-coding-models-token-factory">Top Coding Models @ Token Factory</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Context Window</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>moonshotai/Kimi-K2.7-Code</code></td>
+<td>256K</td>
+<td>1T (32B active)</td>
+</tr>
+<tr>
+<td><code>zai-org/GLM-5.2</code></td>
+<td>1M</td>
+<td>753B</td>
+</tr>
+<tr>
+<td><code>moonshotai/Kimi-K3</code></td>
+<td>1M</td>
+<td>2.8T (104B active)</td>
+</tr>
+<tr>
+<td><code>MiniMaxAI/MiniMax-M3</code></td>
+<td>1M</td>
+<td>428B (23B active)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="coding-agent-integrations">Coding Agent Integrations</h2>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Integration</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cursor</td>
+<td>Native</td>
+<td><a href="#cursor">notes</a></td>
+</tr>
+<tr>
+<td>Cline</td>
+<td>Native</td>
+<td><a href="#cline">notes</a></td>
+</tr>
+<tr>
+<td>Claude Code</td>
+<td>via Proxy</td>
+<td><a href="#claude-code">notes</a></td>
+</tr>
+<tr>
+<td>Codex</td>
+<td>via Proxy</td>
+<td><a href="#codex">notes</a></td>
+</tr>
+<tr>
+<td>OpenCode</td>
+<td>Native</td>
+<td><a href="#opencode">notes</a></td>
+</tr>
+</tbody>
+</table>
 <h2 id="cursor">Cursor</h2>
-<p><a href="https://docs.tokenfactory.nebius.com/integrations/coding/cursor">instructions</a></p>
-<p>demo:</p>
-<p><a href="https://www.youtube.com/watch?v=wsLn2vZdrHw"><img alt="Alt text" src="https://img.youtube.com/vi/wsLn2vZdrHw/0.jpg" /></a></p>
+<p>Native integration.</p>
+<ul>
+<li><a href="https://docs.tokenfactory.nebius.com/integrations/coding/cursor">instructions</a></li>
+<li><a href="https://www.youtube.com/watch?v=wsLn2vZdrHw">🎥 howto video</a></li>
+</ul>
 <h2 id="cline">Cline</h2>
-<p><a href="https://docs.tokenfactory.nebius.com/integrations/coding/cline">instructions</a></p>
-<p>demo:</p>
-<p><a href="https://www.youtube.com/watch?v=q-oCalBP6lk"><img alt="Alt text" src="https://img.youtube.com/vi/q-oCalBP6lk/0.jpg" /></a></p>
+<p>Native integration.</p>
+<ul>
+<li><a href="https://docs.tokenfactory.nebius.com/integrations/coding/cline">instructions</a></li>
+<li><a href="https://www.youtube.com/watch?v=q-oCalBP6lk">🎥 howto video</a></li>
+</ul>
 <h2 id="claude-code">Claude Code</h2>
 <h3 id="using-claude-code-with-proxy-server">Using Claude Code with Proxy Server</h3>
-<p><a href="https://github.com/KiranChilledOut/claude-code-proxy">Claude proxy server</a></p>
-<p>Follow the instructions there.</p>
-<p>Recommended coding models on Token Factory (as of March 2026)
-- <code>zai-org/GLM-5.1</code>
-- <code>zai-org/GLM-4.7-FP8</code>
-- <code>Qwen/Qwen3-Coder-480B-A35B-Instruct</code></p>
-<h4 id="sample-env-file-for-qwenqwen3-coder-480b-a35b-instruct">Sample <code>.env</code> file for <code>Qwen/Qwen3-Coder-480B-A35B-Instruct</code></h4>
-<div class="codehilite"><pre><span></span><code>OPENAI_API_KEY=&quot;your key goes here&quot;
-
-ANTHROPIC_API_KEY=&quot;dummy&quot;
-
-IGNORE_CLIENT_API_KEY=true
-
-OPENAI_BASE_URL=https://api.tokenfactory.nebius.com/v1
-
-BIG_MODEL=Qwen/Qwen3-Coder-480B-A35B-Instruct
-
-MIDDLE_MODEL=Qwen/Qwen3-Coder-480B-A35B-Instruct
-
-SMALL_MODEL=Qwen/Qwen3-Coder-480B-A35B-Instruct
-
-VISION_MODEL=Qwen/Qwen2.5-VL-72B-Instruct
-
-# Optional: explicit context limits (tokens) for safer max_tokens auto-capping
-BIG_MODEL_CONTEXT_LIMIT=204800
-MIDDLE_MODEL_CONTEXT_LIMIT=204800
-SMALL_MODEL_CONTEXT_LIMIT=204800
-VISION_MODEL_CONTEXT_LIMIT=32768
-STRIP_IMAGE_CONTEXT=true
-
-HOST=0.0.0.0
-PORT=8083
-LOG_LEVEL=INFO #DEBUG
-
-## testing this
-MAX_TOKENS_LIMIT=64000
-#MIN_TOKENS_LIMIT=4096
-REQUEST_TIMEOUT=90
-MAX_RETRIES=2
-</code></pre></div>
+<p>Integrates using the following proxies:</p>
+<ul>
+<li><a href="https://github.com/KiranChilledOut/claude-codex-nebius-proxy">Claude Codex proxy server</a></li>
+<li><a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a></li>
+</ul>
+<h2 id="codex">Codex</h2>
+<p>Integrates using the following proxies:</p>
+<ul>
+<li><a href="https://github.com/KiranChilledOut/claude-codex-nebius-proxy">Claude Codex proxy server</a></li>
+<li><a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a></li>
+</ul>
+<h2 id="opencode">OpenCode</h2>
+<p>Native integration with Token Factory!
+- <a href="https://www.youtube.com/watch?v=216_T--JE0k">🎥 howto video</a></p>
+<p>Optionally, you can use this proxy: <a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a></p>
   </article>
 </div>
 <footer><div class="container"><div class="footer-bottom">

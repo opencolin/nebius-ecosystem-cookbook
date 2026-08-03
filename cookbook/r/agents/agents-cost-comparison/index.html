@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Comparing Agent Cost Across Models · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/agents-cost-comparison" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="comparing-agent-cost-across-models">Comparing Agent Cost Across Models</h1>
+<p>This script runs the same agentic task against multiple Nebius-hosted models and compares token usage, tool calls, wall-clock time, and estimated cost.</p>
+<p>File: <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/agents-cost-comparison/agent_cost_comparison.py" target="_blank" rel="noopener"><code>agent_cost_comparison.py</code></a></p>
+<h2 id="setup">Setup</h2>
+<p>Copy <code>env.example</code> to <code>.env</code> and add your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your_key_here
+</code></pre></div>
+
+<h2 id="configure-the-comparison">Configure the comparison</h2>
+<p>Open <code>agent_cost_comparison.py</code> and edit the <code>MODELS</code> list. Each entry needs a model name and per-1M-token pricing:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">MODELS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;nvidia/Nemotron-3-Ultra-550b-a55b&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;input_price_per_1m&quot;</span><span class="p">:</span> <span class="mf">1.00</span><span class="p">,</span>
+        <span class="s2">&quot;output_price_per_1m&quot;</span><span class="p">:</span> <span class="mf">3.00</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;nvidia/nemotron-3-super-120b-a12b&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;input_price_per_1m&quot;</span><span class="p">:</span> <span class="mf">0.30</span><span class="p">,</span>
+        <span class="s2">&quot;output_price_per_1m&quot;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</code></pre></div>
+
+<p>You can also change the <code>QUERY</code> constant to run a different task.</p>
+<h2 id="run">Run</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>agent_cost_comparison.py
+</code></pre></div>
+
+<p>Each model's report is written to <code>output_&lt;model_name&gt;.md</code> in the current directory. The console output shows per-run metrics followed by a comparison summary.</p>
+<h2 id="sample-output">Sample output</h2>
+<div class="codehilite"><pre><span></span><code>=== Running deep research with nvidia/Nemotron-3-Ultra-550b-a55b ===
+Wrote report (1726 chars) to output_nvidia_Nemotron-3-Ultra-550b-a55b.md
+
+--- nvidia/Nemotron-3-Ultra-550b-a55b run summary ---
+Tool calls:    2
+Input tokens:  19,249
+Output tokens: 8,657
+Total tokens:  27,906
+Elapsed time:  31.793s
+Est. cost:     $0.045220 (@ In $1.0/1M, Out $3.0/1M)
+
+=== Running deep research with nvidia/nemotron-3-super-120b-a12b ===
+Wrote report (4534 chars) to output_nvidia_nemotron-3-super-120b-a12b.md
+
+--- nvidia/nemotron-3-super-120b-a12b run summary ---
+Tool calls:    8
+Input tokens:  29,279
+Output tokens: 3,929
+Total tokens:  33,208
+Elapsed time:  21.286s
+Est. cost:     $0.012320 (@ In $0.3/1M, Out $0.9/1M)
+
+=== Final comparison summary ===
+Model                            Tool calls      Input tokens     Output tokens      Total tokens       Elapsed (s)         Est. cost
+-------------------------------------------------------------------------------------------------------------------------------------
+MiniMaxAI/MiniMax-M3                        4            21,086             5,196            26,282            42.865         $0.012561
+moonshotai/Kimi-K2.7-Code                   6            48,195             5,470            53,665          1437.686         $0.067665
+moonshotai/Kimi-K3                          9            66,580             7,198            73,778          1808.597         $0.307710
+nvidia/nemotron-3-super-120b-a12b           8            29,279             3,929            33,208            21.286         $0.012320
+nvidia/Nemotron-3-Ultra-550b-a55b           2            19,249             8,657            27,906            31.793         $0.045220
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Cheapest: nvidia/nemotron-3-super-120b-a12b
+  Tool calls:    8
+  Input tokens:  29,279
+  Output tokens: 3,929
+  Total tokens:  33,208
+  Elapsed time:  21.286s
+  Est. cost:     $0.012320
+
+Fastest: nvidia/nemotron-3-super-120b-a12b
+  Tool calls:    8
+  Input tokens:  29,279
+  Output tokens: 3,929
+  Total tokens:  33,208
+  Elapsed time:  21.286s
+  Est. cost:     $0.012320
+</code></pre></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

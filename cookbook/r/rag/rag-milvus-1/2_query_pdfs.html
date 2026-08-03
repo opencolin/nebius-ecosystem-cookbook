@@ -7933,7 +7933,7 @@ a.anchor-link {
 <span class="c1">#     # model_name = 'sentence-transformers/all-MiniLM-L6-v2' # 23 M params</span>
 <span class="c1">#     model_name = 'BAAI/bge-small-en-v1.5'  # 33M params</span>
 <span class="c1">#     # model_name = 'Qwen/Qwen3-Embedding-0.6B'  # 600M params</span>
-<span class="c1">#     # model_name = 'BAAI/bge-en-icl'  # 7B params</span>
+<span class="c1">#     # model_name = 'Qwen/Qwen3-Embedding-8B'  # 7B params</span>
 <span class="c1">#     #model_name = 'intfloat/multilingual-e5-large-instruct'  # 560M params</span>
 <span class="c1"># )</span>
 </pre></div>
@@ -8115,8 +8115,8 @@ Wall time: 113 ms
 
 <span class="n">Settings</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">NebiusLLM</span><span class="p">(</span>
                 <span class="n">model</span><span class="o">=</span><span class="s1">'openai/gpt-oss-120b'</span><span class="p">,</span>
-                <span class="c1"># model='openai/gpt-oss-20b',</span>
-                <span class="c1"># model='deepseek-ai/DeepSeek-R1-0528',</span>
+                <span class="c1"># model='openai/gpt-oss-120b',</span>
+                <span class="c1"># model='deepseek-ai/DeepSeek-V4-Pro',</span>
                 <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"NEBIUS_API_KEY"</span><span class="p">)</span> <span class="c1"># if not specfified, it will get taken from env variable</span>
     <span class="p">)</span>
 </pre></div>
