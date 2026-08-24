@@ -63,11 +63,11 @@
 <hr />
 <h2 id="agents-flow-diagram">Agents Flow Diagram</h2>
 <div class="codehilite"><pre><span></span><code>flowchart TD
-    A[&quot;search_web (SearchAgent)&quot;] --&gt;|&quot;uploaded_files exist&quot;| B[&quot;process_documents (DocumentAgent)&quot;]
-    A --&gt;|&quot;no uploaded_files&quot;| C[&quot;retrieve_docs (EmbeddingAgent &amp; VectorService)&quot;]
+    A["search_web (SearchAgent)"] --&gt;|"uploaded_files exist"| B["process_documents (DocumentAgent)"]
+    A --&gt;|"no uploaded_files"| C["retrieve_docs (EmbeddingAgent &amp; VectorService)"]
     B --&gt; C
-    C --&gt; D[&quot;generate_response (LLMAgent)&quot;]
-    D --&gt; E[&quot;monitor_request (MonitoringAgent)&quot;]
+    C --&gt; D["generate_response (LLMAgent)"]
+    D --&gt; E["monitor_request (MonitoringAgent)"]
     E --&gt; F[END]
 </code></pre></div>
 

@@ -33,7 +33,7 @@
 <h2 id="why-deep-agents">Why deep agents</h2>
 <p>A regular tool-calling agent gets shallow on a task like this — it does one search, hallucinates the rest. Deep Agents add three primitives that make multi-step research actually work:</p>
 <ul>
-<li><strong>Planning</strong> — a <code>write_todos</code> tool the agent uses to lay out work before it starts, and tick off as it goes.</li>
+<li><strong>Planning</strong> — the lead agent establishes a complete company-by-dimension research matrix before delegating work.</li>
 <li><strong>A virtual filesystem</strong> — <code>write_file</code> / <code>read_file</code> so the agent can accumulate findings and produce a single clean final artifact.</li>
 <li><strong>Sub-agents</strong> — bounded specialist agents the lead can delegate to. We ship three:</li>
 <li><code>pricing-researcher</code> — finds and extracts the official pricing page.</li>
@@ -60,7 +60,7 @@ cp<span class="w"> </span>env.example<span class="w"> </span>.env
 
 <h2 id="run">Run</h2>
 <h3 id="cli">CLI</h3>
-<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>cli.py<span class="w"> </span><span class="s2">&quot;Netflix&quot;</span>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>cli.py<span class="w"> </span><span class="s2">"Netflix"</span>
 </code></pre></div>
 
 <h3 id="streamlit-web-ui">Streamlit (web UI)</h3>
@@ -78,8 +78,8 @@ cp<span class="w"> </span>env.example<span class="w"> </span>.env
 </ol>
 <p>You'll see every step rendered live in the terminal: plan updates, tool calls, sub-agent dispatches, and the final brief.</p>
 <h3 id="options">Options</h3>
-<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>cli.py<span class="w"> </span><span class="s2">&quot;Linear&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--model<span class="w"> </span><span class="s2">&quot;moonshotai/Kimi-K2.6&quot;</span><span class="w"> </span><span class="se">\</span>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>cli.py<span class="w"> </span><span class="s2">"Linear"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span><span class="s2">"MiniMaxAI/MiniMax-M3"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>./linear-brief.md
 </code></pre></div>
 
@@ -94,7 +94,7 @@ cp<span class="w"> </span>env.example<span class="w"> </span>.env
 <tbody>
 <tr>
 <td><code>--model</code>, <code>-m</code></td>
-<td><code>moonshotai/Kimi-K2.6</code></td>
+<td><code>MiniMaxAI/MiniMax-M3</code></td>
 <td>Any tool-calling capable Nebius TF model.</td>
 </tr>
 <tr>

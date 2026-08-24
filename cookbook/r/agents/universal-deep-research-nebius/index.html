@@ -65,7 +65,7 @@ cp<span class="w"> </span>env.example<span class="w"> </span>.env
 <span class="c1"># FRAME_BASE_URL=https://api.tokenfactory.nebius.com/v1/</span>
 <span class="c1"># FRAME_MODEL=moonshotai/Kimi-K2.6</span>
 <span class="c1"># Optional (web search):</span>
-<span class="c1"># echo &quot;&lt;your-tavily-key&gt;&quot; &gt; tavily_api.txt</span>
+<span class="c1"># echo "&lt;your-tavily-key&gt;" &gt; tavily_api.txt</span>
 ./launch_server.sh
 </code></pre></div>
 
@@ -73,11 +73,11 @@ cp<span class="w"> </span>env.example<span class="w"> </span>.env
 <div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../frontend
 cp<span class="w"> </span>env.example<span class="w"> </span>.env.local
 <span class="c1"># Connect to backend and use v1 endpoint</span>
-sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_BACKEND_BASE_URL=.*#NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost#&#39;</span><span class="w"> </span>.env.local
-sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_BACKEND_PORT=.*#NEXT_PUBLIC_BACKEND_PORT=8000#&#39;</span><span class="w"> </span>.env.local
-sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_API_VERSION=.*#NEXT_PUBLIC_API_VERSION=v1#&#39;</span><span class="w"> </span>.env.local
-sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_ENABLE_V2_API=.*#NEXT_PUBLIC_ENABLE_V2_API=false#&#39;</span><span class="w"> </span>.env.local
-sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="s1">&#39;s#^NEXT_PUBLIC_DRY_RUN=.*#NEXT_PUBLIC_DRY_RUN=false#&#39;</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">''</span><span class="w"> </span><span class="s1">'s#^NEXT_PUBLIC_BACKEND_BASE_URL=.*#NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost#'</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">''</span><span class="w"> </span><span class="s1">'s#^NEXT_PUBLIC_BACKEND_PORT=.*#NEXT_PUBLIC_BACKEND_PORT=8000#'</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">''</span><span class="w"> </span><span class="s1">'s#^NEXT_PUBLIC_API_VERSION=.*#NEXT_PUBLIC_API_VERSION=v1#'</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">''</span><span class="w"> </span><span class="s1">'s#^NEXT_PUBLIC_ENABLE_V2_API=.*#NEXT_PUBLIC_ENABLE_V2_API=false#'</span><span class="w"> </span>.env.local
+sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">''</span><span class="w"> </span><span class="s1">'s#^NEXT_PUBLIC_DRY_RUN=.*#NEXT_PUBLIC_DRY_RUN=false#'</span><span class="w"> </span>.env.local
 npm<span class="w"> </span>install
 npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w"> </span>--<span class="w"> </span>-p<span class="w"> </span><span class="m">3004</span>
 </code></pre></div>

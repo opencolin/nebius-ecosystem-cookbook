@@ -30,8 +30,8 @@
 <h1 id="cool-apps-and-demos-built-with-nebius-ai">Cool Apps and Demos built with Nebius AI</h1>
 <ul>
 <li><a href="#whatllm">WhatLLM</a></li>
-<li><a href="#llm-streetfighter">LLM Streetfighter!</a></li>
 <li><a href="#allycat">Allycat</a></li>
+<li><a href="#customer-support-ai">Customer Support AI</a></li>
 </ul>
 <h2 id="whatllm">WhatLLM</h2>
 <p>A cool and very useful LLM comparision tool</p>
@@ -50,25 +50,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="llm-streetfighter">LLM Streetfighter!</h2>
-<p>This will bring back the nostalgia of arcade games!</p>
-<p>coming soon.</p>
-<table>
-<thead>
-<tr>
-<th><img alt="" src="images/street-fighter-1.png" /></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-</tr>
-</tbody>
-</table>
-<hr />
 <h2 id="allycat">Allycat</h2>
 <p><a href="https://github.com/The-AI-Alliance/allycat">Allycat</a> can scrape a website, index its contents and allow chatting with the website content using LLMs running on Nebius Token Factory or locally.</p>
-<p>Author: <a href="https://sujee.dev/">Sujee Maniyam</a>  |   <a href="https://x.com/sujee_dev/">@sujee_dev</a></p>
+<p>Author: <a href="https://github.com/sujee">sujee</a> | <a href="https://sujee.dev/">sujee.dev</a> </p>
 <table>
 <thead>
 <tr>
@@ -81,6 +65,27 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="customer-support-ai">Customer Support AI</h2>
+<p><a href="https://github.com/amrrs/customer-support-ai">Customer Support AI</a> is an
+enterprise-style Next.js demo for building a conversational support assistant
+with Nebius Token Factory and Tavily. It streams Markdown responses, supports
+same-session follow-up questions, and restricts retrieval to a domain selected
+by the user.</p>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    U[Customer question] --&gt; UI[Next.js chat UI]
+    UI --&gt; API[Server API route]
+    API --&gt; T[Tavily domain search]
+    T --&gt; V[HTTPS and hostname validation]
+    V --&gt; N[Nebius Token Factory]
+    N --&gt;|Streamed answer| UI
+    V --&gt;|Approved links| UI
+</code></pre></div>
+
+<p>The server validates every retrieved URL before its excerpt can enter model
+context, and the interface hyperlinks answers only to those approved sources.
+The demo can be run locally or deployed to Vercel or Render.</p>
+<p>Built by <a href="https://github.com/amrrs">Amrrs</a>.</p>
 <hr />
   </article>
 </div>

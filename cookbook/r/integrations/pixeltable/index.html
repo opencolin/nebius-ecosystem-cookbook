@@ -51,51 +51,51 @@
 
 <p>Or in Python:</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NEBIUS_API_KEY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;your_key_here&#39;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'NEBIUS_API_KEY'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'your_key_here'</span>
 </code></pre></div>
 
 <h2 id="3-chat-completions">3. Chat completions</h2>
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pixeltable</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pxt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pixeltable.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">nebius</span>
 
-<span class="n">pxt</span><span class="o">.</span><span class="n">drop_dir</span><span class="p">(</span><span class="s1">&#39;nebius_demo&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">pxt</span><span class="o">.</span><span class="n">create_dir</span><span class="p">(</span><span class="s1">&#39;nebius_demo&#39;</span><span class="p">)</span>
+<span class="n">pxt</span><span class="o">.</span><span class="n">drop_dir</span><span class="p">(</span><span class="s1">'nebius_demo'</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">pxt</span><span class="o">.</span><span class="n">create_dir</span><span class="p">(</span><span class="s1">'nebius_demo'</span><span class="p">)</span>
 
-<span class="n">chat_t</span> <span class="o">=</span> <span class="n">pxt</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">&#39;nebius_demo/chat&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="n">pxt</span><span class="o">.</span><span class="n">String</span><span class="p">})</span>
-<span class="n">messages</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;role&#39;</span><span class="p">:</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="n">chat_t</span><span class="o">.</span><span class="n">input</span><span class="p">}]</span>
+<span class="n">chat_t</span> <span class="o">=</span> <span class="n">pxt</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">'nebius_demo/chat'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'input'</span><span class="p">:</span> <span class="n">pxt</span><span class="o">.</span><span class="n">String</span><span class="p">})</span>
+<span class="n">messages</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">'role'</span><span class="p">:</span> <span class="s1">'user'</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">:</span> <span class="n">chat_t</span><span class="o">.</span><span class="n">input</span><span class="p">}]</span>
 
 <span class="n">chat_t</span><span class="o">.</span><span class="n">add_computed_column</span><span class="p">(</span>
     <span class="n">output</span><span class="o">=</span><span class="n">nebius</span><span class="o">.</span><span class="n">chat_completions</span><span class="p">(</span>
         <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
-        <span class="n">model</span><span class="o">=</span><span class="s1">&#39;meta-llama/Llama-3.3-70B-Instruct&#39;</span><span class="p">,</span>
-        <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max_tokens&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s1">&#39;temperature&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+        <span class="n">model</span><span class="o">=</span><span class="s1">'meta-llama/Llama-3.3-70B-Instruct'</span><span class="p">,</span>
+        <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'max_tokens'</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span> <span class="s1">'temperature'</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
     <span class="p">)</span>
 <span class="p">)</span>
 <span class="n">chat_t</span><span class="o">.</span><span class="n">add_computed_column</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="n">chat_t</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
 
-<span class="n">chat_t</span><span class="o">.</span><span class="n">insert</span><span class="p">([{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;What is the capital of France?&#39;</span><span class="p">}])</span>
+<span class="n">chat_t</span><span class="o">.</span><span class="n">insert</span><span class="p">([{</span><span class="s1">'input'</span><span class="p">:</span> <span class="s1">'What is the capital of France?'</span><span class="p">}])</span>
 <span class="n">chat_t</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">chat_t</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">chat_t</span><span class="o">.</span><span class="n">response</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 </code></pre></div>
 
 <p>Model IDs use the <code>org/model</code> form. Browse the catalog at <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a> or the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/pixeltable/models/" target="_blank" rel="noopener">Models guides</a> in this cookbook.</p>
 <h2 id="4-embeddings">4. Embeddings</h2>
 <p>Token Factory currently serves <code>Qwen/Qwen3-Embedding-8B</code>. By default it returns <strong>4096-dimensional</strong> vectors, which exceed Pixeltable’s embedding-index limit of 4000. Request a truncated size when you need an index:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">emb_t</span> <span class="o">=</span> <span class="n">pxt</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">&#39;nebius_demo/embeddings&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="n">pxt</span><span class="o">.</span><span class="n">String</span><span class="p">})</span>
+<div class="codehilite"><pre><span></span><code><span class="n">emb_t</span> <span class="o">=</span> <span class="n">pxt</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">'nebius_demo/embeddings'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'input'</span><span class="p">:</span> <span class="n">pxt</span><span class="o">.</span><span class="n">String</span><span class="p">})</span>
 <span class="n">emb_t</span><span class="o">.</span><span class="n">add_computed_column</span><span class="p">(</span>
     <span class="n">embedding</span><span class="o">=</span><span class="n">nebius</span><span class="o">.</span><span class="n">embeddings</span><span class="p">(</span>
-        <span class="nb">input</span><span class="o">=</span><span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">&#39;Qwen/Qwen3-Embedding-8B&#39;</span>
+        <span class="nb">input</span><span class="o">=</span><span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">'Qwen/Qwen3-Embedding-8B'</span>
     <span class="p">)</span>
 <span class="p">)</span>
 
 <span class="c1"># For similarity search / RAG indexes, truncate to an indexable size:</span>
 <span class="n">indexed</span> <span class="o">=</span> <span class="n">nebius</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">using</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;Qwen/Qwen3-Embedding-8B&#39;</span><span class="p">,</span>
-    <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;dimensions&#39;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">},</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">'Qwen/Qwen3-Embedding-8B'</span><span class="p">,</span>
+    <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'dimensions'</span><span class="p">:</span> <span class="mi">1024</span><span class="p">},</span>
 <span class="p">)</span>
-<span class="n">emb_t</span><span class="o">.</span><span class="n">add_embedding_index</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="n">embedding</span><span class="o">=</span><span class="n">indexed</span><span class="p">)</span>
+<span class="n">emb_t</span><span class="o">.</span><span class="n">add_embedding_index</span><span class="p">(</span><span class="s1">'input'</span><span class="p">,</span> <span class="n">embedding</span><span class="o">=</span><span class="n">indexed</span><span class="p">)</span>
 
-<span class="n">emb_t</span><span class="o">.</span><span class="n">insert</span><span class="p">([{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;Nebius Token Factory provides open models via API.&#39;</span><span class="p">}])</span>
-<span class="n">sim</span> <span class="o">=</span> <span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="n">string</span><span class="o">=</span><span class="s1">&#39;open models API&#39;</span><span class="p">)</span>
+<span class="n">emb_t</span><span class="o">.</span><span class="n">insert</span><span class="p">([{</span><span class="s1">'input'</span><span class="p">:</span> <span class="s1">'Nebius Token Factory provides open models via API.'</span><span class="p">}])</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="n">string</span><span class="o">=</span><span class="s1">'open models API'</span><span class="p">)</span>
 <span class="n">emb_t</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">emb_t</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">sim</span><span class="o">=</span><span class="n">sim</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">sim</span><span class="p">,</span> <span class="n">asc</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 </code></pre></div>
 

@@ -114,15 +114,15 @@ start with an internal, low-risk repository and a read-only documentation PR.</p
 <p>Keep the API key outside source control. OpenWiki's interactive setup can store
 credentials in <code>~/.openwiki/.env</code>; for a managed environment, inject the value
 from an approved secret manager instead of persisting it on a shared machine:</p>
-<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-token-factory-key&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">OPENWIKI_PROVIDER</span><span class="o">=</span><span class="s2">&quot;nebius&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">OPENWIKI_MODEL_ID</span><span class="o">=</span><span class="s2">&quot;moonshotai/Kimi-K2.7-Code&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span><span class="s2">"your-token-factory-key"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OPENWIKI_PROVIDER</span><span class="o">=</span><span class="s2">"nebius"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OPENWIKI_MODEL_ID</span><span class="o">=</span><span class="s2">"moonshotai/Kimi-K2.7-Code"</span>
 </code></pre></div>
 
 <p>Do not commit the API key to the repository, a documentation page, a notebook, or a CI workflow.</p>
 <p>Set the complete model ID explicitly. This makes a model change reviewable and
 avoids relying on an interactive preset:</p>
-<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">OPENWIKI_MODEL_ID</span><span class="o">=</span><span class="s2">&quot;moonshotai/Kimi-K2.7-Code&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">OPENWIKI_MODEL_ID</span><span class="o">=</span><span class="s2">"moonshotai/Kimi-K2.7-Code"</span>
 </code></pre></div>
 
 <p>Before changing the model, provider, system prompt, or connector scope in a
@@ -157,7 +157,7 @@ openwiki<span class="w"> </span>code<span class="w"> </span>--init<span class="w
 <div class="codehilite"><pre><span></span><code>---
 type: Documentation governance policy
 title: Enterprise documentation brief
-description: Scope and quality requirements for this repository&#39;s knowledge base.
+description: Scope and quality requirements for this repository's knowledge base.
 <span class="gu">tags: [documentation, governance]</span>
 <span class="gu">---</span>
 
@@ -232,7 +232,7 @@ openwiki/
 <span class="w">    </span><span class="nt">NEBIUS_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.NEBIUS_API_KEY }}</span>
 <span class="w">    </span><span class="nt">OPENWIKI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nebius</span>
 <span class="w">    </span><span class="nt">OPENWIKI_MODEL_ID</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moonshotai/Kimi-K2.7-Code</span>
-<span class="w">    </span><span class="nt">OPENWIKI_TELEMETRY_DISABLED</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1&quot;</span>
+<span class="w">    </span><span class="nt">OPENWIKI_TELEMETRY_DISABLED</span><span class="p">:</span><span class="w"> </span><span class="s">"1"</span>
 </code></pre></div>
 
 <p>Use a full Git checkout so OpenWiki can inspect relevant history. Have automation open a documentation pull request; do not give it autonomous merge permission. Use CODEOWNERS or an equivalent mechanism to require reviews from the responsible service, security, or operations teams.</p>
@@ -273,7 +273,7 @@ openwiki<span class="w"> </span>personal<span class="w"> </span>--update
 </code></pre></div>
 
 <p>Explore the result as an interactive graph and Markdown reader:</p>
-<div class="codehilite"><pre><span></span><code>openwiki<span class="w"> </span>visualize<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.openwiki/wiki&quot;</span>
+<div class="codehilite"><pre><span></span><code>openwiki<span class="w"> </span>visualize<span class="w"> </span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/.openwiki/wiki"</span>
 </code></pre></div>
 
 <p>For organizational use, connector ingestion is a data-governance decision, not merely a setup step:</p>
@@ -341,9 +341,9 @@ data classification, deployment environment, or legal requirement changes.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="openwiki-asks-for-provider-setup">OpenWiki asks for provider setup</h3>
 <p>Confirm all three variables are available in the same shell:</p>
-<div class="codehilite"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$NEBIUS_API_KEY</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Nebius key is set&quot;</span>
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OPENWIKI_PROVIDER</span><span class="s2">&quot;</span>
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OPENWIKI_MODEL_ID</span><span class="s2">&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">"</span><span class="nv">$NEBIUS_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Nebius key is set"</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="nv">$OPENWIKI_PROVIDER</span><span class="s2">"</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="nv">$OPENWIKI_MODEL_ID</span><span class="s2">"</span>
 </code></pre></div>
 
 <p>Never print the API key itself.</p>
