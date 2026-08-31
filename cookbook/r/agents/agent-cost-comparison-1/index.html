@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent Cost Comparison 2 · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/agent-cost-comparison-1" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="agent-cost-comparison-2">Agent Cost Comparison 2</h1>
+<p>Benchmark Nebius-hosted LLMs on a small data-analysis task and compare their
+<strong>cost</strong>, <strong>latency</strong>, <strong>token usage</strong>, and <strong>correctness</strong>.</p>
+<p>Each model is run as a <a href="https://github.com/langchain-ai/deepagents">deepagents</a>
+filesystem agent with no shell or code-execution tool. The agent must inspect
+the input files, reason over their contents, and write <code>result.json</code> and
+<code>summary.md</code> to the workspace output directory.</p>
+<h2 id="task">Task</h2>
+<p>The benchmark task is the same for every model:</p>
+<ol>
+<li>Compare Q1 vs Q2 revenue by region.</li>
+<li>Find the region with the largest absolute revenue change.</li>
+<li>Calculate its signed change as Q2 minus Q1.</li>
+<li>Within that region, find the product with the largest change in the same
+   direction as the region's change.</li>
+<li>Write <code>/output/result.json</code> and <code>/output/summary.md</code>.</li>
+</ol>
+<p>The agent has to do all reasoning and arithmetic itself over the file contents —
+there is no code-execution tool available.</p>
+<h2 id="output-format">Output format</h2>
+<p><code>result.json</code> must contain exactly these keys:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"region"</span><span class="p">:</span><span class="w"> </span><span class="s2">"west"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"change"</span><span class="p">:</span><span class="w"> </span><span class="mi">-60000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"primary_product"</span><span class="p">:</span><span class="w"> </span><span class="s2">"widget-b"</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>The values above illustrate the required types; each run must use values
+calculated from its workspace files.</p>
+<p><code>summary.md</code> must contain the <code># Sales Analysis</code> heading and exactly three
+bullets with the actual computed values:</p>
+<div class="codehilite"><pre><span></span><code><span class="gh"># Sales Analysis</span>
+
+<span class="k">-</span><span class="w"> </span>Region with the largest revenue change: &lt;actual region&gt;
+<span class="k">-</span><span class="w"> </span>Dollar amount of that change (signed): &lt;actual signed change&gt;
+<span class="k">-</span><span class="w"> </span>Product that contributed most to the change: &lt;actual product&gt;
+</code></pre></div>
+
+<p>The angle-bracketed text is instructional. The agent must replace every
+placeholder rather than copy it or emit label-only bullets. No Executive
+Summary section is required.</p>
+<h2 id="models-compared">Models compared</h2>
+<p>Configured in <code>MODELS</code> in <code>agent_cost_comparison_1.py</code>:</p>
+<ul>
+<li><code>nvidia/Nemotron-3-Ultra-550b-a55b</code></li>
+<li><code>nvidia/nemotron-3-super-120b-a12b</code></li>
+<li><code>nvidia/Nemotron-3_5-Lightning</code></li>
+</ul>
+<h2 id="setup">Setup</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+</code></pre></div>
+
+<p>Create a <code>.env</code> file in this directory with your Nebius API key:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>&lt;your-key&gt;
+</code></pre></div>
+
+<p>The script validates the key before making any LLM calls.</p>
+<h2 id="run">Run</h2>
+<p>Run the benchmark against the default <code>data-1</code> suite:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>agent_cost_comparison_1.py
+</code></pre></div>
+
+<p>Use a different data suite:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>agent_cost_comparison_1.py<span class="w"> </span>--data-dir<span class="w"> </span>data-2
+</code></pre></div>
+
+<p>For each model, a workspace is created at
+<code>benchmarks/&lt;data-suite&gt;/&lt;model&gt;/</code> (input is copied in, output is written to
+<code>output/</code>). Each result is validated against <code>&lt;data-dir&gt;/expected.json</code>. Once
+all models finish, a comparison table is printed sorted by estimated cost.</p>
+<p>Different data suites retain separate artifacts. Rerunning the same suite and
+model replaces only that model's existing workspace for that suite.</p>
+<h3 id="options">Options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--data-dir</code></td>
+<td><code>data-1</code></td>
+<td>Data suite directory under this folder</td>
+</tr>
+<tr>
+<td><code>--dump-transcript</code></td>
+<td>off</td>
+<td>Write messages to <code>&lt;workspace&gt;/output/_transcript.json</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration">Configuration</h2>
+<p>Key configuration values live in <code>agent_cost_comparison_1.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENT_TIMEOUT</code></td>
+<td><code>300</code> seconds (5 minutes)</td>
+<td>Timeout threshold for each <code>agent.invoke()</code> call</td>
+</tr>
+<tr>
+<td><code>MODELS</code></td>
+<td>3 Nebius models</td>
+<td>Models to benchmark and their pricing</td>
+</tr>
+<tr>
+<td><code>OUTPUT_DATA_DIR</code></td>
+<td><code>output</code></td>
+<td>Output subdirectory inside each workspace</td>
+</tr>
+</tbody>
+</table>
+<p>Adjust <code>AGENT_TIMEOUT</code> if slow runs regularly cross the threshold.</p>
+<h2 id="execution-behavior">Execution behavior</h2>
+<ul>
+<li><code>NEBIUS_API_KEY</code> is validated before any LLM calls are made.</li>
+<li>Each <code>agent.invoke()</code> uses an <code>AGENT_TIMEOUT</code> threshold of 300 seconds (5
+  minutes). If it is exceeded, the script attempts to recover checkpointed
+  messages so already-billed tokens can still be counted.</li>
+<li>The invocation runs in a thread, which cannot forcibly terminate an in-flight
+  request. A timed-out request may therefore continue blocking until the worker
+  returns before recovery proceeds.</li>
+<li>On an unexpected crash, the script also tries to recover checkpointed
+  messages. If recovery itself fails, the original exception is preserved in
+  the metrics output.</li>
+<li>The Nemotron-3-Ultra harness profile override is registered at runtime inside
+  <code>main()</code>, so importing the module does not mutate global Deep Agents state.</li>
+</ul>
+<h2 id="validation">Validation</h2>
+<p>The built-in score compares <code>result.json</code> with the selected suite's
+<code>expected.json</code>. It also reports whether <code>summary.md</code> exists and is nonempty.
+It does not currently validate the summary heading, bullet count, or values;
+inspect the generated summary or transcript when verifying a run.</p>
+<h2 id="files">Files</h2>
+<ul>
+<li><code>agent_cost_comparison_1.py</code> — configuration, orchestration, and per-model
+  execution (parsing, validation, cost metrics, comparison table).</li>
+<li><code>utils.py</code> — workspace setup, usage/cost collection, validation, printing,
+  transcript serialization, and invocation helpers.</li>
+<li><code>data-1/input/</code> — source data copied into each model's workspace.</li>
+<li><code>data-1/expected.json</code> — ground-truth answer used for scoring.</li>
+<li><code>data-2/</code> — second input suite and its expected result.</li>
+<li><code>benchmarks/&lt;data-suite&gt;/</code> — per-model run artifacts (gitignored).</li>
+</ul>
+<h2 id="debugging">Debugging</h2>
+<p>Add <code>--dump-transcript</code> to preserve the complete message and tool-call history
+for each model run:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>agent_cost_comparison_1.py<span class="w"> </span>--data-dir<span class="w"> </span>data-2<span class="w"> </span>--dump-transcript
+</code></pre></div>
+
+<h2 id="nemotron-3-ultra-compatibility">Nemotron-3-Ultra compatibility</h2>
+<p>Deep Agents' built-in Ultra profile can mistake this single-turn filesystem
+task for a task transition. The benchmark keeps the rest of that profile but
+disables <code>NemotronPolicyNudgeMiddleware</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">register_harness_profile</span><span class="p">(</span>
+    <span class="s2">"nebius:nvidia/Nemotron-3-Ultra-550b-a55b"</span><span class="p">,</span>
+    <span class="n">HarnessProfile</span><span class="p">(</span><span class="n">excluded_middleware</span><span class="o">=</span><span class="p">{</span><span class="s2">"NemotronPolicyNudgeMiddleware"</span><span class="p">}),</span>
+<span class="p">)</span>
+</code></pre></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>
