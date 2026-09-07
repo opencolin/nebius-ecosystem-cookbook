@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenHands Agent Canvas + Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/openhands-agent-canvas" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="openhands-agent-canvas-nebius-token-factory">OpenHands Agent Canvas + Nebius Token Factory</h1>
+<p><a href="https://github.com/OpenHands/OpenHands">OpenHands Agent Canvas</a> is a self-hosted control center for coding agents — a web UI for starting agent conversations, running coding tasks, and setting up automations. Because <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> is a first-class LLM provider in Agent Canvas, you can drive the OpenHands agent with open models like <strong>Qwen3-32B</strong> in a few clicks.</p>
+<p>This guide runs the full stack on Nebius: Agent Canvas on a Nebius Cloud VM, with Token Factory serving Qwen3-32B as the LLM.</p>
+<h2 id="why-token-factory">Why Token Factory?</h2>
+<ul>
+<li><strong>Native provider</strong> — Agent Canvas ships with a built-in <code>nebius</code> LLM provider; no proxy or custom base URL needed.</li>
+<li><strong>Open models</strong> — Qwen3-32B has a 128K context window and strong tool-calling behavior, a good fit for agentic coding.</li>
+<li><strong>Cost control</strong> — usage-based pricing at $0.10/M input and $0.30/M output tokens, with no inference infra to manage.</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A Nebius Token Factory API key — see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openhands-agent-canvas/getting-started.md" target="_blank" rel="noopener">Getting Started</a> for how to create one.</li>
+<li>A <a href="https://console.nebius.com/">Nebius Cloud</a> account with permission to create Compute VMs.</li>
+<li>An SSH key pair for reaching the VM.</li>
+</ul>
+<h2 id="1-create-an-api-key-in-token-factory">1. Create an API key in Token Factory</h2>
+<ol>
+<li>Go to <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a> and sign in (Google or GitHub login works).</li>
+<li>Open the <strong>API keys</strong> section and create a new key.</li>
+<li>Copy the key somewhere safe — you will paste it into the Agent Canvas settings in step 6.</li>
+</ol>
+<p>You do not need to pre-provision anything for the model. Qwen3-32B is served on shared infrastructure and billed per token.</p>
+<h2 id="2-set-up-a-vm-in-nebius-cloud">2. Set up a VM in Nebius Cloud</h2>
+<p>Create a Compute VM in the <a href="https://console.nebius.com/">Nebius console</a>:</p>
+<ol>
+<li>Go to <strong>Compute</strong> → <strong>Create virtual machine</strong>.</li>
+<li>Pick a recent Ubuntu LTS image. A CPU-only flavor is fine — the LLM runs in Token Factory, not on this VM. 4 vCPUs and 16 GB RAM is a comfortable starting point.</li>
+<li>Attach your SSH public key.</li>
+<li>Make sure the VM gets a public IP address, and that its security group allows inbound TCP on port <strong>22</strong> (SSH) and port <strong>8000</strong> (the Agent Canvas UI).</li>
+</ol>
+<p>Note the VM's public IP once it is running. The rest of this guide calls it <code>$VM_IP</code>.</p>
+<blockquote>
+<p><strong>Security note.</strong> Port 8000 will expose the Agent Canvas UI to the internet, protected only by the password you choose in step 4. Pick a strong one, and consider restricting the security group rule to your own IP range. For production hardening (TLS, reverse proxy, SSO), see the <a href="https://docs.openhands.dev/openhands/usage/agent-canvas/backends">Agent Canvas docs</a>.</p>
+</blockquote>
+<h2 id="3-ssh-into-the-vm-and-install-dependencies">3. SSH into the VM and install dependencies</h2>
+<div class="codehilite"><pre><span></span><code>ssh<span class="w"> </span>ubuntu@<span class="nv">$VM_IP</span>
+</code></pre></div>
+
+<p>Agent Canvas needs Node.js 22.12+ (for the UI and CLI) and <a href="https://docs.astral.sh/uv/">uv</a> (it launches the Python agent server via <code>uvx</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Node.js 22 (NodeSource)</span>
+curl<span class="w"> </span>-fsSL<span class="w"> </span>https://deb.nodesource.com/setup_22.x<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>-E<span class="w"> </span>bash<span class="w"> </span>-
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>nodejs
+
+<span class="c1"># uv</span>
+curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+<span class="nb">source</span><span class="w"> </span>~/.local/bin/env
+</code></pre></div>
+
+<h2 id="4-install-and-start-agent-canvas">4. Install and start Agent Canvas</h2>
+<p>Install the package globally:</p>
+<div class="codehilite"><pre><span></span><code>sudo<span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@openhands/agent-canvas
+</code></pre></div>
+
+<p>Then start it in <strong>public mode</strong> with a password of your choosing:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">LOCAL_BACKEND_API_KEY</span><span class="o">=</span>yourpassword<span class="w"> </span>agent-canvas<span class="w"> </span>--public
+</code></pre></div>
+
+<p>Two things are happening here:</p>
+<ul>
+<li><code>LOCAL_BACKEND_API_KEY</code> sets the password that protects the server. Replace <code>yourpassword</code> with a strong secret of your own.</li>
+<li><code>--public</code> tells Agent Canvas <em>not</em> to auto-inject that password into the frontend. Anyone who loads the UI must enter it themselves — which is exactly what you want on a VM with a public IP.</li>
+</ul>
+<p>The first startup takes a minute or two while <code>uvx</code> pulls the agent server. When the log settles, the full stack (frontend, agent server, automation backend) is listening behind a single ingress on port 8000.</p>
+<blockquote>
+<p><strong>Tip.</strong> To keep Agent Canvas running after you disconnect, launch it inside <code>tmux</code>, or wrap it in a <code>systemd</code> unit once you are happy with the setup.</p>
+</blockquote>
+<h2 id="5-open-the-ui-and-unlock-it">5. Open the UI and unlock it</h2>
+<p>In your browser, go to:</p>
+<div class="codehilite"><pre><span></span><code>http://$VM_IP:8000
+</code></pre></div>
+
+<p>Agent Canvas will ask you to add a backend. The host and name are pre-filled — you only need the <strong>API Key</strong> field. Enter the password you chose in step 4 (the <code>LOCAL_BACKEND_API_KEY</code> value):</p>
+<p><img alt="The &quot;Add a backend&quot; dialog with the API Key field at the bottom" src="assets/add-backend-api-key.png" /></p>
+<h2 id="6-configure-the-openhands-agent-with-qwen3-32b">6. Configure the OpenHands agent with Qwen3-32B</h2>
+<p>The setup wizard walks you through the agent and model configuration.</p>
+<p>First, choose <strong>OpenHands</strong> as your agent:</p>
+<p><img alt="The &quot;Choose your agent&quot; step with OpenHands selected" src="assets/choose-agent-openhands.png" /></p>
+<p>Next, configure the LLM:</p>
+<ol>
+<li>Set <strong>Authentication</strong> to <code>API key</code>.</li>
+<li>Set <strong>LLM Provider</strong> to <code>nebius</code>.</li>
+<li>Set <strong>LLM Model</strong> to <code>Qwen/Qwen3-32B</code>.</li>
+<li>In the <strong>API Key</strong> field, paste the Token Factory key you created in step 1.</li>
+</ol>
+<p><img alt="The LLM settings with nebius as the provider and Qwen/Qwen3-32B as the model" src="assets/llm-provider-qwen3-32b.png" /></p>
+<h2 id="7-start-a-conversation">7. Start a conversation</h2>
+<p>That's it! Start a new conversation and give the agent something to do:</p>
+<blockquote>
+<p>Create a small Python script that fetches the current Bitcoin price and prints it.</p>
+</blockquote>
+<p>You should see the agent plan, run commands, and stream results back — every LLM call served by Qwen3-32B on Token Factory. You can watch token usage accumulate in the <a href="https://tokenfactory.nebius.com/">Token Factory console</a>.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>The UI never loads</strong> — check the security group allows inbound TCP 8000, and that <code>agent-canvas</code> is still running on the VM.</li>
+<li><strong>"Invalid API key" when adding the backend</strong> — the password in the UI must exactly match the <code>LOCAL_BACKEND_API_KEY</code> value the server was started with.</li>
+<li><strong>The agent errors on its first LLM call</strong> — re-check the provider (<code>nebius</code>), the model ID (<code>Qwen/Qwen3-32B</code>, case-sensitive), and that the Token Factory key was pasted without whitespace.</li>
+<li><strong><code>agent-canvas</code> fails at startup</strong> — confirm <code>node --version</code> reports 22.12+ and <code>uv --version</code> works in the same shell.</li>
+</ul>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://docs.openhands.dev/">OpenHands Agent Canvas docs</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/">Token Factory docs</a></li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openhands-agent-canvas/getting-started.md" target="_blank" rel="noopener">Cookbook: Getting Started</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

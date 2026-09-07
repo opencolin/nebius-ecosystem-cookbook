@@ -29,17 +29,21 @@
   <article class="cb-content">
 <h1 id="using-token-factory-models-with-coding-agents">Using Token Factory Models with Coding Agents</h1>
 <p>Token Factory has integrations with many coding agents and allows you to run state-of-the-art open-source models.</p>
-<p>Check out <a href="https://docs.tokenfactory.nebius.com/integrations/overview#coding-assistants">all coding integrations</a> for instructions.</p>
+<p>References:</p>
+<ul>
+<li>Check out <a href="https://docs.tokenfactory.nebius.com/integrations/overview">integrations docs</a>.</li>
+</ul>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#prerequisites">Prerequisites</a></li>
-<li><a href="#top-coding-models-token-factory">Top Coding Models @ Token Factory</a></li>
+<li><a href="#top-coding-models--token-factory">Top Coding Models @ Token Factory</a></li>
 <li><a href="#coding-agent-integrations">Coding Agent Integrations</a></li>
 <li><a href="#cursor">Cursor</a></li>
 <li><a href="#cline">Cline</a></li>
 <li><a href="#claude-code">Claude Code</a></li>
 <li><a href="#codex">Codex</a></li>
 <li><a href="#opencode">OpenCode</a></li>
+<li><a href="#proxies">Proxies</a></li>
 </ul>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
@@ -57,6 +61,16 @@
 </thead>
 <tbody>
 <tr>
+<td><code>zai-org/GLM-5.3-Flash</code></td>
+<td>1 M</td>
+<td>320 B (18 B active)</td>
+</tr>
+<tr>
+<td><code>moonshotai/Kimi-K3</code></td>
+<td>1M</td>
+<td>2.8T (104B active)</td>
+</tr>
+<tr>
 <td><code>moonshotai/Kimi-K2.7-Code</code></td>
 <td>256K</td>
 <td>1T (32B active)</td>
@@ -64,12 +78,7 @@
 <tr>
 <td><code>zai-org/GLM-5.2</code></td>
 <td>1M</td>
-<td>753B</td>
-</tr>
-<tr>
-<td><code>moonshotai/Kimi-K3</code></td>
-<td>1M</td>
-<td>2.8T (104B active)</td>
+<td>753B (17B active)</td>
 </tr>
 <tr>
 <td><code>MiniMaxAI/MiniMax-M3</code></td>
@@ -82,36 +91,48 @@
 <table>
 <thead>
 <tr>
-<th>Agent</th>
-<th>Integration</th>
-<th>Notes</th>
+<th>Coding Agent</th>
+<th>Native support</th>
+<th>Add as a provider</th>
+<th>via proxy</th>
+<th>Instructions</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Cursor</td>
-<td>Native</td>
-<td><a href="#cursor">notes</a></td>
+<td>-</td>
+<td>✅</td>
+<td>✅</td>
+<td><a href="#cursor">instructions</a></td>
 </tr>
 <tr>
 <td>Cline</td>
-<td>Native</td>
-<td><a href="#cline">notes</a></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td><a href="#cline">instructions</a></td>
 </tr>
 <tr>
 <td>Claude Code</td>
-<td>via Proxy</td>
-<td><a href="#claude-code">notes</a></td>
+<td>-</td>
+<td>-</td>
+<td>✅</td>
+<td><a href="#claude-code">instructions</a></td>
 </tr>
 <tr>
 <td>Codex</td>
-<td>via Proxy</td>
-<td><a href="#codex">notes</a></td>
+<td>-</td>
+<td>-</td>
+<td>✅</td>
+<td><a href="#codex">instructions</a></td>
 </tr>
 <tr>
 <td>OpenCode</td>
-<td>Native</td>
-<td><a href="#opencode">notes</a></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/opencode.md" target="_blank" rel="noopener">instructions</a></td>
 </tr>
 </tbody>
 </table>
@@ -128,11 +149,10 @@
 <li><a href="https://www.youtube.com/watch?v=q-oCalBP6lk">🎥 howto video</a></li>
 </ul>
 <h2 id="claude-code">Claude Code</h2>
-<h3 id="using-claude-code-with-proxy-server">Using Claude Code with Proxy Server</h3>
 <p>Integrates using the following proxies:</p>
 <ul>
 <li><a href="https://github.com/KiranChilledOut/claude-codex-nebius-proxy">Claude Codex proxy server</a></li>
-<li><a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a>  .   <a href="https://www.youtube.com/watch?v=u8c_exTe2To">how to video</a></li>
+<li><a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a> — <a href="https://www.youtube.com/watch?v=u8c_exTe2To">how to video</a></li>
 </ul>
 <h2 id="codex">Codex</h2>
 <p>Integrates using the following proxies:</p>
@@ -141,11 +161,30 @@
 <li><a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a></li>
 </ul>
 <h2 id="opencode">OpenCode</h2>
-<p>Native integration with Token Factory!</p>
-<p><a href="https://www.youtube.com/watch?v=216_T--JE0k">🎥 howto video</a></p>
-<p>Optionally, you can use this proxy: <a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a></p>
-<p>Guides:
-- A <a href="https://github.com/m1burn/omo-nebius-token-factory">setup guide</a> guide with agentmemory + opencode + Token Factory</p>
+<p>See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/opencode.md" target="_blank" rel="noopener">OpenCode integration guide</a></p>
+<h2 id="proxies">Proxies</h2>
+<p>These proxies support connecting coding agents to Token Factory.</p>
+<table>
+<thead>
+<tr>
+<th>Proxy</th>
+<th>Supports</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Codex proxy server</td>
+<td>Claude Code, Codex</td>
+<td><a href="https://github.com/KiranChilledOut/claude-codex-nebius-proxy">GitHub</a></td>
+</tr>
+<tr>
+<td>Nebius TF Relay</td>
+<td>Claude Code, Codex, OpenCode</td>
+<td><a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a> · <a href="https://www.youtube.com/watch?v=u8c_exTe2To">how to video</a></td>
+</tr>
+</tbody>
+</table>
   </article>
 </div>
 <footer><div class="container"><div class="footer-bottom">
