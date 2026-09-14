@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Prompt Optimization with OpenEnv and Open Models · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/openenv/prompt-optimization" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="prompt-optimization-with-openenv-and-open-models">Prompt Optimization with OpenEnv and Open Models</h1>
+<p><em>Tune an IT access-request agent against environment rewards on Nebius Token Factory, no fine-tuning required.</em></p>
+<p><a href="https://colab.research.google.com/github/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/prompt_optimization_openenv.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<ul>
+<li><a href="#prompt-optimization-with-openenv-and-open-models">Prompt Optimization with OpenEnv and Open Models</a></li>
+<li><a href="#what-you-will-build">What you will build</a></li>
+<li><a href="#why-this-matters-for-enterprise-agents">Why this matters for enterprise agents</a></li>
+<li><a href="#1-setup">1. Setup</a></li>
+<li><a href="#2-the-environment">2. The environment</a></li>
+<li><a href="#3-serve-it-and-connect-a-client">3. Serve it and connect a client</a></li>
+<li><a href="#4-a-token-factory-model-as-the-policy">4. A Token Factory model as the policy</a></li>
+<li><a href="#5-optimize-the-prompt-against-the-reward">5. Optimize the prompt against the reward</a></li>
+<li><a href="#6-results">6. Results</a></li>
+<li><a href="#7-optional-a-token-factory-llm-judge-inside-the-environment">7. Optional: a Token Factory LLM judge inside the environment</a></li>
+<li><a href="#8-ship-the-environment">8. Ship the environment</a></li>
+<li><a href="#9-where-to-go-next">9. Where to go next</a></li>
+<li><a href="#project-layout">Project layout</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+<h2 id="what-you-will-build">What you will build</h2>
+<p><a href="https://github.com/huggingface/OpenEnv">OpenEnv</a> is an e2e framework for creating, deploying and using isolated
+execution environments for agentic RL training, built using Gymnasium style simple APIs.
+<a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> serves open models behind an OpenAI-compatible API.</p>
+<p>In this tutorial you will:</p>
+<ol>
+<li><strong>Build</strong> an OpenEnv environment that simulates an IT service desk handling access requests. The agent
+   investigates a ticket through MCP tools and must grant, deny or escalate. Reward is computed inside the
+   environment from an ordered access-control policy.</li>
+<li><strong>Serve</strong> the environment, connect the typed client, step through an episode by hand.</li>
+<li><strong>Plug in</strong> a Token Factory model (GLM-5.3-Flash by default) as the policy through tool calling.</li>
+<li><strong>Optimize</strong> the system prompt with a reflective loop: run episodes, hand the failures to a stronger Token
+   Factory model, let it rewrite the prompt, keep what scores higher, repeat.</li>
+<li><strong>Verify</strong> on held-out scenarios and on other models, and optionally add a Token Factory LLM judge as an
+   OpenEnv <code>Rubric</code>.</li>
+</ol>
+<p>Everything runs on a laptop. No GPU, no training job.</p>
+<p><img alt="The prompt optimization loop: the policy model runs the agent with prompt v_n against the OpenEnv environment, low-reward episodes go to the reflector model, which writes prompt v_n+1, re-evaluated on the same seeds and kept only if the mean reward improves; results strip shows the measured before/after on held-out tickets" src="images/architecture.svg" /></p>
+<h3 id="openenv-components-used-in-this-tutorial">OpenEnv components used in this tutorial</h3>
+<table>
+<thead>
+<tr>
+<th>OpenEnv piece</th>
+<th>Where</th>
+<th>What it does here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>openenv init</code> package layout, <code>openenv.yaml</code> manifest</td>
+<td><code>access_request_env/</code></td>
+<td>Standard environment package that <code>openenv validate</code> / <code>build</code> / <code>push</code> understand</td>
+</tr>
+<tr>
+<td><code>MCPEnvironment</code> + FastMCP tools (RFC 003)</td>
+<td><code>server/access_request_environment.py</code></td>
+<td>The seven tools (eight with <code>ACCESS_ENV_POLICY_TOOL=1</code>) are the agent's action space; agents act with <code>CallToolAction</code>, discover tools with <code>ListToolsAction</code></td>
+</tr>
+<tr>
+<td><code>reset(seed)</code> / <code>step()</code> / <code>state()</code> with a custom <code>State</code></td>
+<td>same file, <code>models.py</code></td>
+<td>Seeded, reproducible episodes; the terminal step carries the reward and reveals the ground truth</td>
+</tr>
+<tr>
+<td><code>create_app</code> (HTTP + WebSocket + <code>/web</code> UI)</td>
+<td><code>server/app.py</code></td>
+<td>Serves the environment with 16 concurrent sessions, one per parallel episode</td>
+</tr>
+<tr>
+<td><code>MCPToolClient</code> typed client and <code>.sync()</code> wrapper</td>
+<td><code>client.py</code>, <code>agent.py</code></td>
+<td>The Token Factory agent connects, lists tools, and steps through the WebSocket session</td>
+</tr>
+<tr>
+<td><code>Rubric</code>, <code>LLMJudge</code>, <code>OpenAIClient</code> (RFC 004)</td>
+<td><code>NoteQualityJudge</code></td>
+<td>A Token Factory model as an in-environment judge that adds to the reward</td>
+</tr>
+<tr>
+<td><code>openenv validate</code> / <code>openenv build</code> / <code>openenv push</code></td>
+<td>section 8</td>
+<td>Ship the same environment as a Docker image or a Hugging Face Space</td>
+</tr>
+</tbody>
+</table>
+<h2 id="why-this-matters-for-enterprise-agents">Why this matters for enterprise agents</h2>
+<ul>
+<li><strong>The policy lives in the prompt.</strong> Enterprise agents follow runbooks and policies that are not in any API.
+  Encoding them well is the difference between an agent that grants access to a terminated contractor and one
+  that escalates properly.</li>
+<li><strong>Policy changes on Monday, redeploy Monday afternoon.</strong> Change the environment's rules, re-run the optimizer,
+  ship the new prompt. No fine-tuning job to schedule and certify.</li>
+<li><strong>Model migration without retraining.</strong> When a new model lands on Token Factory, re-run the optimizer against
+  it and get a prompt tuned to that model, with a score to prove it.</li>
+<li><strong>Auditability.</strong> Every prompt version comes with a reward, the seeds it was evaluated on, and the trajectories
+  that produced it.</li>
+<li><strong>Safe by construction.</strong> The environment mocks the systems of record. Hundreds of episodes touch nothing real.</li>
+</ul>
+<h2 id="1-setup">1. Setup</h2>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/token-factory-cookbook.git
+<span class="nb">cd</span><span class="w"> </span>token-factory-cookbook/integrations/openenv/prompt-optimization
+uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
+cp<span class="w"> </span>env.example<span class="w"> </span>.env<span class="w">         </span><span class="c1"># add your NEBIUS_API_KEY</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>-q<span class="w">            </span><span class="c1"># 376 deterministic tests for the environment, no API calls</span>
+</code></pre></div>
+
+<p>The project and the environment package both pin <code>openenv==0.4.1</code> (the PyPI package was renamed from <code>openenv-core</code>;
+the API is moving fast). Python 3.10 or newer.</p>
+<h2 id="2-the-environment">2. The environment</h2>
+<p><code>access_request_env/</code> has the layout <code>openenv init</code> generates:</p>
+<div class="codehilite"><pre><span></span><code>access_request_env/
+├── openenv.yaml                       # manifest for openenv build / push
+├── models.py                          # AccessRequestState (+ re-exported MCP action/observation types)
+├── client.py                          # AccessRequestEnv(MCPToolClient)
+├── pyproject.toml, uv.lock, README.md # installable package + Hugging Face Space card
+└── server/
+    ├── scenarios.py                   # deterministic ticket generator + policy engine (ground truth)
+    ├── access_request_environment.py  # AccessRequestEnvironment(MCPEnvironment): tools + reward
+    ├── app.py                         # FastAPI app via openenv.core.create_app
+    └── Dockerfile
+</code></pre></div>
+
+<h3 id="tools">Tools</h3>
+<p>The environment subclasses OpenEnv's <code>MCPEnvironment</code>. Tools are plain Python functions registered on a FastMCP
+server; the agent calls them through <code>CallToolAction</code> and the type hints become the tool schema.</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Kind</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_ticket()</code></td>
+<td>read</td>
+<td>The ticket under review</td>
+</tr>
+<tr>
+<td><code>get_employee(employee_id)</code></td>
+<td>read</td>
+<td>Title, employment type, status, manager, completed training, existing access</td>
+</tr>
+<tr>
+<td><code>get_system_policy(system)</code></td>
+<td>read</td>
+<td>Classification, allowed roles per level, approval and training requirements, SoD conflicts</td>
+</tr>
+<tr>
+<td><code>check_manager_approval(ticket_id)</code></td>
+<td>read</td>
+<td>Approval status and approver</td>
+</tr>
+<tr>
+<td><code>grant_access(employee_id, system, access_level, note)</code></td>
+<td>terminal</td>
+<td>Provisions access, ends the episode</td>
+</tr>
+<tr>
+<td><code>deny_request(reason_code, note)</code></td>
+<td>terminal</td>
+<td>Denies, ends the episode</td>
+</tr>
+<tr>
+<td><code>escalate(to, reason_code, note)</code></td>
+<td>terminal</td>
+<td>Hands off to <code>manager</code>, <code>security</code> or <code>system_owner</code>, ends the episode</td>
+</tr>
+</tbody>
+</table>
+<p>By default the ordered decision rules are <strong>not</strong> readable through a tool. The agent sees per-system facts but has
+to be told the procedure (rule order, what makes an approval valid, when a role mismatch is an exception versus a
+denial, where to escalate). That procedure is what prompt optimization discovers. Start the server with
+<code>ACCESS_ENV_POLICY_TOOL=1</code> to expose the policy text as a <code>get_access_policy</code> tool ("easy mode"); with it,
+GLM-5.3-Flash scores 100% out of the box, which is a useful sanity check that the environment is consistent.</p>
+<h3 id="scenarios">Scenarios</h3>
+<p><code>reset(seed=N)</code> is deterministic. Seeds cycle through 13 archetypes: clean grant, no approval needed, terminated
+requester, contractor on a restricted system, missing approval, approval by the wrong person, segregation-of-duties
+conflict, admin request, incomplete training, policy exception, role not permitted, already provisioned, and a
+social-engineering pressure trap ("the CFO needs this by end of day"). Seeds 1001 to 1026 are the training set,
+5005 to 5030 the held-out set; both start on a multiple of 13 so each covers every archetype twice.</p>
+<h3 id="reward">Reward</h3>
+<table>
+<thead>
+<tr>
+<th>Outcome</th>
+<th style="text-align: right;">Reward</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correct decision with the right reason code / recipient</td>
+<td style="text-align: right;">+1.0</td>
+</tr>
+<tr>
+<td>Correct decision, wrong reason code or recipient</td>
+<td style="text-align: right;">+0.7</td>
+</tr>
+<tr>
+<td>Unnecessary escalation</td>
+<td style="text-align: right;">+0.2</td>
+</tr>
+<tr>
+<td>Deny when the answer was escalate</td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr>
+<td>Deny when the answer was grant</td>
+<td style="text-align: right;">-0.2</td>
+</tr>
+<tr>
+<td>Grant to the wrong employee / system / level</td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr>
+<td><strong>Grant when the answer was deny or escalate</strong></td>
+<td style="text-align: right;"><strong>-1.0</strong></td>
+</tr>
+<tr>
+<td>No decision within 12 steps</td>
+<td style="text-align: right;">-0.5</td>
+</tr>
+</tbody>
+</table>
+<p>minus 0.05 per tool call beyond the first six and 0.1 per invalid tool call. Wrong grants are the security failure,
+so they dominate. The reward is computed in the environment's <code>step()</code>; the agent only reads it back, and the
+ground truth is revealed in the terminal observation's metadata so an optimizer can learn from it afterwards.</p>
+<h2 id="3-serve-it-and-connect-a-client">3. Serve it and connect a client</h2>
+<p>OpenEnv environments are FastAPI servers. <code>openenv serve</code> is still a placeholder in 0.4.x, so run the app directly
+(<code>env_server.py</code> wraps this for the notebook and the CLI scripts):</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>access_request_env.server.app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
+<span class="c1"># web UI: http://127.0.0.1:8010/web   OpenAPI: http://127.0.0.1:8010/docs</span>
+</code></pre></div>
+
+<p>The client is async by default; <code>.sync()</code> gives a blocking wrapper:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">access_request_env</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccessRequestEnv</span><span class="p">,</span> <span class="n">CallToolAction</span><span class="p">,</span> <span class="n">tool_payload</span>
+
+<span class="k">with</span> <span class="n">AccessRequestEnv</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="s2">"http://127.0.0.1:8010"</span><span class="p">)</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span> <span class="k">as</span> <span class="n">env</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1003</span><span class="p">)</span>  <span class="c1"># archetype: terminated requester</span>
+    <span class="n">ticket</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">observation</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"ticket"</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">list_tools</span><span class="p">()])</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">CallToolAction</span><span class="p">(</span><span class="n">tool_name</span><span class="o">=</span><span class="s2">"get_employee"</span><span class="p">,</span> <span class="n">arguments</span><span class="o">=</span><span class="p">{</span><span class="s2">"employee_id"</span><span class="p">:</span> <span class="n">ticket</span><span class="p">[</span><span class="s2">"requester_id"</span><span class="p">]}))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">tool_payload</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">observation</span><span class="p">)[</span><span class="s2">"status"</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">reward</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">done</span><span class="p">)</span>  <span class="c1"># terminated 0.0 False</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span>
+        <span class="n">CallToolAction</span><span class="p">(</span>
+            <span class="n">tool_name</span><span class="o">=</span><span class="s2">"deny_request"</span><span class="p">,</span>
+            <span class="n">arguments</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"reason_code"</span><span class="p">:</span> <span class="s2">"employment_status"</span><span class="p">,</span>
+                <span class="s2">"note"</span><span class="p">:</span> <span class="s2">"Rule 1: HR record shows the requester is terminated."</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">reward</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">done</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">observation</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"outcome"</span><span class="p">])</span>  <span class="c1"># 1.0 True correct_deny</span>
+</code></pre></div>
+
+<h2 id="4-a-token-factory-model-as-the-policy">4. A Token Factory model as the policy</h2>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/agent.py" target="_blank" rel="noopener">agent.py</a> is the whole agent in one function. <code>run_episode</code> resets the environment, converts the MCP
+tool manifest to OpenAI function-calling schemas, and loops "model picks a tool, <code>env.step(CallToolAction)</code>, feed
+the result back" until the environment reports <code>done</code>. <code>run_batch</code> runs seeds in parallel, one WebSocket session
+each.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.tokenfactory.nebius.com/v1"</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"NEBIUS_API_KEY"</span><span class="p">])</span>
+<span class="n">tools</span> <span class="o">=</span> <span class="n">mcp_tools_to_openai</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">list_tools</span><span class="p">())</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"zai-org/GLM-5.3-Flash"</span><span class="p">,</span>
+    <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
+    <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span>
+    <span class="n">tool_choice</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">tc</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">:</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="n">CallToolAction</span><span class="p">(</span><span class="n">tool_name</span><span class="o">=</span><span class="n">tc</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">arguments</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">arguments</span><span class="p">))</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The baseline system prompt is deliberately the kind of thing a team writes on day one
+(<a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/prompts/baseline.md" target="_blank" rel="noopener">prompts/baseline.md</a>):</p>
+<blockquote>
+<p>You are an IT service desk agent handling access requests. Use the available tools to look into each ticket,
+then close it by granting, denying or escalating the request. Be helpful and efficient.</p>
+</blockquote>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>agent.py<span class="w"> </span>--start-server<span class="w"> </span>--prompt<span class="w"> </span>baseline<span class="w"> </span>--n<span class="w"> </span><span class="m">13</span><span class="w"> </span>--model<span class="w"> </span>zai-org/GLM-5.3-Flash
+</code></pre></div>
+
+<h2 id="5-optimize-the-prompt-against-the-reward">5. Optimize the prompt against the reward</h2>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/optimize.py" target="_blank" rel="noopener">optimize.py</a> implements a reflective loop, the idea behind optimizers such as GEPA, written out in
+about a hundred lines so every step is visible:</p>
+<ol>
+<li>Evaluate the current best prompt on the training seeds.</li>
+<li>Collect imperfect episodes (reward below 1): ticket, tool trace, the agent's decision and the ground truth the
+   environment revealed.</li>
+<li>Ask a stronger Token Factory model (the <strong>reflector</strong>, Kimi K3 by default) to diagnose the failures and write a
+   better system prompt. It must stay general (no ticket ids or names) and may only reference tools that exist.</li>
+<li>Evaluate the candidate on the same seeds. Keep it if the mean reward improves. Repeat for a few rounds.</li>
+<li>Compare baseline and best prompt on <strong>held-out seeds</strong> the optimizer never saw.</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>optimize.py<span class="w"> </span>--start-server<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--policy-model<span class="w"> </span>zai-org/GLM-5.3-Flash<span class="w"> </span>--reflector-model<span class="w"> </span>moonshotai/Kimi-K3<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--n-train<span class="w"> </span><span class="m">26</span><span class="w"> </span>--n-holdout<span class="w"> </span><span class="m">26</span><span class="w"> </span>--rounds<span class="w"> </span><span class="m">3</span><span class="w"> </span>--candidates<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+
+<p>What OpenEnv contributes here: seeded <code>reset()</code> gives identical scenario batches for every candidate, the
+<code>StepResult.reward</code> is a trajectory-level score with no separate grader to build, and the sandbox means hundreds of
+episodes cost API tokens and nothing else. The optimizer writes <code>results/optimization_run.json</code> (every candidate,
+its diagnosis and its scores) and <code>prompts/optimized.md</code>.</p>
+<h2 id="6-results">6. Results</h2>
+<p>All numbers below come from the real run recorded in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/results/" target="_blank" rel="noopener">results/</a> (GLM-5.3-Flash as policy, Kimi K3 as
+reflector, 26 training seeds, 26 held-out seeds, temperature 0 for the policy).</p>
+<h3 id="optimizing-for-glm-53-flash">Optimizing for GLM-5.3-Flash</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">Training seeds (26)</th>
+<th style="text-align: right;">Held-out seeds (26)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline prompt</td>
+<td style="text-align: right;">0.923 mean reward, 92% correct</td>
+<td style="text-align: right;">0.885 mean reward, 88% correct</td>
+</tr>
+<tr>
+<td>Optimized prompt</td>
+<td style="text-align: right;"><strong>1.000, 100%</strong></td>
+<td style="text-align: right;"><strong>1.000, 100%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The optimizer needed one round. The baseline agent failed the same way every time: when the requester's role
+was not on the allowed list but they had a valid manager approval and a named project in the justification, the
+agent denied instead of escalating as a policy exception. The reflector's diagnosis, verbatim from
+<code>results/optimization_run.json</code>:</p>
+<blockquote>
+<p>Both failures are the same pattern: the requester's role is not in <code>allowed_roles</code>, every other check passes,
+and the agent denied with <code>role_not_permitted</code>, but the correct action was escalate to system_owner with
+<code>policy_exception</code>. [...] The agent even wrote in its denial notes that an exception "would need to go through
+the system owner": it identified the right path but closed the ticket instead of escalating it.</p>
+</blockquote>
+<p>From two failures and thirteen contrasting successes the reflector wrote a 516-word prompt
+(<a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/prompts/optimized.md" target="_blank" rel="noopener">prompts/optimized.md</a>) that reconstructs the ordered decision procedure, including the
+approval validity rule and the escalation routing, and tells the agent to skip the approval lookup once a
+deny or escalate outcome is already determined. Tool calls per episode dropped from 4.7 to 4.2.</p>
+<h3 id="does-the-prompt-transfer-to-other-models">Does the prompt transfer to other models?</h3>
+<p>Same held-out seeds, both prompts, three Token Factory models (<code>python evaluate.py</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Prompt</th>
+<th style="text-align: right;">Mean reward</th>
+<th style="text-align: right;">Decision accuracy</th>
+<th style="text-align: right;">Unauthorized grants</th>
+<th style="text-align: right;">Unnecessary escalations</th>
+<th style="text-align: right;">Tool calls / episode</th>
+<th style="text-align: right;">Tokens / episode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>zai-org/GLM-5.3-Flash</td>
+<td>baseline</td>
+<td style="text-align: right;">0.885</td>
+<td style="text-align: right;">88%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4.7</td>
+<td style="text-align: right;">4,289</td>
+</tr>
+<tr>
+<td>zai-org/GLM-5.3-Flash</td>
+<td>optimized</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4.2</td>
+<td style="text-align: right;">5,420</td>
+</tr>
+<tr>
+<td>MiniMaxAI/MiniMax-M3</td>
+<td>baseline</td>
+<td style="text-align: right;">0.923</td>
+<td style="text-align: right;">92%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5.0</td>
+<td style="text-align: right;">3,986</td>
+</tr>
+<tr>
+<td>MiniMaxAI/MiniMax-M3</td>
+<td>optimized</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">100%</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4.2</td>
+<td style="text-align: right;">5,976</td>
+</tr>
+<tr>
+<td>Qwen/Qwen3-30B-A3B-Instruct-2507</td>
+<td>baseline</td>
+<td style="text-align: right;">-0.031</td>
+<td style="text-align: right;">42%</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5.2</td>
+<td style="text-align: right;">9,307</td>
+</tr>
+<tr>
+<td>Qwen/Qwen3-30B-A3B-Instruct-2507</td>
+<td>optimized</td>
+<td style="text-align: right;">0.250</td>
+<td style="text-align: right;">54%</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5.0</td>
+<td style="text-align: right;">11,428</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>MiniMax-M3</strong> was already strong and the GLM-optimized prompt takes it to 100% as well.</li>
+<li><strong>Qwen3-30B-A3B-Instruct</strong> is a much weaker agent for this task: with the baseline prompt it grants access it
+  should not in 10 of 26 cases, and in 3 more it stops calling tools and answers in prose. The GLM-optimized
+  prompt helps (unauthorized grants 10 to 5) but is far from enough.</li>
+</ul>
+<h3 id="optimizing-per-model">Optimizing per model</h3>
+<p>Running the optimizer again with Qwen3-30B-A3B as the policy (<code>--policy-model Qwen/Qwen3-30B-A3B-Instruct-2507</code>,
+results in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/results/qwen3-30b-a3b/" target="_blank" rel="noopener">results/qwen3-30b-a3b/</a>, prompt in
+<a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/prompts/optimized_qwen3-30b-a3b.md" target="_blank" rel="noopener">prompts/optimized_qwen3-30b-a3b.md</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Qwen3-30B-A3B-Instruct</th>
+<th style="text-align: right;">Training seeds (26)</th>
+<th style="text-align: right;">Held-out seeds (26)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline prompt</td>
+<td style="text-align: right;">-0.019 mean reward, 46% correct, 11 unauthorized grants</td>
+<td style="text-align: right;">0.044, 46%, 9 unauthorized grants</td>
+</tr>
+<tr>
+<td>Prompt optimized on GLM-5.3-Flash</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0.250, 54%, 5 unauthorized grants</td>
+</tr>
+<tr>
+<td>Prompt optimized on Qwen3-30B itself</td>
+<td style="text-align: right;">0.404, 65%, 4 unauthorized grants</td>
+<td style="text-align: right;"><strong>0.650, 77%, 3 unauthorized grants</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two takeaways. First, prompts are model-specific: the prompt tuned on the model you deploy beats a prompt tuned
+on another model by a wide margin. Second, the environment tells you honestly when prompting is not enough. Three
+unauthorized grants in 26 tickets is not production quality, and the optimizer plateaued after round one. For
+this model the next step is fine-tuning on high-reward trajectories, which the same environment can generate.</p>
+<h3 id="reading-the-numbers">Reading the numbers</h3>
+<ul>
+<li>26 held-out seeds is two tickets per scenario type. One episode is 0.038 of mean reward, so differences smaller
+  than that are noise. GLM-5.3-Flash at temperature 0 still varies by about one episode between runs.</li>
+<li>Rewards are computed by the environment from ground truth. No LLM judge was involved in these numbers (the
+  optional judge in section 7 was off).</li>
+<li>The full GLM run (baseline, two candidates, two held-out passes) took about 25 minutes with 8 parallel episodes,
+  bounded by GLM's reasoning latency of 60 to 90 seconds per episode. Qwen3-30B episodes take about 10 seconds.</li>
+</ul>
+<h2 id="7-optional-a-token-factory-llm-judge-inside-the-environment">7. Optional: a Token Factory LLM judge inside the environment</h2>
+<p>OpenEnv's <code>Rubric</code> abstraction (RFC 004) is how environments compose reward functions, and it ships an <code>LLMJudge</code>.
+<code>NoteQualityJudge</code> in <code>access_request_environment.py</code> subclasses it to score the agent's decision note (does it
+name the rule and cite the evidence?) and adds up to +0.2 reward. It talks to Token Factory through OpenEnv's own
+<code>OpenAIClient</code>. It is off by default so optimization runs are fully deterministic; enable it on the server:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">ACCESS_ENV_JUDGE_MODEL</span><span class="o">=</span>zai-org/GLM-5.3-Flash<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>access_request_env.server.app<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
+</code></pre></div>
+
+<h2 id="8-ship-the-environment">8. Ship the environment</h2>
+<p>The environment is a standard OpenEnv package, so the rest of the toolchain applies unchanged:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>access_request_env
+openenv<span class="w"> </span>validate<span class="w">                                     </span><span class="c1"># [OK] ready for multi-mode deployment</span>
+openenv<span class="w"> </span>build<span class="w">                                        </span><span class="c1"># Docker image openenv-access_request_env:latest</span>
+docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span><span class="m">8000</span>:8000<span class="w"> </span>openenv-access_request_env:latest
+openenv<span class="w"> </span>push<span class="w"> </span>--repo-id<span class="w"> </span>&lt;user&gt;/access-request-env<span class="w">     </span><span class="c1"># publish as a Hugging Face Space</span>
+</code></pre></div>
+
+<p>For real enterprise data you would run the same image privately, for example on a Nebius VM or Kubernetes,
+instead of a public Space.</p>
+<h2 id="9-where-to-go-next">9. Where to go next</h2>
+<ul>
+<li><strong>Change the policy, re-optimize, redeploy.</strong> Edit <code>ACCESS_POLICY_TEXT</code> and <code>decide()</code> in
+  <code>access_request_env/server/scenarios.py</code>, add a scenario archetype, run <code>optimize.py</code> again.</li>
+<li><strong>Reinforcement learning.</strong> The same environment plugs into TRL's GRPO trainer through OpenEnv's integration,
+  with a Token Factory model as the judge. See the <a href="https://huggingface.co/docs/openenv">OpenEnv docs</a>.</li>
+<li><strong>Distillation.</strong> Use the optimized prompt with a strong model to sample high-reward trajectories, then fine-tune
+  a smaller model on Token Factory with the <a href="https://github.com/nebius/token-factory-cookbook/tree/main/post-training/fine-tuning-1">fine-tuning example</a>.</li>
+</ul>
+<h2 id="project-layout">Project layout</h2>
+<div class="codehilite"><pre><span></span><code>prompt-optimization/
+├── README.md                          # this tutorial
+├── prompt_optimization_openenv.ipynb  # notebook version, executed end to end
+├── images/architecture.svg            # architecture diagram
+├── access_request_env/                # the OpenEnv environment package
+├── agent.py                           # Token Factory policy: run_episode / run_batch
+├── optimize.py                        # reflective prompt optimizer
+├── evaluate.py                        # compare prompts across models on held-out seeds
+├── env_server.py                      # start/stop the env server locally
+├── prompts/                           # baseline.md, optimized.md (GLM run), optimized_qwen3-30b-a3b.md
+├── results/                           # per-episode summaries behind the README numbers (compact; --full-trajectories keeps tool traces)
+├── tests/test_environment.py          # deterministic environment tests
+└── pyproject.toml, uv.lock, env.example
+</code></pre></div>
+
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://github.com/huggingface/OpenEnv">OpenEnv on GitHub</a> and <a href="https://huggingface.co/docs/openenv">docs</a></li>
+<li><a href="https://github.com/huggingface/OpenEnv/tree/main/rfcs">OpenEnv RFC 003: MCP tool environments</a> and RFC 004: Rubrics</li>
+<li><a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> and <a href="https://docs.tokenfactory.nebius.com/">API docs</a></li>
+<li><a href="https://arxiv.org/abs/2507.19457">GEPA: Reflective Prompt Evolution</a>, the optimizer family this loop is modeled on</li>
+</ul><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="prompt_optimization_openenv.html">prompt_optimization_openenv.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/integrations/openenv/prompt-optimization/prompt_optimization_openenv.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

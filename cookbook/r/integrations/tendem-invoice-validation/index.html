@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invoice Extraction with Confidence-Gated Human Validation · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/tendem-invoice-validation" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="invoice-extraction-with-confidence-gated-human-validation">Invoice Extraction with Confidence-Gated Human Validation</h1>
+<p>A vision model reading a blurred invoice does not stay silent. It produces a number.</p>
+<p>On the sample invoice in this cookbook, <a href="https://tokenfactory.nebius.com/models/catalog/image2text/Qwen%2FQwen2.5-VL-72B-Instruct">Qwen2.5-VL-72B-Instruct</a> read a total of <strong>$2,148.75</strong> and rated its own confidence at <strong>0.70</strong>. A human expert then looked at the same image and returned <code>null</code>: the total was too blurred to confirm, and the invoice number and issue date were hidden behind a PAID stamp. The model had not misread the total. It had invented one.</p>
+<p>That gap is the entire subject of this cookbook. You will build a pipeline that treats a model's confidence as a routing decision rather than a footnote, and buys human judgment only for the documents that need it.</p>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>A batch invoice processor with three stages:</p>
+<ol>
+<li><strong>Extract.</strong> Every image goes to a Nebius vision model, which returns the invoice fields plus a self-reported confidence score.</li>
+<li><strong>Route.</strong> Ordinary Python — not another model call — decides which results are trustworthy. A record escalates if confidence falls below <code>0.95</code> or any required field is missing.</li>
+<li><strong>Validate.</strong> Escalated invoices become paid tasks for a vetted human expert through <a href="https://nebius.com/solutions/tendem">Tendem by Toloka</a>. The expert's answer replaces the draft, and every row in the output CSV carries a <code>source</code> column recording who finalized it.</li>
+</ol>
+<p>The routing rule is deliberately boring code. That makes it deterministic, auditable, and unit-testable — three things a second model call would not give you.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.11 or newer and <a href="https://docs.astral.sh/uv/">uv</a></li>
+<li>A <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> account with access to <code>Qwen/Qwen2.5-VL-72B-Instruct</code> — see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/tendem-invoice-validation/getting-started.md" target="_blank" rel="noopener">Getting Started</a> for how to create an API key</li>
+<li>A Tendem account, and an API key from <strong>Account Settings → Tendem MCP → Agent Builders</strong></li>
+<li>A funded Tendem balance. Human validation is paid work — the sample run below settled at <strong>$3.00</strong>.</li>
+</ul>
+<h2 id="run-the-cookbook">Run the cookbook</h2>
+<ol>
+<li>Clone the project and install dependencies:</li>
+</ol>
+<p><code>bash
+   git clone https://github.com/amrrs/toloka-nebiustf-validation.git
+   cd toloka-nebiustf-validation
+   uv sync --extra dev</code></p>
+<ol start="2">
+<li>Provide both credentials. The recipe reads them from environment files:</li>
+</ol>
+<p><code>bash
+   export NEBIUS_API_KEY="your-token-factory-key"
+   export TENDEM_API_KEY="your-tendem-key"</code></p>
+<ol start="3">
+<li>
+<p>Put invoice images in <code>documents/inbox/</code>. A deliberately poor-quality sample is included, so you can run the escalation path without supplying your own documents.</p>
+</li>
+<li>
+<p>Run the recipe:</p>
+</li>
+</ol>
+<p><code>bash
+   uv run python use_cases/invoice_vision_human_validation.py</code></p>
+<p>Results land in <code>documents/extracted.csv</code>, written after each invoice so an interrupted batch keeps completed work.</p>
+<h3 id="the-controls-worth-reading-before-you-run">The controls worth reading before you run</h3>
+<p>The configuration block at the top of the script holds the decisions that cost money:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">MIN_CONFIDENCE</span> <span class="o">=</span> <span class="mf">0.95</span>          <span class="c1"># below this, escalate to a human</span>
+<span class="n">MAX_HUMAN_PRICE_USD</span> <span class="o">=</span> <span class="mf">10.0</span>     <span class="c1"># quotes above this are refused, not approved</span>
+<span class="n">HUMAN_WAIT_SECONDS</span> <span class="o">=</span> <span class="mi">6</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span>
+</code></pre></div>
+
+<p><code>MAX_HUMAN_PRICE_USD</code> is a hard stop. When a quote exceeds it the run raises rather than approving, so an unexpected price becomes a person's decision instead of a silent charge. Raising <code>MIN_CONFIDENCE</code> sends more work to humans and costs more; lowering it keeps more model output unchecked. That single number is the accuracy-versus-cost dial.</p>
+<p>The script also keeps a journal in <code>documents/tendem-tasks.json</code> mapping each image to its Tendem task ID. Restart mid-batch and it resumes the existing task rather than buying the same validation twice.</p>
+<h2 id="verify-the-result">Verify the result</h2>
+<p>Open <code>documents/extracted.csv</code> and look at the <code>source</code> column. Rows finalized by the model read <code>nebius-vision</code>; rows a human corrected read <code>tendem-human</code>. On the bundled sample you should see one <code>tendem-human</code> row where <code>total_amount</code> is empty and the notes explain why the expert refused to guess.</p>
+<p>Compare that against <code>documents/run-evidence/vision-invoice-live-run.json</code>, which records a complete run: the model's <code>2148.75</code> at <code>0.80</code> confidence, the <code>escalate_to_human</code> decision, the $3.00 quote, and the human's corrected output.</p>
+<p>Reproducing the first stage on its own is fast and costs a fraction of a cent — a measured extraction on the sample used 342 prompt and 82 completion tokens, about <strong>$0.000147</strong>, in <strong>3.8 seconds</strong>.</p>
+<h2 id="what-a-run-costs">What a run costs</h2>
+<p>Two providers are billed, and they are not the same order of magnitude:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Provider</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vision extraction (per invoice)</td>
+<td>Nebius Token Factory</td>
+<td>~$0.000147</td>
+</tr>
+<tr>
+<td>Human validation (per escalated invoice)</td>
+<td>Tendem by Toloka</td>
+<td>$3.00 on the sample run; capped at <code>MAX_HUMAN_PRICE_USD</code></td>
+</tr>
+</tbody>
+</table>
+<p>A batch where nothing escalates costs well under a cent. The human stage is what you are budgeting for, and the confidence threshold is the dial that controls how often you pay it.</p>
+<h3 id="timing-expectations">Timing expectations</h3>
+<p>The Nebius pass returns in seconds. Human validation does not — it is an asynchronous task that a person picks up, and the script waits up to six hours for a result. Plan your first end-to-end run around that, and treat the human stage as a queue rather than a function call.</p>
+<h3 id="troubleshooting">Troubleshooting</h3>
+<ul>
+<li><strong>401 from Token Factory</strong> — check <code>NEBIUS_API_KEY</code>, and that your account has access to the vision model.</li>
+<li><strong>The run raises on a quote</strong> — expected behavior, not a bug. The quote exceeded <code>MAX_HUMAN_PRICE_USD</code>. Review the task and raise the cap deliberately if the price is fair.</li>
+<li><strong>Nothing escalates</strong> — your invoices are clean and the model is confident. Lower <code>MIN_CONFIDENCE</code> or use the bundled low-quality sample to exercise the human path.</li>
+<li><strong>A task seems stuck</strong> — check <code>documents/tendem-tasks.json</code> for the task ID and inspect it in the Tendem console.</li>
+</ul>
+<h2 id="clean-up">Clean up</h2>
+<p>Completed tasks remove themselves from the journal. To reset local state:</p>
+<div class="codehilite"><pre><span></span><code>rm<span class="w"> </span>-f<span class="w"> </span>documents/extracted.csv<span class="w"> </span>documents/tendem-tasks.json
+rm<span class="w"> </span>-rf<span class="w"> </span>.venv
+<span class="nb">unset</span><span class="w"> </span>NEBIUS_API_KEY<span class="w"> </span>TENDEM_API_KEY
+</code></pre></div>
+
+<p>Paid Tendem tasks that already settled cannot be refunded by deleting local files. If you want to stop spending, clear <code>documents/inbox/</code> before the next run.</p>
+<h2 id="links">Links</h2>
+<ul>
+<li><a href="https://github.com/amrrs/toloka-nebiustf-validation/tree/main/use_cases">Source project</a></li>
+<li><a href="https://nebius.com/solutions/tendem">Tendem by Toloka</a></li>
+<li><a href="https://tokenfactory.nebius.com/models/catalog/image2text/Qwen%2FQwen2.5-VL-72B-Instruct">Qwen2.5-VL-72B-Instruct in the Token Factory catalog</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/">Token Factory documentation</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>
