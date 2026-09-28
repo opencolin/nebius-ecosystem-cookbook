@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kimi CLI with Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/kimi-cli" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="kimi-cli-with-nebius-token-factory">Kimi CLI with Nebius Token Factory</h1>
+<p>Run <a href="https://github.com/MoonshotAI/kimi-cli">Kimi CLI</a> with Kimi K3 on Nebius
+Token Factory through its existing OpenAI-compatible provider. This
+recipe uses Kimi CLI's <code>openai_legacy</code> provider, which sends streaming requests to
+the OpenAI Chat Completions endpoint. It does not add a new provider or use the
+OpenAI Responses API.</p>
+<p>The example defaults to <code>moonshotai/Kimi-K3</code>, Moonshot AI's reasoning and vision
+model with a 1M-token context window. <code>NEBIUS_MODEL</code> is explicit and required so
+the selected model is reviewed before every launch; this recipe rejects models
+whose context and capability declarations it has not validated.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.12 or newer</li>
+<li><a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a></li>
+<li>A <a href="https://tokenfactory.nebius.com/">Nebius Token Factory API key</a></li>
+</ul>
+<p>The recipe was validated against Kimi CLI 1.49.0. Install the compatible 1.x line:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.13<span class="w"> </span><span class="s1">'kimi-cli&gt;=1.49,&lt;2'</span>
+kimi<span class="w"> </span>--version
+</code></pre></div>
+
+<h2 id="configure">Configure</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Edit <code>.env</code> and set both required values:</p>
+<div class="codehilite"><pre><span></span><code>NEBIUS_API_KEY=your-token-factory-api-key
+NEBIUS_MODEL=moonshotai/Kimi-K3
+</code></pre></div>
+
+<p>Load them into the current shell and validate the configuration offline:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">set</span><span class="w"> </span>-a
+<span class="nb">source</span><span class="w"> </span>.env
+<span class="nb">set</span><span class="w"> </span>+a
+python<span class="w"> </span>kimi_token_factory.py<span class="w"> </span>--check
+</code></pre></div>
+
+<p>The launcher validates <code>config.template.toml</code>, substitutes the required model into
+an ephemeral config, maps <code>NEBIUS_API_KEY</code> to the environment variable Kimi CLI's
+OpenAI-compatible provider reads, and deletes the generated config on exit. The
+API key is never written into the generated file.</p>
+<h2 id="run">Run</h2>
+<p>Start an interactive session in the current project:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>kimi_token_factory.py
+</code></pre></div>
+
+<p>Arguments not consumed by the wrapper pass through to Kimi CLI. For example:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>kimi_token_factory.py<span class="w"> </span>--print<span class="w"> </span><span class="s2">"Summarize this repository"</span>
+</code></pre></div>
+
+<p>Kimi CLI remains in its normal approval mode. This recipe deliberately leaves
+<code>default_yolo = false</code>; review tool calls before approving them.</p>
+<h2 id="validate-the-recipe">Validate the recipe</h2>
+<p>The test suite is fully offline: it checks required environment variables, parses
+the TOML, locks the provider to Chat Completions, verifies the canonical base URL,
+and ensures no secret is stored in the config.</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>venv
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-test.txt
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>-q
+</code></pre></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="missing-required-environment"><code>Missing required environment</code></h3>
+<p>Reload <code>.env</code> in the shell that launches the wrapper. Both <code>NEBIUS_API_KEY</code> and
+<code>NEBIUS_MODEL</code> are required. This recipe requires the validated model ID
+<code>moonshotai/Kimi-K3</code>.</p>
+<h3 id="authentication-errors-401-or-403">Authentication errors (<code>401</code> or <code>403</code>)</h3>
+<p>Create or rotate the API key in Token Factory, update <code>.env</code>, and reload it. The
+wrapper overwrites ambient <code>OPENAI_API_KEY</code> and <code>OPENAI_BASE_URL</code> values for the
+child process so unrelated OpenAI settings do not take precedence.</p>
+<h3 id="model-not-found-404">Model not found (<code>404</code>)</h3>
+<p>Model availability can change. Confirm <code>moonshotai/Kimi-K3</code> in the Token Factory
+model catalog. If it has been replaced, update the recipe's model ID, context size,
+capabilities, and tests together. Do not change the provider type: Token Factory
+is reached through <code>openai_legacy</code> Chat Completions.</p>
+<h3 id="kimi-cli-is-not-installed"><code>Kimi CLI is not installed</code></h3>
+<p>Run the installation command above and make sure the <code>uv</code> tools directory is on
+<code>PATH</code> (run <code>uv tool update-shell</code> if needed).</p>
+<h3 id="search-or-fetch-behaves-differently">Search or fetch behaves differently</h3>
+<p>Kimi CLI's <code>SearchWeb</code> and hosted <code>FetchURL</code> services are exclusive to the Kimi
+Code platform. With Token Factory, <code>SearchWeb</code> is unavailable and <code>FetchURL</code> falls
+back to local fetching. This does not affect shell, file, agent, or other local
+tools.</p>
+<h2 id="how-the-integration-works">How the integration works</h2>
+<p>Kimi CLI already supports arbitrary OpenAI-compatible endpoints. The essential
+configuration is:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">[providers.token-factory]</span>
+<span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"openai_legacy"</span>
+<span class="n">base_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://api.tokenfactory.nebius.com/v1"</span>
+<span class="n">api_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"overridden-by-OPENAI_API_KEY"</span>
+<span class="n">reasoning_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"reasoning_content"</span>
+</code></pre></div>
+
+<p><code>openai_legacy</code> is Kimi CLI's name for the Chat Completions protocol. The separate
+<code>openai_responses</code> provider is intentionally not used by this recipe.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

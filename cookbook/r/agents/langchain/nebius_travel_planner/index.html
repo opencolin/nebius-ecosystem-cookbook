@@ -52,8 +52,8 @@ cp<span class="w"> </span>env.example<span class="w"> </span>.env
 <span class="nv">NEBIUS_MODEL</span><span class="o">=</span>Qwen/Qwen3-30B-A3B
 </code></pre></div>
 
-<p>You can also paste the API key into the Streamlit sidebar or configure it in
-Streamlit secrets.</p>
+<p>For a deployed app, configure the key in the server environment or Streamlit
+secrets. The app never accepts provider credentials through the browser UI.</p>
 <h2 id="run">Run</h2>
 <div class="codehilite"><pre><span></span><code>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
 </code></pre></div>

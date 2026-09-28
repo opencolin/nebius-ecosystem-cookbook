@@ -28,86 +28,147 @@
   
   <article class="cb-content">
 <h1 id="openclaw-nebius-token-factory">OpenClaw + Nebius Token Factory</h1>
-<p><a href="https://openclaw.ai/">OpenClaw</a> is a self-hosted AI assistant that connects chat apps (WhatsApp, Telegram, Discord, and more) to LLM providers. Because <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> serves open models through an <strong>OpenAI-compatible API</strong>, you can point OpenClaw at Token Factory and run your agents on models like Qwen3, Llama, and DeepSeek.</p>
-<h2 id="why-token-factory">Why Token Factory?</h2>
-<ul>
-<li><strong>OpenAI-compatible</strong> — no special SDK, OpenClaw's built-in OpenAI provider works as-is.</li>
-<li><strong>Open models</strong> — Qwen3, Kimi, DeepSeek, GLM and more, all behind one API key.</li>
-<li><strong>Cost control</strong> — usage-based pricing with no infra to manage.</li>
-</ul>
+<p><a href="https://openclaw.ai/">OpenClaw</a> can use custom OpenAI-compatible model
+providers. This recipe registers
+<a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> as a custom provider,
+keeps the API key outside the configuration file, and shows how to verify the
+selected model before starting the gateway.</p>
+<blockquote>
+<p><strong>Last verified:</strong> 2026-08-13 against the Token Factory public model catalog
+and OpenClaw <code>2026.7.1-2</code>. The validation in this repository is offline; it
+does not make a paid inference request.</p>
+</blockquote>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li>A running <a href="https://docs.openclaw.ai/">OpenClaw</a> instance.</li>
-<li>A Nebius Token Factory API key — see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/getting-started.md" target="_blank" rel="noopener">Getting Started</a> for how to create one.</li>
+<li>A working <a href="https://docs.openclaw.ai/start/getting-started">OpenClaw installation</a></li>
+<li>A Token Factory account and API key; see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/start-here/setup.md" target="_blank" rel="noopener">Getting Started</a></li>
+<li>A model available to your Token Factory account</li>
 </ul>
-<h2 id="1-get-your-api-key">1. Get your API key</h2>
-<p>Grab a key from <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a></p>
-<h2 id="2-add-token-factory-as-a-provider">2. Add Token Factory as a provider</h2>
-<div class="codehilite"><pre><span></span><code>openclaw<span class="w"> </span>--configure
+<h2 id="1-keep-the-api-key-out-of-configuration">1. Keep the API key out of configuration</h2>
+<p>Export the key in the environment that starts the OpenClaw gateway:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span><span class="s2">"your-token-factory-api-key"</span>
+</code></pre></div>
+
+<p>For a persistent installation, set <code>NEBIUS_API_KEY</code> with your service manager
+or secret store. Do not paste the key into <code>openclaw.json</code>, commit it, or put it
+in shell history. The included <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/env.example" target="_blank" rel="noopener"><code>.env.example</code></a> is a
+variable-name reference, not a file to fill in and commit.</p>
+<h2 id="2-register-token-factory">2. Register Token Factory</h2>
+<p>Merge the contents of
+<a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/openclaw.example.json" target="_blank" rel="noopener"><code>openclaw.example.json</code></a> into
+<code>~/.openclaw/openclaw.json</code>. If you already have provider or agent settings,
+preserve them; do not replace the whole file blindly.</p>
+<p>The important provider fields are:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"baseUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://api.tokenfactory.nebius.com/v1"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"apiKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"${NEBIUS_API_KEY}"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"api"</span><span class="p">:</span><span class="w"> </span><span class="s2">"openai-completions"</span>
+<span class="p">}</span>
 </code></pre></div>
 
 <ul>
-<li>Choose '<strong>Configure Models</strong>'</li>
-<li>choose '<strong>Custom provider</strong>'</li>
-<li>base url = <code>https://api.tokenfactory.nebius.com/v1</code></li>
-<li>API KEY = <code>paste your nebius API key</code></li>
-<li>Select <strong>OpenAI comptible</strong></li>
-<li>model id =  <code>moonshotai/Kimi-K2.6</code>  (or any model id from Token Factory)</li>
-<li>End point id = <strong>nebius-token-factory</strong></li>
-<li>model alias : leave blank</li>
+<li>Keep <code>/v1</code> in <code>baseUrl</code>.</li>
+<li>Use <code>openai-completions</code> for Token Factory's OpenAI-compatible Chat
+  Completions path.</li>
+<li>Model references have the form <code>nebius-token-factory/&lt;org&gt;/&lt;model&gt;</code>.
+  OpenClaw removes the provider prefix and sends the remaining <code>&lt;org&gt;/&lt;model&gt;</code>
+  ID to Token Factory.</li>
 </ul>
-<h3 id="model-selection">Model Selection</h3>
-<p>Model IDs use the <code>org/model</code> form. A few options:</p>
+<p>The example selects:</p>
+<div class="codehilite"><pre><span></span><code>nebius-token-factory/moonshotai/Kimi-K2.6
+</code></pre></div>
+
+<h2 id="3-verify-configuration-before-starting-the-gateway">3. Verify configuration before starting the gateway</h2>
+<p>Run OpenClaw's configuration and model diagnostics:</p>
+<div class="codehilite"><pre><span></span><code>openclaw<span class="w"> </span>config<span class="w"> </span>validate
+openclaw<span class="w"> </span>models<span class="w"> </span>status
+openclaw<span class="w"> </span>models<span class="w"> </span>list<span class="w"> </span>--provider<span class="w"> </span>nebius-token-factory
+</code></pre></div>
+
+<p>These commands verify the local schema and model registration. OpenClaw's
+model-list command is read-only and does not call the provider, so it does not
+prove account access or live inference readiness. Token Factory's
+<a href="https://tokenfactory.nebius.com/api/public/models_info">public model catalog</a>
+is the lifecycle source to check before choosing a different model.</p>
+<p>Then restart the gateway and open a client:</p>
+<div class="codehilite"><pre><span></span><code>openclaw<span class="w"> </span>gateway<span class="w"> </span>restart
+openclaw<span class="w"> </span>dashboard
+<span class="c1"># or: openclaw tui</span>
+</code></pre></div>
+
+<p>For a first request, use a low token limit and inspect the response before
+enabling the model in unattended agents.</p>
+<h2 id="model-lifecycle-note">Model lifecycle note</h2>
+<p>These example IDs were present with <code>active</code> status in the public catalog when
+this recipe was last verified:</p>
 <table>
 <thead>
 <tr>
 <th>Model</th>
-<th>ID</th>
+<th>Token Factory model ID</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Kimi-K2.6</td>
+<td>Kimi K2.6</td>
 <td><code>moonshotai/Kimi-K2.6</code></td>
 </tr>
 <tr>
-<td>DeepSeek-V4-Pro</td>
-<td><code>deepseek-ai/DeepSeek-V4-Pro</code></td>
+<td>DeepSeek V4 Flash</td>
+<td><code>deepseek-ai/DeepSeek-V4-Flash</code></td>
 </tr>
 <tr>
-<td>GLM-5.1</td>
+<td>GLM 5.1</td>
 <td><code>zai-org/GLM-5.1</code></td>
 </tr>
 </tbody>
 </table>
-<p>See the full catalog at <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a> or the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/models/" target="_blank" rel="noopener">Models guides</a> in this cookbook.</p>
-<p>That's it!</p>
-<h2 id="3-restart-openclaw">3. Restart OpenClaw</h2>
-<p>Be sure to restart the openclaw gateway for changes to take effect.</p>
-<div class="codehilite"><pre><span></span><code>openclaw<span class="w">  </span>gateway<span class="w"> </span>run
-<span class="c1"># or </span>
-openclaw<span class="w">  </span>gateway<span class="w"> </span>restart
-</code></pre></div>
-
-<p>Then launch openclaw as </p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># web based UI</span>
-openclaw<span class="w">  </span>dashboard
-
-<span class="c1"># Terminal based ui</span>
-openclaw<span class="w">  </span>tui
-</code></pre></div>
-
+<p>Kimi K2.6 and GLM 5.1 both had public <code>active</code> status on 2026-08-13. This recipe
+retains both IDs and does not infer a deprecation or replacement from an
+unconfirmed lifecycle signal. Re-check the public catalog and your account
+before deploying or changing a production default; use the exact case-sensitive
+ID returned there.</p>
+<h2 id="updating-the-default-model">Updating the default model</h2>
+<ol>
+<li>Confirm the model is in the current catalog and available to your account.</li>
+<li>Add its exact ID under <code>models.providers.nebius-token-factory.models</code>.</li>
+<li>Set <code>agents.defaults.model.primary</code> to <code>nebius-token-factory/&lt;exact-model-id&gt;</code>.</li>
+<li>Re-run <code>openclaw config validate</code> and <code>openclaw models status</code>.</li>
+</ol>
+<p>Do not infer a replacement from an unconfirmed lifecycle signal. Wait for the
+public lifecycle state or an official migration path.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <ul>
-<li><strong>401 Unauthorized</strong> — check that <code>NEBIUS_API_KEY</code> is set and the provider config references it correctly.</li>
-<li><strong>404 / model not found</strong> — verify the model ID (<code>org/model</code>, case-sensitive) and that it's available on your account.</li>
-<li><strong>Wrong endpoint</strong> — the <code>base_url</code> must end in <code>/v1</code>; do not append <code>/chat/completions</code> yourself.</li>
+<li><strong>Missing environment variable</strong> — export <code>NEBIUS_API_KEY</code> in the same
+  environment that launches the gateway. A desktop shell and a system service
+  may not share environment variables.</li>
+<li><strong>401 Unauthorized</strong> — verify the key is active and that OpenClaw resolves
+  <code>${NEBIUS_API_KEY}</code> rather than storing a literal placeholder.</li>
+<li><strong>404 / model not found</strong> — copy the exact case-sensitive model ID from the
+  current catalog and confirm it is available to your account.</li>
+<li><strong>Wrong route</strong> — <code>baseUrl</code> must be exactly
+  <code>https://api.tokenfactory.nebius.com/v1</code>; do not append <code>/chat/completions</code>.</li>
+<li><strong>Provider appears but model does not</strong> — a custom model must be registered in
+  <code>models.providers.nebius-token-factory.models</code>; adding only an alias under
+  <code>agents.defaults.models</code> does not register it.</li>
+<li><strong>Existing configuration disappears</strong> — restore your backup and merge the
+  provider block instead of replacing <code>openclaw.json</code>.</li>
 </ul>
+<h2 id="offline-validation-for-contributors">Offline validation for contributors</h2>
+<p>From the repository root:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>integrations.openclaw.test_recipe
+</code></pre></div>
+
+<p>The test checks the JSON example, canonical endpoint, environment-backed secret
+reference, provider/model IDs, lifecycle note, and common secret/configuration
+regressions. It does not require an API key or network access.</p>
 <h2 id="resources">Resources</h2>
 <ul>
-<li><a href="https://docs.openclaw.ai/">OpenClaw docs</a></li>
-<li><a href="https://docs.tokenfactory.nebius.com/">Token Factory docs</a></li>
-<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/getting-started.md" target="_blank" rel="noopener">Cookbook: Getting Started</a></li>
+<li><a href="https://docs.openclaw.ai/concepts/model-providers#providers-via-modelsproviders-custombase-url">OpenClaw custom providers</a></li>
+<li><a href="https://docs.openclaw.ai/concepts/models">OpenClaw models CLI</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/">Token Factory documentation</a></li>
+<li><a href="https://tokenfactory.nebius.com/api/public/models_info">Token Factory public model catalog</a></li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/openclaw/start-here/setup.md" target="_blank" rel="noopener">Cookbook Getting Started</a></li>
 </ul>
   </article>
 </div>

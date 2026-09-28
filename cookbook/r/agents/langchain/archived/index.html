@@ -28,7 +28,7 @@
   
   <article class="cb-content">
 <h1 id="langchain-examples-for-nebius-token-factory">LangChain examples for Nebius Token Factory</h1>
-<p>This folder contains production-oriented LangChain examples powered by Nebius Token Factory. Each example is self-contained with its own <code>requirements.txt</code>, <code>.env.example</code>, source files, and sample data.</p>
+<p>This folder contains production-oriented LangChain examples powered by Nebius Token Factory. Each example is self-contained with its own <code>requirements.txt</code>, <code>env.example</code>, source files, and sample data.</p>
 <h2 id="examples">Examples</h2>
 <table>
 <thead>
@@ -68,11 +68,11 @@
 </table>
 <h2 id="setup-pattern">Setup pattern</h2>
 <p>Each project can be run independently:</p>
-<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>langchain/&lt;example-folder&gt;
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>agents/langchain/&lt;example-folder&gt;
 python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+cp<span class="w"> </span>env.example<span class="w"> </span>.env
 <span class="c1"># add NEBIUS_API_KEY and any project-specific keys</span>
 python<span class="w"> </span>main.py
 </code></pre></div>
@@ -86,7 +86,7 @@ uvicorn<span class="w"> </span>voice_agent_server:app<span class="w"> </span>--h
 <ul>
 <li>All examples are designed to use local fixtures and read-only or draft-only tools.</li>
 <li>No real infrastructure, refunds, shipments, or vendor approvals are executed.</li>
-<li><code>.env.example</code> files contain placeholders only; add real keys locally.</li>
+<li><code>env.example</code> files contain placeholders only; add real keys locally.</li>
 </ul>
   </article>
 </div>

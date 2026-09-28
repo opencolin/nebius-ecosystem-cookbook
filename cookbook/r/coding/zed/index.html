@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zed with Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/coding/zed" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="zed-with-nebius-token-factory">Zed with Nebius Token Factory</h1>
+<p>Use Nebius Token Factory for Zed-owned AI features through Zed's existing
+<a href="https://zed.dev/docs/ai/use-api-access#openai-compatible">OpenAI-compatible provider</a>.
+No Zed extension, native provider, or Token Factory adapter is required.</p>
+<p>This recipe configures <code>moonshotai/Kimi-K3</code> over the OpenAI Chat Completions
+protocol. It applies to the Zed Agent, Inline Assistant, commit-message generation,
+thread summaries, and similar model-backed Zed features. It does not configure
+External Agents, Terminal Threads, or Edit Prediction; those are separate Zed
+surfaces with their own model access and authentication.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A current <a href="https://zed.dev/download">Zed</a> installation</li>
+<li>A <a href="https://tokenfactory.nebius.com/">Nebius Token Factory API key</a></li>
+<li>Python 3.11 or newer for the optional offline validator</li>
+</ul>
+<h2 id="configure-the-provider">Configure the provider</h2>
+<p>Open Zed's Agent Settings from the command palette with <code>agent: open settings</code>.
+Under <strong>LLM Providers</strong>, choose <strong>Add Provider</strong>, then select an OpenAI-compatible
+provider and enter:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provider ID / name</td>
+<td><code>nebius</code></td>
+</tr>
+<tr>
+<td>API URL</td>
+<td><code>https://api.tokenfactory.nebius.com/v1</code></td>
+</tr>
+<tr>
+<td>Model ID</td>
+<td><code>moonshotai/Kimi-K3</code></td>
+</tr>
+<tr>
+<td>Context window</td>
+<td><code>1000000</code></td>
+</tr>
+<tr>
+<td>Supports tools</td>
+<td>On</td>
+</tr>
+<tr>
+<td>Supports images</td>
+<td>On</td>
+</tr>
+<tr>
+<td>Supports <code>/chat/completions</code></td>
+<td>On</td>
+</tr>
+<tr>
+<td>Supports parallel tool calls</td>
+<td>Off</td>
+</tr>
+<tr>
+<td>Supports prompt cache key</td>
+<td>Off</td>
+</tr>
+<tr>
+<td>Interleaved reasoning</td>
+<td>On</td>
+</tr>
+<tr>
+<td>Uses <code>max_tokens</code></td>
+<td>Off</td>
+</tr>
+</tbody>
+</table>
+<p>The provider ID is significant. Zed converts it to upper snake case and appends
+<code>_API_KEY</code>; <code>nebius</code> therefore reads <code>NEBIUS_API_KEY</code>.</p>
+<p>Enter the Token Factory key in Zed's provider UI to store it in the local system
+keychain. Alternatively, start Zed from an environment that contains the key:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span><span class="s2">"your-token-factory-api-key"</span>
+zed<span class="w"> </span>.
+</code></pre></div>
+
+<p>Do not put the key in <code>settings.json</code>.</p>
+<h2 id="merge-the-maintained-settings">Merge the maintained settings</h2>
+<p>The UI writes equivalent settings. For a reviewable manual setup, open your Zed
+settings file with <code>zed: open settings file</code> and merge the contents of
+<code>settings.json</code> into your existing top-level JSON object. Do not replace unrelated
+editor settings.</p>
+<p>The important protocol lock is:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">"capabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"chat_completions"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"interleaved_reasoning"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"max_tokens_parameter"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>With <code>chat_completions: true</code>, current Zed appends <code>/chat/completions</code> to the
+configured API URL. Setting it to <code>false</code> switches Zed to <code>/responses</code>, which is
+outside this recipe. <code>interleaved_reasoning</code> allows reasoning-capable chat models
+to round-trip the dedicated <code>reasoning_content</code> field. Keeping
+<code>max_tokens_parameter: false</code> uses <code>max_completion_tokens</code>, which Token Factory's
+Chat Completions API accepts.</p>
+<h2 id="select-and-use-the-model">Select and use the model</h2>
+<p>The settings fragment makes Kimi K3 the default Zed model. You can also select
+<strong>Nebius Token Factory · Kimi K3</strong> from the model picker in the Agent Panel.</p>
+<p>Start with a low-risk prompt and approve tool actions deliberately. Provider
+configuration does not change Zed's tool-permission policy.</p>
+<h2 id="validate-offline">Validate offline</h2>
+<p>The validator parses the settings without launching Zed or contacting Token
+Factory. It checks the exact schema subset, base URL, model, context, provider-to-key
+mapping, default-model reference, secret exclusion, and Chat Completions capability.</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>validate_settings.py
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+.venv/bin/pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-test.txt
+.venv/bin/pytest<span class="w"> </span>-q
+</code></pre></div>
+
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li>This recipe covers Zed-owned AI features only. External Agents and Terminal
+  Threads are separate processes and do not inherit this provider.</li>
+<li>Edit Prediction uses a separate configuration and the legacy OpenAI
+  <code>/v1/completions</code> format. Kimi K3 is not configured here as a fill-in-the-middle
+  edit-prediction model.</li>
+<li>The current model is pinned because its 1M context, vision, tools, and reasoning
+  declarations are model-specific. When changing models, update and validate all
+  of those fields together.</li>
+<li><code>parallel_tool_calls</code> and <code>prompt_cache_key</code> remain off because this recipe does
+  not claim those optional Zed request features for Token Factory.</li>
+<li>Zed's OpenAI-compatible provider rate-limits itself to four concurrent requests.</li>
+<li>API access is initialized in the local Zed app. For SSH and dev-container
+  projects, keychain credentials and provider environment variables come from the
+  local Zed process, not the remote shell.</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="zed-asks-for-an-api-key">Zed asks for an API key</h3>
+<p>Enter it through the <code>nebius</code> provider UI, or make sure <code>NEBIUS_API_KEY</code> is in the
+environment of the Zed process and restart Zed. A key exported only in an embedded
+or remote terminal does not automatically reach the local app.</p>
+<h3 id="401-or-403"><code>401</code> or <code>403</code></h3>
+<p>Create or rotate the key in Token Factory, reset the provider credential in Zed,
+and enter the new value. Confirm the API URL still ends in <code>/v1</code>.</p>
+<h3 id="404-or-request-reaches-responses"><code>404</code> or request reaches <code>/responses</code></h3>
+<p>Keep the base URL at <code>https://api.tokenfactory.nebius.com/v1</code> and
+<code>capabilities.chat_completions</code> set to <code>true</code>. Do not append
+<code>/chat/completions</code> yourself; Zed appends it. A false capability sends the request
+to the Responses endpoint instead.</p>
+<h3 id="model-not-found">Model not found</h3>
+<p>Confirm the exact current model ID in the authenticated Token Factory model catalog.
+If Kimi K3 has been retired, update the model ID, context window, capabilities,
+default-model reference, and validator together instead of changing only the name.</p>
+<h3 id="tools-or-images-fail">Tools or images fail</h3>
+<p>Check that the model remains advertised with those capabilities in Token Factory.
+If the selected replacement model lacks either feature, turn the corresponding Zed
+capability off so the UI does not offer unsupported inputs or tools.</p>
+<h2 id="documentation-gap-audited">Documentation gap audited</h2>
+<p>Token Factory's public integrations overview lists <strong>Zed</strong> under Coding Assistants,
+but as of this audit the label has no linked setup page or configuration details.
+This first-party cookbook recipe fills that onboarding gap without adding or
+duplicating provider code in Zed.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

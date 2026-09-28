@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mattermost Agents + Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/mattermost-agents" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="mattermost-agents-nebius-token-factory">Mattermost Agents + Nebius Token Factory</h1>
+<p><a href="https://github.com/mattermost/mattermost-plugin-agents">Mattermost Agents</a> can connect to Nebius Token Factory through its built-in <strong>OpenAI Compatible</strong> service. No Mattermost provider plugin or custom adapter is required.</p>
+<p>This recipe uses the Chat Completions compatibility path. Mattermost's <strong>Use Responses API</strong> setting must therefore be off.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A Mattermost deployment with the Agents plugin installed and enabled.</li>
+<li>A Nebius Token Factory API key from <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a>.</li>
+<li>A model available to your Token Factory account. The sample uses <code>moonshotai/Kimi-K2.7-Code</code>; verify it, or select another model, from the <a href="https://tokenfactory.nebius.com/model-catalog.md">live model catalog</a>.</li>
+</ul>
+<h2 id="1-add-the-token-factory-service">1. Add the Token Factory service</h2>
+<p>In Mattermost, open <strong>System Console &gt; Plugins &gt; Agents</strong>, select <strong>Add a Service</strong>, and enter:</p>
+<table>
+<thead>
+<tr>
+<th>Mattermost setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Service name</strong></td>
+<td><code>Nebius Token Factory</code></td>
+</tr>
+<tr>
+<td><strong>Service type</strong></td>
+<td><strong>OpenAI Compatible</strong></td>
+</tr>
+<tr>
+<td><strong>API URL</strong></td>
+<td><code>https://api.tokenfactory.nebius.com/v1</code></td>
+</tr>
+<tr>
+<td><strong>API Key</strong></td>
+<td>Your Token Factory API key</td>
+</tr>
+<tr>
+<td><strong>Default Model</strong></td>
+<td><code>moonshotai/Kimi-K2.7-Code</code> or another model available to your account</td>
+</tr>
+<tr>
+<td><strong>Use Responses API</strong></td>
+<td><strong>Off</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Save the service. Mattermost may fetch the model list from Token Factory after the API URL and key are present; model IDs are case-sensitive.</p>
+<p>The accompanying <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/mattermost-agents/service-config.example.json" target="_blank" rel="noopener"><code>service-config.example.json</code></a> is a reviewable reference for these fields. It is not a complete Mattermost admin-config export and contains no working secret. Mattermost assigns service IDs and stores the configuration through its own admin interface or admin API.</p>
+<h2 id="2-create-or-update-an-agent">2. Create or update an agent</h2>
+<p>Open the top-level <strong>Agents</strong> product page, create an agent (or edit an existing one), and select <strong>Nebius Token Factory</strong> as its service. Leave the agent's model override empty to inherit the service's default, or enter another exact model ID available to your account.</p>
+<p>Start with a plain chat prompt before enabling Mattermost tools or MCP servers. Tool calling is model-sensitive; select a model whose current catalog metadata advertises <code>function_calling</code> before testing tools.</p>
+<h2 id="why-use-responses-api-is-off">Why <code>Use Responses API</code> is off</h2>
+<p>Mattermost routes an <strong>OpenAI Compatible</strong> service through Chat Completions when <code>Use Responses API</code> is <code>false</code>. Selecting Mattermost's direct <strong>OpenAI</strong> service is not equivalent: that service always uses the Responses API.</p>
+<p>Token Factory exposes a stateless Responses-compatible surface for supported models, but this recipe does not validate Mattermost's Responses-specific native tools, reasoning controls, or response-state assumptions. Keep the setting off unless you have separately tested that exact model and workflow.</p>
+<h2 id="validate-the-sample-offline">Validate the sample offline</h2>
+<p>The validation test checks the documented service type, canonical URL, explicit model, secret placeholder, and Chat Completions setting without making a network request:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>integrations/mattermost-agents
+python3<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>-v<span class="w"> </span>test_recipe.py
+</code></pre></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>401 Unauthorized</strong> — replace <code>&lt;NEBIUS_API_KEY&gt;</code> with a valid key in Mattermost. Do not include quotes, the placeholder text, or the <code>Bearer</code> prefix.</li>
+<li><strong>404 / model not found</strong> — compare the exact, case-sensitive model ID with the live catalog and the models available to your key. Model availability changes; do not guess a replacement from the model family name.</li>
+<li><strong>Requests go to <code>/responses</code></strong> — confirm the service type is <strong>OpenAI Compatible</strong>, not <strong>OpenAI</strong>, and that <strong>Use Responses API</strong> is off.</li>
+<li><strong>Wrong endpoint</strong> — use <code>https://api.tokenfactory.nebius.com/v1</code> as the API URL. Do not append <code>/chat/completions</code>; Mattermost adds the route.</li>
+<li><strong>Tools do not run</strong> — first confirm plain chat works, then choose a model advertising function calling. Mattermost's provider-native web search and Responses-only reasoning controls are outside this recipe.</li>
+<li><strong>Model list cannot be fetched</strong> — verify that the Mattermost server can reach <code>api.tokenfactory.nebius.com</code> and that the API URL and key are both present. You can still enter a known, current model ID manually.</li>
+</ul>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://github.com/mattermost/mattermost-plugin-agents/blob/master/docs/providers.md">Mattermost Agents provider guide</a></li>
+<li><a href="https://github.com/mattermost/mattermost-plugin-agents/blob/master/docs/admin_guide.md">Mattermost Agents admin guide</a></li>
+<li><a href="https://tokenfactory.nebius.com/model-catalog.md">Token Factory model catalog</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/api-reference/inference/chat-completion">Token Factory API documentation</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trace Nebius Token Factory with Respan Gateway · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/respan" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="trace-nebius-token-factory-with-respan-gateway">Trace Nebius Token Factory with Respan Gateway</h1>
+<p>Route Token Factory Chat Completions through
+<a href="https://www.respan.ai/">Respan</a> (formerly Keywords AI) using Respan's existing
+<a href="https://www.respan.ai/docs/integrations/gateway/model-providers/custom">Custom / Self-hosted provider</a>.
+The gateway automatically records latency, token, cost, and error traces, so this
+path needs neither a Token Factory adapter nor the Respan tracing SDK.</p>
+<p>This recipe uses two trust boundaries:</p>
+<ol>
+<li>Respan stores a Token Factory provider credential and proxies the request.</li>
+<li>Your application authenticates to Respan using only <code>RESPAN_API_KEY</code>.</li>
+</ol>
+<p>It is deliberately limited to OpenAI-compatible Chat Completions. Respan has a
+separate Responses route, but arbitrary custom-provider Responses behavior is not
+validated here.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.11 or newer</li>
+<li><a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a></li>
+<li>A <a href="https://tokenfactory.nebius.com/">Nebius Token Factory API key</a></li>
+<li>A <a href="https://platform.respan.ai/platform/api/api-keys">Respan account and API key</a></li>
+</ul>
+<h2 id="register-token-factory-in-respan">Register Token Factory in Respan</h2>
+<p>The checked-in <code>provider-config.example.json</code> is an offline-review checklist, not
+an importable payload. Configure its values in the Respan UI:</p>
+<ol>
+<li>Open Respan's <a href="https://platform.respan.ai/platform/api/providers">Providers page</a>
+   and choose <strong>Add Custom Provider</strong>.</li>
+<li>Set the name to <code>Nebius Token Factory</code>.</li>
+<li>Select the OpenAI-compatible protocol.</li>
+<li>Set the provider base URL to exactly
+   <code>https://api.tokenfactory.nebius.com/v1</code>.</li>
+<li>Paste your <code>NEBIUS_API_KEY</code> into Respan's provider credential field. Do not put
+   it in this recipe's <code>.env</code>; the application does not need the upstream key.</li>
+<li>Open Respan's <a href="https://platform.respan.ai/platform/models">Models page</a>, add
+   <code>moonshotai/Kimi-K3</code>, and associate it with the custom Token Factory provider.</li>
+<li>Use Respan's provider/model test before sending application traffic.</li>
+</ol>
+<p>Kimi K3 is the model validated by this recipe. If Token Factory replaces it,
+update the Respan model registration, example config, code constant, documentation,
+and tests together after confirming the current catalog.</p>
+<h2 id="install-and-configure">Install and configure</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>venv
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>-r<span class="w"> </span>requirements-test.txt
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Edit <code>.env</code>:</p>
+<div class="codehilite"><pre><span></span><code>RESPAN_API_KEY=your-respan-api-key
+RESPAN_MODEL=moonshotai/Kimi-K3
+RESPAN_LOG_CONTENT=false
+</code></pre></div>
+
+<p>Keep <code>RESPAN_LOG_CONTENT=false</code> until your data owner has approved prompt and
+completion retention in Respan. Then validate locally without a network request:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>respan_gateway.py<span class="w"> </span>--check
+</code></pre></div>
+
+<h2 id="run">Run</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>respan_gateway.py<span class="w"> </span>--prompt<span class="w"> </span><span class="s2">"Explain tracing in one sentence."</span>
+</code></pre></div>
+
+<p>The application sends <code>POST https://api.respan.ai/api/chat/completions</code> with the
+registered raw model ID. Respan authenticates the upstream request using the Token
+Factory credential stored in Provider settings, then exposes the request as a
+trace in its Logs view.</p>
+<h2 id="privacy-and-production-review">Privacy and production review</h2>
+<p>Gateway mode places Respan in the inference data path. Prompts and completions
+transit Respan before reaching the canonical Token Factory endpoint, and the
+Token Factory credential is stored in Respan Provider settings. Review your data
+classification, DPA, retention, region, access-control, and incident requirements
+before production use; do not send secrets, personal data, or regulated content
+until that review is complete.</p>
+<p>This recipe defaults to <code>disable_log=true</code>, which Respan documents as recording
+metrics while omitting input/output from the log. It does <strong>not</strong> prevent request
+content from transiting the gateway. Setting <code>RESPAN_LOG_CONTENT=true</code> changes the
+request to <code>disable_log=false</code>, allowing content to appear in traces subject to
+your Respan retention controls.</p>
+<p>Use separate Respan API keys for development and production, restrict access to
+Provider settings, and rotate both Respan and Token Factory credentials after any
+suspected exposure. Gateway mode may add latency and a third-party dependency;
+test timeouts and failure behavior for your workload.</p>
+<h2 id="offline-validation">Offline validation</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>-q
+uvx<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>respan_gateway.py<span class="w"> </span>test_respan_gateway.py
+uvx<span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>respan_gateway.py<span class="w"> </span>test_respan_gateway.py
+</code></pre></div>
+
+<p>The mocked transport test executes the real OpenAI Python client and asserts:</p>
+<ul>
+<li><code>POST /api/chat/completions</code>, never <code>/responses</code></li>
+<li>Respan bearer authentication at the application boundary</li>
+<li>the exact <code>moonshotai/Kimi-K3</code> model registration</li>
+<li>the canonical Token Factory URL in the provider checklist</li>
+<li>content logging disabled by default</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="respan-reports-a-provider-credential-error">Respan reports a provider credential error</h3>
+<p>The local process needs <code>RESPAN_API_KEY</code>, while the Respan custom provider needs
+the separate <code>NEBIUS_API_KEY</code>. Confirm both keys are in the correct location and
+that the provider test succeeds. Do not pass the Token Factory key to the gateway
+as application bearer authentication.</p>
+<h3 id="model-not-found">Model not found</h3>
+<p>The application model must exactly match the custom model registered in Respan.
+Confirm <code>moonshotai/Kimi-K3</code> is still available in Token Factory, then check its
+case and provider association in Respan's Models page.</p>
+<h3 id="the-request-reaches-apiresponses">The request reaches <code>/api/responses</code></h3>
+<p>Use <code>client.chat.completions.create</code>, as shown here. Do not replace it with
+<code>client.responses.create</code>; this recipe has not validated custom Token Factory
+routing through Respan's Responses endpoint.</p>
+<h3 id="traces-contain-no-prompt-or-completion">Traces contain no prompt or completion</h3>
+<p>That is the expected privacy-first default. Metrics remain available while
+<code>RESPAN_LOG_CONTENT=false</code>. Opt in only after completing the data review above.</p>
+<h3 id="duplicate-traces">Duplicate traces</h3>
+<p>Gateway calls are automatically traced. Do not add Respan's OpenAI instrumentation
+to this small gateway client unless you intentionally want separate client-side
+spans and have verified deduplication.</p>
+<h2 id="existing-cookbook-keywords-ai-hook">Existing cookbook Keywords AI hook</h2>
+<p><code>rag/support-agent-weaviate</code> contains an older optional <code>MonitoringAgent</code> that
+manually posts a second request log to the legacy <code>api.keywordsai.co</code> endpoint and
+estimates tokens by splitting text. It does not proxy Token Factory traffic,
+capture the actual provider response metadata, or represent current Respan gateway
+onboarding. This recipe leaves that application untouched; migrating or removing
+its legacy hook should be reviewed as a separate app-specific cleanup.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

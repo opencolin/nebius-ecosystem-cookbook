@@ -28,11 +28,11 @@
   <div class="container">
     <span class="hero-eyebrow">Runnable reference · the Token Factory Cookbook</span>
     <h1>Every recipe, rendered and browsable.</h1>
-    <p class="lede">The full <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Token Factory Cookbook</a> — 60 recipes across 17 categories, 30 notebooks rendered with their outputs. The runnable backing for the <a href="../index.html#partners">reference architectures</a> on the ecosystem page. Built on open models through one OpenAI-compatible <code>base_url</code>.</p>
+    <p class="lede">The full <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Token Factory Cookbook</a> — 71 recipes across 19 categories, 30 notebooks rendered with their outputs. The runnable backing for the <a href="../index.html#partners">reference architectures</a> on the ecosystem page. Built on open models through one OpenAI-compatible <code>base_url</code>.</p>
     <div class="cb-controls">
       <input class="cb-search" type="search" placeholder="Search recipes… (framework, task, model)" aria-label="Search recipes" />
     </div>
-    <div class="cb-chips"><button class="cb-chip cb-chip-on" data-cat="all">All</button><button class="cb-chip" data-cat="_root">Essentials</button><button class="cb-chip" data-cat="api">API Quickstarts</button><button class="cb-chip" data-cat="agents">Agents</button><button class="cb-chip" data-cat="tool-calling">Tool Calling</button><button class="cb-chip" data-cat="rag">RAG</button><button class="cb-chip" data-cat="lora">LoRA Fine-tuning</button><button class="cb-chip" data-cat="post-training">Fine-tuning &amp; Post-training</button><button class="cb-chip" data-cat="distillation">Distillation</button><button class="cb-chip" data-cat="models">Models</button><button class="cb-chip" data-cat="integrations">Integrations</button><button class="cb-chip" data-cat="apps">Apps</button><button class="cb-chip" data-cat="coding">Coding</button><button class="cb-chip" data-cat="workshops">Workshops</button><button class="cb-chip" data-cat="articles">Articles</button><button class="cb-chip" data-cat="community">Community</button><button class="cb-chip" data-cat="fun">Fun</button><button class="cb-chip" data-cat="office-hours">Office Hours</button></div>
+    <div class="cb-chips"><button class="cb-chip cb-chip-on" data-cat="all">All</button><button class="cb-chip" data-cat="_root">Essentials</button><button class="cb-chip" data-cat="api">API Quickstarts</button><button class="cb-chip" data-cat="agents">Agents</button><button class="cb-chip" data-cat="tool-calling">Tool Calling</button><button class="cb-chip" data-cat="rag">RAG</button><button class="cb-chip" data-cat="lora">LoRA Fine-tuning</button><button class="cb-chip" data-cat="post-training">Fine-tuning &amp; Post-training</button><button class="cb-chip" data-cat="distillation">Distillation</button><button class="cb-chip" data-cat="models">Models</button><button class="cb-chip" data-cat="integrations">Integrations</button><button class="cb-chip" data-cat="apps">Apps</button><button class="cb-chip" data-cat="coding">Coding</button><button class="cb-chip" data-cat="workshops">Workshops</button><button class="cb-chip" data-cat="articles">Articles</button><button class="cb-chip" data-cat="community">Community</button><button class="cb-chip" data-cat="fun">Fun</button><button class="cb-chip" data-cat="evaluations">Evaluations</button><button class="cb-chip" data-cat="office-hours">Office Hours</button><button class="cb-chip" data-cat="start-here">Start Here</button></div>
   </div>
 </header>
 <div class="container cb-index">
@@ -84,7 +84,7 @@
     <p>This guide shows how to run models using various python APIs.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/api','_blank')">source ↗</span>
   </div>
-</a></div></section><section class="cb-cat" data-cat="agents"><div class="section-eyebrow">Agents · 26</div><p class="section-lede">Production agents across every major framework — LangChain, CrewAI, Agno, AWS Strands, Google ADK, LlamaIndex, Pydantic, and more.</p><div class="cb-grid"><a class="cb-card" href="r/agents/agent-cost-comparison-1/index.html" data-search="agent cost comparison 2 benchmark nebius-hosted llms on a small data-analysis task and compare their cost, latency, token usage, and correctness. agents">
+</a></div></section><section class="cb-cat" data-cat="agents"><div class="section-eyebrow">Agents · 28</div><p class="section-lede">Production agents across every major framework — LangChain, CrewAI, Agno, AWS Strands, Google ADK, LlamaIndex, Pydantic, and more.</p><div class="cb-grid"><a class="cb-card" href="r/agents/agent-cost-comparison-1/index.html" data-search="agent cost comparison 2 benchmark nebius-hosted llms on a small data-analysis task and compare their cost, latency, token usage, and correctness. agents">
   <div class="cb-thumb cb-thumb-blank"></div>
   <div class="cb-card-body">
     <div class="cb-tags"><span class="pill">agents</span></div>
@@ -115,6 +115,14 @@
     <h3>AWS Strands Starter Agent</h3>
     <p>A simple demonstration of using the Strands library with Nebius Token Factory&#x27;s API to create an AI assistant that can fetch weather information.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/aws-strands-weather-agent','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/agents/jev-style-decision-model-glm/index.html" data-search="build a jev-style typed decision model with glm-5.3 flash short answer: you can get a typed decision with a real probability from an ordinary llm without generating any text. list the valid answers as letters, ask for one token, and read the probability of each letter from the model&#x27;s logprobs. on agents">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span></div>
+    <h3>Build a Jev-Style Typed Decision Model With GLM-5.3 Flash</h3>
+    <p>Short answer: you can get a typed decision with a real probability from an ordinary LLM without generating any text. List the valid answers as letters, ask for one token, and read the probability of each letter from the model&#x27;s logprobs. On</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/jev-style-decision-model-glm','_blank')">source ↗</span>
   </div>
 </a><a class="cb-card" href="r/agents/camel-ai-model-comparison-agent/index.html" data-search="camel-ai model comparison agent a benchmarking tool built with the camel framework that compares the performance of various ai models, including openai and nebius models. this tool measures and visualizes the speed of different models in terms of tokens processed per seco agents">
   <div class="cb-thumb cb-thumb-blank"></div>
@@ -172,6 +180,14 @@
     <p>Production use case: data teams need read-only agents that can inspect pipelines, query governed datasets, and recommend next actions when metrics break.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/data-quality-ops-agent','_blank')">source ↗</span>
   </div>
+</a><a class="cb-card" href="r/agents/langchain/pr-review-bot/index.html" data-search="deep pr reviewer a self-hosted github pull-request reviewer built with langchain deep agents and nebius token factory. agents langchain">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
+    <h3>Deep PR Reviewer</h3>
+    <p>A self-hosted GitHub pull-request reviewer built with LangChain Deep Agents and Nebius Token Factory.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/pr-review-bot','_blank')">source ↗</span>
+  </div>
 </a><a class="cb-card" href="r/agents/agno-hacker-news-agent/index.html" data-search="hackernews analysis agent a powerful ai agent built with agno that analyzes and provides insights about hackernews content. this agent uses the nebius ai model to deliver intelligent analysis of tech news, trends, and discussions. agents">
   <div class="cb-thumb" style="background-image:url(r/agents/agno-hacker-news-agent/banner.png)"></div>
   <div class="cb-card-body">
@@ -220,12 +236,12 @@
     <p>A starter example of a LangChain Deep Agent powered by an Nvidia Nemotron LLM served by Nebius Token Factory.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/nemotron-agents','_blank')">source ↗</span>
   </div>
-</a><a class="cb-card" href="r/agents/langchain/archived/index.html" data-search="langchain examples for nebius token factory this folder contains production-oriented langchain examples powered by nebius token factory. each example is self-contained with its own requirements.txt, .env.example, source files, and sample data. agents langchain">
+</a><a class="cb-card" href="r/agents/langchain/archived/index.html" data-search="langchain examples for nebius token factory this folder contains production-oriented langchain examples powered by nebius token factory. each example is self-contained with its own requirements.txt, env.example, source files, and sample data. agents langchain">
   <div class="cb-thumb cb-thumb-blank"></div>
   <div class="cb-card-body">
     <div class="cb-tags"><span class="pill">agents</span><span class="pill">langchain</span></div>
     <h3>LangChain examples for Nebius Token Factory</h3>
-    <p>This folder contains production-oriented LangChain examples powered by Nebius Token Factory. Each example is self-contained with its own requirements.txt, .env.example, source files, and sample data.</p>
+    <p>This folder contains production-oriented LangChain examples powered by Nebius Token Factory. Each example is self-contained with its own requirements.txt, env.example, source files, and sample data.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/archived','_blank')">source ↗</span>
   </div>
 </a><a class="cb-card" href="r/agents/llamaindex-task-timer/index.html" data-search="llamaindex starter agent a powerful ai agent template built with llamaindex that demonstrates how to create intelligent agents using the llamaindex framework. this starter project implements a task management assistant using the nebius ai model to showcase llamaind agents">
@@ -380,7 +396,7 @@
     <p>Browse NVIDIA Nemotron models available on Nebius Token Factory.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/models/nemotron','_blank')">source ↗</span>
   </div>
-</a></div></section><section class="cb-cat" data-cat="integrations"><div class="section-eyebrow">Integrations · 7</div><p class="section-lede">Token Factory inside OpenClaw, Tavily, and more.</p><div class="cb-grid"><a class="cb-card" href="r/integrations/openwiki-enterprise/index.html" data-search="build an enterprise knowledge base with openwiki and kimi k2.7 code openwiki is a langchain documentation agent that generates and maintains a markdown knowledge base from source repositories or connected knowledge sources. this guide configures openwiki to use moonshotai/kimi-k2.7-code through the nebius t integrations">
+</a></div></section><section class="cb-cat" data-cat="integrations"><div class="section-eyebrow">Integrations · 11</div><p class="section-lede">Token Factory inside OpenClaw, Tavily, and more.</p><div class="cb-grid"><a class="cb-card" href="r/integrations/openwiki-enterprise/index.html" data-search="build an enterprise knowledge base with openwiki and kimi k2.7 code openwiki is a langchain documentation agent that generates and maintains a markdown knowledge base from source repositories or connected knowledge sources. this guide configures openwiki to use moonshotai/kimi-k2.7-code through the nebius t integrations">
   <div class="cb-thumb cb-thumb-blank"></div>
   <div class="cb-card-body">
     <div class="cb-tags"><span class="pill">integrations</span></div>
@@ -396,12 +412,28 @@
     <p>A vision model reading a blurred invoice does not stay silent. It produces a number.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/tendem-invoice-validation','_blank')">source ↗</span>
   </div>
-</a><a class="cb-card" href="r/integrations/openclaw/index.html" data-search="openclaw + nebius token factory openclaw is a self-hosted ai assistant that connects chat apps (whatsapp, telegram, discord, and more) to llm providers. because nebius token factory serves open models through an openai-compatible api, you can point openclaw at token facto integrations">
+</a><a class="cb-card" href="r/integrations/kimi-cli/index.html" data-search="kimi cli with nebius token factory run kimi cli with kimi k3 on nebius token factory through its existing openai-compatible provider. this recipe uses kimi cli&#x27;s openailegacy provider, which sends streaming requests to the openai chat completions endpoint. it does not add a  integrations">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">integrations</span></div>
+    <h3>Kimi CLI with Nebius Token Factory</h3>
+    <p>Run Kimi CLI with Kimi K3 on Nebius Token Factory through its existing OpenAI-compatible provider. This recipe uses Kimi CLI&#x27;s openailegacy provider, which sends streaming requests to the OpenAI Chat Completions endpoint. It does not add a </p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/kimi-cli','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/integrations/mattermost-agents/index.html" data-search="mattermost agents + nebius token factory mattermost agents can connect to nebius token factory through its built-in openai compatible service. no mattermost provider plugin or custom adapter is required. integrations">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">integrations</span></div>
+    <h3>Mattermost Agents + Nebius Token Factory</h3>
+    <p>Mattermost Agents can connect to Nebius Token Factory through its built-in OpenAI Compatible service. No Mattermost provider plugin or custom adapter is required.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/mattermost-agents','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/integrations/openclaw/index.html" data-search="openclaw + nebius token factory openclaw can use custom openai-compatible model providers. this recipe registers nebius token factory as a custom provider, keeps the api key outside the configuration file, and shows how to verify the selected model before starting the gat integrations">
   <div class="cb-thumb cb-thumb-blank"></div>
   <div class="cb-card-body">
     <div class="cb-tags"><span class="pill">integrations</span></div>
     <h3>OpenClaw + Nebius Token Factory</h3>
-    <p>OpenClaw is a self-hosted AI assistant that connects chat apps (WhatsApp, Telegram, Discord, and more) to LLM providers. Because Nebius Token Factory serves open models through an OpenAI-compatible API, you can point OpenClaw at Token Facto</p>
+    <p>OpenClaw can use custom OpenAI-compatible model providers. This recipe registers Nebius Token Factory as a custom provider, keeps the API key outside the configuration file, and shows how to verify the selected model before starting the gat</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/openclaw','_blank')">source ↗</span>
   </div>
 </a><a class="cb-card" href="r/integrations/openhands-agent-canvas/index.html" data-search="openhands agent canvas + nebius token factory openhands agent canvas is a self-hosted control center for coding agents — a web ui for starting agent conversations, running coding tasks, and setting up automations. because nebius token factory is a first-class llm provider in agent canv integrations">
@@ -411,6 +443,14 @@
     <h3>OpenHands Agent Canvas + Nebius Token Factory</h3>
     <p>OpenHands Agent Canvas is a self-hosted control center for coding agents — a web UI for starting agent conversations, running coding tasks, and setting up automations. Because Nebius Token Factory is a first-class LLM provider in Agent Canv</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/openhands-agent-canvas','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/integrations/pi/index.html" data-search="pi coding agent + nebius token factory pi is a terminal coding agent with a built-in custom-provider configuration path. nebius token factory works through pi&#x27;s existing openai-completions api mode, so no provider adapter or extension is required. integrations">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">integrations</span></div>
+    <h3>pi coding agent + Nebius Token Factory</h3>
+    <p>pi is a terminal coding agent with a built-in custom-provider configuration path. Nebius Token Factory works through pi&#x27;s existing openai-completions API mode, so no provider adapter or extension is required.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/pi','_blank')">source ↗</span>
   </div>
 </a><a class="cb-card" href="r/integrations/pixeltable/index.html" data-search="pixeltable + nebius token factory pixeltable is open-source multimodal ai data infrastructure. you declare tables with images, video, audio, documents, and text; computed columns and embedding indexes run incrementally as data arrives. pixeltable includes a native nebius to integrations">
   <div class="cb-thumb cb-thumb-blank"></div>
@@ -436,6 +476,14 @@
     <p>Tavily is an LLM-optimized search API built specifically for agents. It delivers clean, structured, and context-aware web results — making it ideal for research, competitive intelligence, and multi-step agentic workflows. Tavily handles que</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/tavily','_blank')">source ↗</span>
   </div>
+</a><a class="cb-card" href="r/integrations/respan/index.html" data-search="trace nebius token factory with respan gateway route token factory chat completions through respan (formerly keywords ai) using respan&#x27;s existing custom / self-hosted provider. the gateway automatically records latency, token, cost, and error traces, so this path needs neither a token f integrations">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">integrations</span></div>
+    <h3>Trace Nebius Token Factory with Respan Gateway</h3>
+    <p>Route Token Factory Chat Completions through Respan (formerly Keywords AI) using Respan&#x27;s existing Custom / Self-hosted provider. The gateway automatically records latency, token, cost, and error traces, so this path needs neither a Token F</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/integrations/respan','_blank')">source ↗</span>
+  </div>
 </a></div></section><section class="cb-cat" data-cat="apps"><div class="section-eyebrow">Apps · 1</div><p class="section-lede">End-to-end applications built on Token Factory.</p><div class="cb-grid"><a class="cb-card" href="r/apps/index.html" data-search="cool apps and demos built with nebius ai - whatllm - allycat - customer support ai apps">
   <div class="cb-thumb cb-thumb-blank"></div>
   <div class="cb-card-body">
@@ -444,13 +492,29 @@
     <p>- WhatLLM - Allycat - Customer Support AI</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/apps','_blank')">source ↗</span>
   </div>
-</a></div></section><section class="cb-cat" data-cat="coding"><div class="section-eyebrow">Coding · 1</div><p class="section-lede">Coding-agent and code-generation recipes.</p><div class="cb-grid"><a class="cb-card" href="r/coding/index.html" data-search="using token factory models with coding agents token factory has integrations with many coding agents and allows you to run state-of-the-art open-source models. coding">
+</a></div></section><section class="cb-cat" data-cat="coding"><div class="section-eyebrow">Coding · 3</div><p class="section-lede">Coding-agent and code-generation recipes.</p><div class="cb-grid"><a class="cb-card" href="r/coding/cherry-studio/index.html" data-search="cherry studio with nebius token factory cherry studio already supports custom openai-compatible providers. this recipe configures its existing openai chat completions endpoint for token factory. it does not add a provider adapter or enable stateful responses behavior. coding">
   <div class="cb-thumb cb-thumb-blank"></div>
   <div class="cb-card-body">
     <div class="cb-tags"><span class="pill">coding</span></div>
-    <h3>Using Token Factory Models with Coding Agents</h3>
-    <p>Token Factory has integrations with many coding agents and allows you to run state-of-the-art open-source models.</p>
-    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/coding','_blank')">source ↗</span>
+    <h3>Cherry Studio with Nebius Token Factory</h3>
+    <p>Cherry Studio already supports custom OpenAI-compatible providers. This recipe configures its existing OpenAI Chat Completions endpoint for Token Factory. It does not add a provider adapter or enable stateful Responses behavior.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/coding/cherry-studio','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/coding/opencode.html" data-search="using opencode with token factory opencode is a coding agent that lives in your terminal, and nebius token factory is one of the providers built into it. there is no gateway to configure and no base url to paste: run /connect, pick nebius token factory, paste an api key onc coding doc">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">coding</span><span class="pill">doc</span></div>
+    <h3>Using OpenCode with Token Factory</h3>
+    <p>OpenCode is a coding agent that lives in your terminal, and Nebius Token Factory is one of the providers built into it. There is no gateway to configure and no base URL to paste: run /connect, pick Nebius Token Factory, paste an API key onc</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/blob/main/coding/opencode.md','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/coding/zed/index.html" data-search="zed with nebius token factory use nebius token factory for zed-owned ai features through zed&#x27;s existing openai-compatible provider. no zed extension, native provider, or token factory adapter is required. coding">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">coding</span></div>
+    <h3>Zed with Nebius Token Factory</h3>
+    <p>Use Nebius Token Factory for Zed-owned AI features through Zed&#x27;s existing OpenAI-compatible provider. No Zed extension, native provider, or Token Factory adapter is required.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/coding/zed','_blank')">source ↗</span>
   </div>
 </a></div></section><section class="cb-cat" data-cat="workshops"><div class="section-eyebrow">Workshops · 2</div><p class="section-lede">Hands-on workshop material.</p><div class="cb-grid"><a class="cb-card" href="r/workshops/deep-research-writing-agents-nebius-okahu/index.html" data-search="deep research + writing agents workshop with nebius and okahu a hands-on workshop for building a practical ai agent system with two mcp servers: a deep research agent and a linkedin writing workflow. the current implementation uses nebius ai studio for text llm calls, exa for real-time research, gemin workshops">
   <div class="cb-thumb cb-thumb-blank"></div>
@@ -492,8 +556,16 @@
     <p>OpenBench is a fast, standardized evaluation framework built by @groqinc for reproducible LLM benchmarking.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/community/openbench-evaluation-guide','_blank')">source ↗</span>
   </div>
-</a></div></section><section class="cb-cat" data-cat="fun"><div class="section-eyebrow">Fun · 2</div><p class="section-lede">Pelicans on bicycles, snake games — open models having fun.</p><div class="cb-grid"><a class="cb-card" href="r/fun/pelican-riding-bicycle/index.html" data-search="pelican riding a bicycle - a fun vibe benchmark this is inpired by simon willison&#x27;s experiment called pelican riding a bicycle.  it has become a cool vibe benchmark to evaluate llms. original github repo: simonw/pelican-bicycle fun">
-  <div class="cb-thumb" style="background-image:url(r/fun/pelican-riding-bicycle/token-factory-1.png)"></div>
+</a></div></section><section class="cb-cat" data-cat="fun"><div class="section-eyebrow">Fun · 3</div><p class="section-lede">Pelicans on bicycles, snake games — open models having fun.</p><div class="cb-grid"><a class="cb-card" href="r/fun/nebius-realtime-webcam/index.html" data-search="nebius realtime webcam point your webcam at something and get a running commentary from a vision model. it is exactly as fun as it sounds, and it takes about thirty seconds to get going. fun">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">fun</span></div>
+    <h3>Nebius Realtime Webcam</h3>
+    <p>Point your webcam at something and get a running commentary from a vision model. It is exactly as fun as it sounds, and it takes about thirty seconds to get going.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/fun/nebius-realtime-webcam','_blank')">source ↗</span>
+  </div>
+</a><a class="cb-card" href="r/fun/pelican-riding-bicycle/index.html" data-search="pelican riding a bicycle - a fun vibe benchmark this is inpired by simon willison&#x27;s experiment called pelican riding a bicycle.  it has become a cool vibe benchmark to evaluate llms. original github repo: simonw/pelican-bicycle fun">
+  <div class="cb-thumb" style="background-image:url(r/fun/pelican-riding-bicycle/token-factory-2.png)"></div>
   <div class="cb-card-body">
     <div class="cb-tags"><span class="pill">fun</span></div>
     <h3>Pelican Riding a Bicycle - A fun vibe benchmark</h3>
@@ -508,6 +580,14 @@
     <p>A visual snake battle game where two LLMs compete against each other! Watch as AI models control their snakes in a battle of survival.</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/fun/snake-game','_blank')">source ↗</span>
   </div>
+</a></div></section><section class="cb-cat" data-cat="evaluations"><div class="section-eyebrow">Evaluations · 1</div><p class="section-lede"></p><div class="cb-grid"><a class="cb-card" href="r/evaluations/inspect-ai/index.html" data-search="evaluate token factory models with inspect ai this recipe runs a small, reproducible inspect ai task against the nebius token factory openai-compatible endpoint. it uses inspect&#x27;s existing openai provider; no token factory-specific adapter is needed. evaluations">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">evaluations</span></div>
+    <h3>Evaluate Token Factory models with Inspect AI</h3>
+    <p>This recipe runs a small, reproducible Inspect AI task against the Nebius Token Factory OpenAI-compatible endpoint. It uses Inspect&#x27;s existing openai provider; no Token Factory-specific adapter is needed.</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/evaluations/inspect-ai','_blank')">source ↗</span>
+  </div>
 </a></div></section><section class="cb-cat" data-cat="office-hours"><div class="section-eyebrow">Office Hours · 1</div><p class="section-lede"></p><div class="cb-grid"><a class="cb-card" href="r/office-hours/index.html" data-search="🚀 token factory office hour 📅 jump to schedule office-hours">
   <div class="cb-thumb cb-thumb-blank"></div>
   <div class="cb-card-body">
@@ -515,6 +595,14 @@
     <h3>🚀 Token Factory Office Hour</h3>
     <p>📅 Jump to schedule</p>
     <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/office-hours','_blank')">source ↗</span>
+  </div>
+</a></div></section><section class="cb-cat" data-cat="start-here"><div class="section-eyebrow">Start Here · 1</div><p class="section-lede"></p><div class="cb-grid"><a class="cb-card" href="r/start-here/index.html" data-search="nebius token factory : start here - 0 - sign up - 1 - try the ui - 2 - your first api call - 3 - building your first agents - 4 - understanding agentic operations and cost - 5 - deep research agents - 6 - coding with token factory models - 7 - build a fun app / demo with yo start-here">
+  <div class="cb-thumb cb-thumb-blank"></div>
+  <div class="cb-card-body">
+    <div class="cb-tags"><span class="pill">start-here</span></div>
+    <h3>Nebius Token Factory : Start Here</h3>
+    <p>- 0 - Sign up - 1 - Try the UI - 2 - Your first API call - 3 - Building Your First Agents - 4 - Understanding Agentic Operations and Cost - 5 - Deep Research Agents - 6 - Coding with Token Factory Models - 7 - Build a fun app / demo with yo</p>
+    <span class="cb-src" onclick="event.preventDefault();event.stopPropagation();window.open('https://github.com/nebius/token-factory-cookbook/tree/main/start-here','_blank')">source ↗</span>
   </div>
 </a></div></section>
   <p class="cb-empty" hidden>No recipes match.</p>

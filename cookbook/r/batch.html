@@ -7824,7 +7824,21 @@ a.anchor-link {
 </style>
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<main><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<main>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h1 id="Batch-inference-with-Token-Factory">Batch inference with Token Factory<a class="anchor-link" href="#Batch-inference-with-Token-Factory">¶</a></h1><p>This notebook uploads a JSONL request file, creates a batch, checks that same batch, and downloads its output. Set <code>NEBIUS_BATCH_INPUT_PATH</code> to your JSONL file. Output is written to <code>NEBIUS_BATCH_OUTPUT_PATH</code> or a portable temporary-directory default.</p>
+<blockquote>
+<p>Batch access may require project enablement and a configured batch endpoint. Confirm the current <a href="https://docs.tokenfactory.nebius.com/ai-models-inference/batch-inference">Token Factory batch documentation</a> before running this notebook.</p>
+</blockquote>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7832,251 +7846,117 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://api.tokenfactory.nebius.com/v1"</span><span class="p">,</span>
-    <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">'NEBIUS_API_KEY'</span><span class="p">,</span> <span class="s1">''</span><span class="p">),</span>
+    <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"NEBIUS_API_KEY"</span><span class="p">],</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [737]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">batch_input_file</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-  <span class="n">file</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s2">"/Users/sofrony/batch.jsonl"</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">),</span>
-  <span class="n">purpose</span><span class="o">=</span><span class="s2">"batch"</span>
-<span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">batch_input_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"NEBIUS_BATCH_INPUT_PATH"</span><span class="p">,</span> <span class="s2">"batch.jsonl"</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">batch_input_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Batch input not found at </span><span class="si">{</span><span class="n">batch_input_path</span><span class="si">}</span><span class="s2">. "</span>
+        <span class="s2">"Set NEBIUS_BATCH_INPUT_PATH to a JSONL request file."</span>
+    <span class="p">)</span>
 
-<span class="n">batch_input_file</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">batch_input_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">batch_input</span><span class="p">:</span>
+    <span class="n">uploaded_file</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">batch_input</span><span class="p">,</span> <span class="n">purpose</span><span class="o">=</span><span class="s2">"batch"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">({</span><span class="s2">"input_file_id"</span><span class="p">:</span> <span class="n">uploaded_file</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"filename"</span><span class="p">:</span> <span class="n">batch_input_path</span><span class="o">.</span><span class="n">name</span><span class="p">})</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[737]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>{'id': 'd8af680e-9be8-4634-b4a5-cfd675067aef',
- 'bytes': 9120315571,
- 'created_at': 1729516591,
- 'filename': 'batch.jsonl',
- 'object': 'file',
- 'purpose': 'batch',
- 'status': None,
- 'status_details': None}</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [738]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">batch_input_file_id</span> <span class="o">=</span> <span class="n">batch_input_file</span><span class="o">.</span><span class="n">id</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">batch_input_file_id</span><span class="p">)</span>
-
-<span class="n">batch_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">batches</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-    <span class="n">input_file_id</span><span class="o">=</span><span class="n">batch_input_file_id</span><span class="p">,</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">batches</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">input_file_id</span><span class="o">=</span><span class="n">uploaded_file</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
     <span class="n">endpoint</span><span class="o">=</span><span class="s2">"/v1/chat/completions"</span><span class="p">,</span>
     <span class="n">completion_window</span><span class="o">=</span><span class="s2">"24h"</span><span class="p">,</span>
-    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-      <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"nightly eval job"</span>
-    <span class="p">}</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"description"</span><span class="p">:</span> <span class="s2">"nightly eval job"</span><span class="p">},</span>
 <span class="p">)</span>
 
-<span class="n">batch_id</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">({</span><span class="s2">"batch_id"</span><span class="p">:</span> <span class="n">batch</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"status"</span><span class="p">:</span> <span class="n">batch</span><span class="o">.</span><span class="n">status</span><span class="p">})</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>d8af680e-9be8-4634-b4a5-cfd675067aef
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[738]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>{'id': 'batch_3416ef9e-7176-4ba1-8b00-8080984e0970',
- 'completion_window': '24h',
- 'created_at': 1729516667,
- 'endpoint': '/v1/chat/completions',
- 'input_file_id': 'd8af680e-9be8-4634-b4a5-cfd675067aef',
- 'object': 'batch',
- 'status': 'validating',
- 'request_counts': {}}</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [739]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">status</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">batches</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">batch_id</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-<span class="n">status</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Re-run this cell until the batch reaches a terminal state.</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">batches</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"batch_id"</span><span class="p">:</span> <span class="n">status</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="s2">"status"</span><span class="p">:</span> <span class="n">status</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+        <span class="s2">"request_counts"</span><span class="p">:</span> <span class="n">status</span><span class="o">.</span><span class="n">request_counts</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[739]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>{'id': 'batch_3416ef9e-7176-4ba1-8b00-8080984e0970',
- 'completion_window': '24h',
- 'created_at': 1729516667,
- 'endpoint': '/v1/chat/completions',
- 'input_file_id': 'd8af680e-9be8-4634-b4a5-cfd675067aef',
- 'object': 'batch',
- 'status': 'validating',
- 'completed_at': None,
- 'error_file_id': None,
- 'finalizing_at': None,
- 'in_progress_at': None,
- 'output_file_id': None,
- 'request_counts': {}}</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [753]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">batch_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">batches</span><span class="o">.</span><span class="n">list</span><span class="p">()</span><span class="o">.</span><span class="n">dict</span><span class="p">()[</span><span class="s1">'data'</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">'id'</span><span class="p">]</span>
-<span class="n">status</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">batches</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">batch_id</span><span class="p">)</span>
-<span class="n">status</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[753]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>{'id': 'batch_df3346b5-4c2c-4f36-9b30-aeedfa485a59',
- 'completion_window': '24h',
- 'created_at': 1729502538,
- 'endpoint': '/v1/chat/completions',
- 'input_file_id': '6425e0cf-1f38-48c0-882b-c34336112cc0',
- 'object': 'batch',
- 'status': 'done',
- 'completed_at': 1729513364,
- 'error_file_id': None,
- 'finalizing_at': 1729513363,
- 'in_progress_at': 1729502547,
- 'output_file_id': 'f01cbeef-4714-4edb-8896-25b712d287db',
- 'request_counts': {'completed': 4, 'failed': 0, 'total': 4}}</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [754]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">file_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">output_file_id</span><span class="p">)</span>
-<span class="n">file_response</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[754]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>{'id': 'f01cbeef-4714-4edb-8896-25b712d287db',
- 'bytes': 2477,
- 'created_at': 1729513364,
- 'filename': 'batch_df3346b5-4c2c-4f36-9b30-aeedfa485a59_output.jsonl',
- 'object': 'file',
- 'purpose': 'batch',
- 'status': None,
- 'status_details': None}</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [755]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">if</span> <span class="ow">not</span> <span class="n">status</span><span class="o">.</span><span class="n">output_file_id</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Batch </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> has no output file yet (status: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">)."</span>
+    <span class="p">)</span>
+
 <span class="n">file_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">content</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">output_file_id</span><span class="p">)</span>
-<span class="n">lines</span> <span class="o">=</span> <span class="n">file_response</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+<span class="n">default_output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">())</span> <span class="o">/</span> <span class="s2">"nebius-batch-output.jsonl"</span>
+<span class="n">batch_output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"NEBIUS_BATCH_OUTPUT_PATH"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">default_output_path</span><span class="p">))</span>
+<span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+<span class="n">batch_output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">batch_output_path</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">file_response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">batch_output_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">output_file</span><span class="p">:</span>
+    <span class="n">result_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">output_file</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Saved </span><span class="si">{</span><span class="n">result_count</span><span class="si">}</span><span class="s2"> batch result(s) to </span><span class="si">{</span><span class="n">batch_output_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>{'id': 'batch_req_e3f24ba0-8305-4395-9d1f-95703a363986', 'custom_id': 'request-1', 'response': {'id': 'chat-1bd17149372044158cc19d7859a5506d', 'choices': [{'finish_reason': 'stop', 'index': 0, 'logprobs': None, 'message': {'content': 'Hello! How can I assist you today?', 'role': 'assistant', 'function_call': None, 'tool_calls': []}, 'stop_reason': None}], 'created': 1729513357, 'model': 'meta-llama/Meta-Llama-3.1-8B-Instruct-fast', 'object': 'chat.completion', 'service_tier': None, 'system_fingerprint': None, 'usage': {'completion_tokens': 10, 'prompt_tokens': 22, 'total_tokens': 32}, 'prompt_logprobs': None}, 'error': None}
-{'id': 'batch_req_ded9f16e-af25-466b-a155-27a3a72dc09e', 'custom_id': 'request-2', 'response': {'id': 'chat-41d9be70810441c68b2fcd89b7f3bc58', 'choices': [{'finish_reason': 'stop', 'index': 0, 'logprobs': None, 'message': {'content': '*shrugs*', 'role': 'assistant', 'function_call': None, 'tool_calls': []}, 'stop_reason': None}], 'created': 1729513359, 'model': 'meta-llama/Meta-Llama-3.1-8B-Instruct-fast', 'object': 'chat.completion', 'service_tier': None, 'system_fingerprint': None, 'usage': {'completion_tokens': 5, 'prompt_tokens': 24, 'total_tokens': 29}, 'prompt_logprobs': None}, 'error': None}
-{'id': 'batch_req_f1dbb223-86b6-4f1f-9697-4c07cdd1df86', 'custom_id': 'request-2', 'response': {'id': 'chat-a42fe71b08214b0e95234ddde13f995d', 'choices': [{'finish_reason': 'stop', 'index': 0, 'logprobs': None, 'message': {'content': '*sits silently*', 'role': 'assistant', 'function_call': None, 'tool_calls': []}, 'stop_reason': None}], 'created': 1729513360, 'model': 'meta-llama/Meta-Llama-3.1-8B-Instruct-fast', 'object': 'chat.completion', 'service_tier': None, 'system_fingerprint': None, 'usage': {'completion_tokens': 5, 'prompt_tokens': 24, 'total_tokens': 29}, 'prompt_logprobs': None}, 'error': None}
-{'id': 'batch_req_374315b6-4749-4239-8f47-de39293bc48d', 'custom_id': 'request-1', 'response': {'id': 'chat-b8cca8b11f434e07b1698bc3948b1a3b', 'choices': [{'finish_reason': 'stop', 'index': 0, 'logprobs': None, 'message': {'content': 'How can I assist you today?', 'role': 'assistant', 'function_call': None, 'tool_calls': []}, 'stop_reason': None}], 'created': 1729513360, 'model': 'meta-llama/Meta-Llama-3.1-8B-Instruct-fast', 'object': 'chat.completion', 'service_tier': None, 'system_fingerprint': None, 'usage': {'completion_tokens': 8, 'prompt_tokens': 22, 'total_tokens': 30}, 'prompt_logprobs': None}, 'error': None}
-</pre>
 </div>
 </div>
 </div>

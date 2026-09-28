@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>pi coding agent + Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/integrations/pi" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="pi-coding-agent-nebius-token-factory">pi coding agent + Nebius Token Factory</h1>
+<p><a href="https://github.com/earendil-works/pi">pi</a> is a terminal coding agent with a built-in custom-provider configuration path. Nebius Token Factory works through pi's existing <code>openai-completions</code> API mode, so no provider adapter or extension is required.</p>
+<p>This recipe uses OpenAI-compatible Chat Completions. It does not select pi's separate <code>openai-responses</code> mode.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Node.js and the <a href="https://www.npmjs.com/package/@earendil-works/pi-coding-agent">pi coding agent</a>.</li>
+<li>A Nebius Token Factory API key from <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a>.</li>
+<li>A model available to your Token Factory account. The sample uses the current <code>zai-org/GLM-5.1</code>; verify it, or choose another tool-capable model, in the <a href="https://tokenfactory.nebius.com/model-catalog.md">live model catalog</a>.</li>
+</ul>
+<h2 id="1-install-pi">1. Install pi</h2>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>--ignore-scripts<span class="w"> </span>@earendil-works/pi-coding-agent
+</code></pre></div>
+
+<h2 id="2-configure-the-provider">2. Configure the provider</h2>
+<p>Pi reads custom providers from <code>~/.pi/agent/models.json</code>. On a fresh setup, copy <a href="https://github.com/nebius/token-factory-cookbook/blob/main/integrations/pi/models.example.json" target="_blank" rel="noopener"><code>models.example.json</code></a> there. If the file already exists, merge the <code>nebius-token-factory</code> entry into its existing <code>providers</code> object instead of replacing the file.</p>
+<div class="codehilite"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.pi/agent
+cp<span class="w"> </span>models.example.json<span class="w"> </span>~/.pi/agent/models.json
+</code></pre></div>
+
+<p>The important fields are:</p>
+<ul>
+<li><code>baseUrl</code>: Token Factory's canonical API root, including <code>/v1</code>.</li>
+<li><code>apiKey</code>: <code>$NEBIUS_API_KEY</code>, which tells pi to resolve the environment variable at request time. Do not remove the <code>$</code>.</li>
+<li><code>api</code>: <code>openai-completions</code>, pi's Chat Completions compatibility mode.</li>
+<li><code>models</code>: explicit model entries; pi does not copy Token Factory's catalog into this local file automatically.</li>
+</ul>
+<p>The compatibility overrides keep the baseline request aligned with Token Factory's Chat Completions schema: use <code>system</code> rather than <code>developer</code>, send <code>max_tokens</code> rather than <code>max_completion_tokens</code>, and do not request OpenAI long-cache retention.</p>
+<h2 id="3-set-the-api-key">3. Set the API key</h2>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span>your_key_here
+</code></pre></div>
+
+<p>Keep the key in your shell or secret manager. Do not paste a working key into <code>models.json</code> or commit one to source control.</p>
+<h2 id="4-select-the-model">4. Select the model</h2>
+<p>Confirm pi loaded the custom entry:</p>
+<div class="codehilite"><pre><span></span><code>pi<span class="w"> </span>--list-models<span class="w"> </span><span class="s2">"GLM-5.1"</span>
+</code></pre></div>
+
+<p>Then start pi in the project you want it to work on:</p>
+<div class="codehilite"><pre><span></span><code>pi<span class="w"> </span>--provider<span class="w"> </span>nebius-token-factory<span class="w"> </span>--model<span class="w"> </span>zai-org/GLM-5.1
+</code></pre></div>
+
+<p>You can also select the model from <code>/model</code> in an interactive pi session.</p>
+<p>The sample keeps pi's extended-thinking controls off and declares text input only. That is the conservative coding-agent baseline validated by this recipe. Tool calling remains available because pi's normal coding tools use the Chat Completions <code>tools</code> field. Enable model-specific reasoning controls or image input only after validating the exact current model and route.</p>
+<h2 id="validate-the-sample-offline">Validate the sample offline</h2>
+<p>The included test checks the provider schema, canonical URL, environment-key reference, current model entry, compatibility overrides, and absence of Responses mode without making an API request:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>integrations/pi
+python3<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>-v<span class="w"> </span>test_recipe.py
+</code></pre></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>Model does not appear</strong> — ensure the file is exactly <code>~/.pi/agent/models.json</code>, export <code>NEBIUS_API_KEY</code> in the shell that starts pi, then reopen <code>/model</code>. Pi reloads the file when the model selector opens.</li>
+<li><strong>Authentication error</strong> — the JSON value must be <code>"$NEBIUS_API_KEY"</code>, including the <code>$</code>. <code>"NEBIUS_API_KEY"</code> is treated as a literal key.</li>
+<li><strong>404 / model not found</strong> — compare the exact, case-sensitive model ID with the live catalog and the models available to your key. Update the single model entry rather than copying a static catalog.</li>
+<li><strong>Request mentions <code>developer</code> or <code>max_completion_tokens</code></strong> — confirm the <code>compat</code> object from the sample is present and nested under <code>nebius-token-factory</code>.</li>
+<li><strong>Wrong endpoint</strong> — use <code>https://api.tokenfactory.nebius.com/v1</code>. Do not append <code>/chat/completions</code>; pi adds the route.</li>
+<li><strong>Tool calls fail</strong> — first test a plain prompt, then verify that the selected model currently advertises function calling. Tool support is model-specific even when the API route is compatible.</li>
+<li><strong>Context or cost display looks wrong</strong> — model metadata changes over time. Recheck the live catalog before changing <code>contextWindow</code>; pi's cost display is zero unless you add current rates, so use Token Factory billing as the source of truth.</li>
+<li><strong>You need Responses-specific features</strong> — this recipe intentionally uses Chat Completions. Token Factory's Responses-compatible surface is stateless and requires separate model/workflow validation; changing <code>api</code> is not a drop-in persistence guarantee.</li>
+</ul>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/models.md">pi custom models documentation</a></li>
+<li><a href="https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/providers.md">pi provider documentation</a></li>
+<li><a href="https://tokenfactory.nebius.com/model-catalog.md">Token Factory model catalog</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/api-reference/inference/chat-completion">Token Factory Chat Completions API</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

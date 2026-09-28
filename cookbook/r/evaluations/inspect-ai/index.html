@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Evaluate Token Factory models with Inspect AI · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/evaluations/inspect-ai" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="evaluate-token-factory-models-with-inspect-ai">Evaluate Token Factory models with Inspect AI</h1>
+<p>This recipe runs a small, reproducible <a href="https://inspect.aisi.org.uk/">Inspect AI</a> task against the Nebius Token Factory OpenAI-compatible endpoint. It uses Inspect's existing <code>openai</code> provider; no Token Factory-specific adapter is needed.</p>
+<p>The included smoke task has two fixed samples, temperature zero, and deterministic exact-answer scoring. It is intentionally small enough to check a model or account before starting a larger evaluation.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.11 or newer</li>
+<li>A <a href="https://tokenfactory.nebius.com/">Token Factory API key</a></li>
+<li>A current chat-completions model ID from the <a href="https://tokenfactory.nebius.com/models">model catalog</a></li>
+</ul>
+<h2 id="set-up">Set up</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+
+<p>Copy the example configuration, replace the key if needed, and load it into your shell:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="nb">set</span><span class="w"> </span>-a
+<span class="nb">source</span><span class="w"> </span>.env
+<span class="nb">set</span><span class="w"> </span>+a
+</code></pre></div>
+
+<p><code>NEBIUS_API_KEY</code> and <code>NEBIUS_MODEL</code> are both required. The example currently uses <code>openai/gpt-oss-120b</code>; choose another active chat model if it is not available to your account.</p>
+<h2 id="run-the-evaluation">Run the evaluation</h2>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>run_eval.py
+</code></pre></div>
+
+<p>The runner maps <code>NEBIUS_API_KEY</code> to Inspect's <code>OPENAI_API_KEY</code>, sets the canonical base URL to <code>https://api.tokenfactory.nebius.com/v1</code>, and selects the model as:</p>
+<div class="codehilite"><pre><span></span><code>openai/openai/gpt-oss-120b
+└────┘ └──────────────────┘
+Inspect       Token Factory
+provider      model ID
+</code></pre></div>
+
+<p>Inspect writes logs to <code>logs/</code>. Open the local viewer with:</p>
+<div class="codehilite"><pre><span></span><code>inspect<span class="w"> </span>view<span class="w"> </span>--log-dir<span class="w"> </span>logs
+</code></pre></div>
+
+<h2 id="chat-completions-and-responses-api-scope">Chat Completions and Responses API scope</h2>
+<p>This recipe explicitly sets <code>responses_api=False</code>, so Inspect uses Chat Completions. That is the safe default for evaluation flows that may grow into multi-turn tasks.</p>
+<p>Do not change this example to <code>responses_api=True</code> unless every sample is an independent, stateless first turn. Token Factory's Responses API currently does not support stateful continuation fields such as <code>previous_response_id</code>; multi-turn evaluation state should stay in Chat Completions messages.</p>
+<h2 id="validate-without-an-api-key">Validate without an API key</h2>
+<p>The tests use Inspect's in-process mock model and make no network requests:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[test]'</span>
+pytest
+</code></pre></div>
+
+<p>They verify required configuration, provider/model mapping, the canonical endpoint, the Chat Completions guard, and the complete task/scorer pipeline.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

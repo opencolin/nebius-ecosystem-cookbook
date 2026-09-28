@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cherry Studio with Nebius Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/coding/cherry-studio" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="cherry-studio-with-nebius-token-factory">Cherry Studio with Nebius Token Factory</h1>
+<p>Cherry Studio already supports custom OpenAI-compatible providers. This recipe configures its existing <strong>OpenAI Chat Completions</strong> endpoint for Token Factory. It does not add a provider adapter or enable stateful Responses behavior.</p>
+<p>Cherry Studio stores custom providers in its application database, so <a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/cherry-studio/config.json" target="_blank" rel="noopener"><code>config.json</code></a> is a reviewable reference manifest—not a file to import into the application. Follow the UI steps below.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li><a href="https://github.com/CherryHQ/cherry-studio">Cherry Studio</a> installed</li>
+<li>a <a href="https://tokenfactory.nebius.com/project/api-keys">Token Factory API key</a></li>
+</ul>
+<h2 id="add-the-provider">Add the provider</h2>
+<ol>
+<li>Open <strong>Settings → Model Services</strong>.</li>
+<li>Select <strong>Add Provider</strong> (<code>+</code>), then <strong>Add Custom Provider</strong>.</li>
+<li>Enter:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provider name</td>
+<td><code>Nebius Token Factory</code></td>
+</tr>
+<tr>
+<td>API key</td>
+<td>Your Token Factory key</td>
+</tr>
+<tr>
+<td>OpenAI / Chat Completions Base URL</td>
+<td><code>https://api.tokenfactory.nebius.com/v1</code></td>
+</tr>
+</tbody>
+</table>
+<ol start="4">
+<li>Keep <strong>OpenAI / Chat Completions</strong> selected as the default text endpoint.</li>
+<li>Leave <strong>OpenAI Responses</strong> under <strong>More Endpoints</strong> empty. Token Factory's current Responses surface is stateless Stage 1 and is not the default wire contract for this recipe.</li>
+<li>Save the provider.</li>
+</ol>
+<p>Cherry Studio previews the final Chat Completions request as:</p>
+<div class="codehilite"><pre><span></span><code>https://api.tokenfactory.nebius.com/v1/chat/completions
+</code></pre></div>
+
+<p>Do not paste the full <code>/chat/completions</code> path into the Base URL field; Cherry Studio appends it.</p>
+<h2 id="discover-and-add-models">Discover and add models</h2>
+<ol>
+<li>Select the new <strong>Nebius Token Factory</strong> provider.</li>
+<li>Choose <strong>Get model list</strong> / <strong>Pull models</strong>.</li>
+<li>Cherry Studio calls <code>GET https://api.tokenfactory.nebius.com/v1/models</code> with the configured bearer key.</li>
+<li>Select a current coding model and apply the changes. This recipe was checked with <code>moonshotai/Kimi-K2.7-Code</code>.</li>
+<li>If you add the model manually instead, use the exact raw model ID and set its chat protocol/endpoint type to <strong>OpenAI Chat Completions</strong>. Do not prepend <code>openai/</code> or <code>nebius/</code>.</li>
+<li>Enable the provider, choose the model in a chat, and send a small prompt.</li>
+</ol>
+<p>Model availability changes independently of Cherry Studio. Prefer <strong>Get model list</strong> over copying a static catalog, and re-pull before relying on a model in a durable workflow.</p>
+<h2 id="scope">Scope</h2>
+<p>This setup covers Token Factory's OpenAI-compatible Chat Completions path, including normal Cherry Studio chat and model features supported by the selected model.</p>
+<p>It deliberately does not configure Cherry Studio's separate <strong>OpenAI Responses</strong> endpoint. Do not infer support for <code>previous_response_id</code>, server-side conversation chaining, or replay of prior response output/reasoning items from Cherry Studio's ability to speak that protocol to other providers.</p>
+<h2 id="validate-the-reference-offline">Validate the reference offline</h2>
+<p>The reference manifest contains no API key. Validate it with Node's built-in tools:</p>
+<div class="codehilite"><pre><span></span><code>node<span class="w"> </span>validate-config.mjs
+node<span class="w"> </span>--test<span class="w"> </span>validate-config.test.mjs
+</code></pre></div>
+
+<p>The checks make no network calls. They verify the provider name, canonical Base URL, Chat Completions default and model endpoint, derived <code>/chat/completions</code> and <code>/models</code> routes, raw model ID, absence of a Responses endpoint, and absence of stored secrets.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="401-unauthorized">401 Unauthorized</h3>
+<p>Open the provider's authentication section and replace the API key with a current Token Factory key. A key is stored by Cherry Studio locally; never add it to <code>config.json</code>, source control, screenshots, or support logs.</p>
+<h3 id="404-or-wrong-host">404 or wrong host</h3>
+<p>The Base URL must be exactly <code>https://api.tokenfactory.nebius.com/v1</code>. Retired <code>api.studio.nebius.*</code> hosts are not valid. Do not omit <code>/v1</code>, and do not append <code>/chat/completions</code> or <code>/models</code> yourself.</p>
+<h3 id="get-model-list-fails">Get model list fails</h3>
+<p>Confirm the provider has an enabled API key and the Chat Completions Base URL is set. The generic Cherry Studio model fetcher derives <code>/models</code> from that Base URL and sends bearer authentication. You can compare the upstream response directly:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-sS<span class="w"> </span>https://api.tokenfactory.nebius.com/v1/models<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$NEBIUS_API_KEY</span><span class="s2">"</span>
+</code></pre></div>
+
+<h3 id="model-not-found">Model not found</h3>
+<p>Pull the model list again. If the model was removed, select another current model suitable for coding and tool use. Keep the provider-owned model ID unchanged.</p>
+<h3 id="requests-unexpectedly-use-responses">Requests unexpectedly use Responses</h3>
+<p>Edit the provider and confirm <strong>OpenAI / Chat Completions</strong> is the default endpoint. Remove any OpenAI Responses Base URL, then edit the model and ensure its endpoint type contains only <strong>OpenAI Chat Completions</strong>.</p>
+<h2 id="evidence-checked">Evidence checked</h2>
+<p>The recipe follows Cherry Studio's current public source behavior:</p>
+<ul>
+<li>custom providers expose independent OpenAI Chat Completions and OpenAI Responses URL fields;</li>
+<li>Chat Completions is the default when it is the configured text endpoint;</li>
+<li>request previews append <code>/chat/completions</code> to the configured API root; and</li>
+<li>the generic model fetcher appends <code>/models</code> and sends bearer authentication.</li>
+</ul>
+<p>No Cherry Studio provider preset or adapter is required.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://github.com/CherryHQ/cherry-studio">Cherry Studio repository</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/inference/quickstart">Token Factory inference quickstart</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/api-reference/inference/create-chat-completion">Token Factory API reference</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

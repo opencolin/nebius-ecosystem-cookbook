@@ -7837,9 +7837,9 @@ a.anchor-link {
 <li><a href="https://docs.llamaindex.ai/en/stable/">llama-index</a></li>
 <li><a href="https://docs.llamaindex.ai/en/stable/api_reference/llms/nebius/#llama_index.llms.nebius.NebiusLLM">LlamaIndex + nebius API examples</a></li>
 </ul>
-<h2 id="Pre-requisites">Pre requisites<a class="anchor-link" href="#Pre-requisites">¶</a></h2><ul>
+<h2 id="Prerequisites">Prerequisites<a class="anchor-link" href="#Prerequisites">¶</a></h2><ul>
 <li>Nebius API key.  Sign up for free at <a href="https://tokenfactory.nebius.com/">Token Factory</a></li>
-<li>And complete <a href="https://github.com/nebius/token-factory-cookbook/blob/main/getting-started.md">the setup</a></li>
+<li>And complete <a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/setup.md">the setup</a></li>
 </ul>
 </div>
 </div>
@@ -7865,7 +7865,7 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="n">capture</span>
 
-<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span>  <span class="n">llama</span><span class="o">-</span><span class="n">index</span><span class="o">-</span><span class="n">llms</span><span class="o">-</span><span class="n">nebius</span>  <span class="n">python</span><span class="o">-</span><span class="n">dotenv</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="s2">"llama-index-llms-nebius==0.3.0"</span> <span class="s2">"python-dotenv&gt;=1,&lt;2"</span>
 </pre></div>
 </div>
 </div>
@@ -7882,12 +7882,12 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
@@ -7909,26 +7909,15 @@ a.anchor-link {
 <span class="c1">## quick hack (not recommended) - you can hardcode the config key here</span>
 <span class="c1"># NEBIUS_API_KEY = "your_key_here"</span>
 
+<span class="n">NEBIUS_BASE_URL</span> <span class="o">=</span> <span class="s2">"https://api.tokenfactory.nebius.com/v1/"</span>
+<span class="n">NEBIUS_MODEL</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"NEBIUS_MODEL"</span><span class="p">,</span> <span class="s2">"openai/gpt-oss-120b"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
 <span class="k">if</span> <span class="n">NEBIUS_API_KEY</span><span class="p">:</span>
   <span class="nb">print</span> <span class="p">(</span><span class="s1">'✅ NEBIUS_API_KEY found'</span><span class="p">)</span>
   <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'NEBIUS_API_KEY'</span><span class="p">]</span> <span class="o">=</span> <span class="n">NEBIUS_API_KEY</span>
 <span class="k">else</span><span class="p">:</span>
   <span class="k">raise</span> <span class="ne">RuntimeError</span> <span class="p">(</span><span class="s1">'❌ NEBIUS_API_KEY NOT found'</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>NOT running in Colab
-✅ NEBIUS_API_KEY found
-</pre>
 </div>
 </div>
 </div>
@@ -7942,7 +7931,7 @@ a.anchor-link {
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="3---Pick-a-Model">3 - Pick a Model<a class="anchor-link" href="#3---Pick-a-Model">¶</a></h2><ol>
 <li>Go to <strong>models</strong> tab in <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a></li>
-<li>Copy the model name.  For example <strong><code>openai/gpt-oss-120b-Instruct-2507</code></strong></li>
+<li>Copy the exact model ID. This notebook defaults to <strong><code>openai/gpt-oss-120b</code></strong>, which was present in the public catalog on 2026-08-13. Set <code>NEBIUS_MODEL</code> to override it if the catalog changes.</li>
 </ol>
 <p><img alt="" src="https://raw.githubusercontent.com/nebius/token-factory-cookbook/main/images/token-factory-1-models.png"/></p>
 </div>
@@ -7959,12 +7948,12 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="n">time</span>
@@ -7972,8 +7961,9 @@ a.anchor-link {
 <span class="kn">from</span><span class="w"> </span><span class="nn">llama_index.llms.nebius</span><span class="w"> </span><span class="kn">import</span> <span class="n">NebiusLLM</span>
 
 <span class="n">llm</span> <span class="o">=</span> <span class="n">NebiusLLM</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="s2">"openai/gpt-oss-120b-Instruct-2507"</span><span class="p">,</span> 
+    <span class="n">model</span><span class="o">=</span><span class="n">NEBIUS_MODEL</span><span class="p">,</span>
     <span class="n">api_key</span><span class="o">=</span><span class="n">NEBIUS_API_KEY</span><span class="p">,</span>
+    <span class="n">api_base</span><span class="o">=</span><span class="n">NEBIUS_BASE_URL</span><span class="p">,</span>
     <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># either set temperature or `top_p`</span>
 <span class="p">)</span>
 
@@ -7984,32 +7974,6 @@ a.anchor-link {
 <span class="nb">print</span> <span class="p">(</span><span class="n">response</span><span class="p">)</span>
 <span class="nb">print</span> <span class="p">(</span><span class="s1">'---------'</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>/Users/sujee/my-stuff/nebius/ai-studio-cookbook/upstream-2-tf-launch/.venv/lib/python3.12/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-None of PyTorch, TensorFlow &gt;= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>----model answer -----
-The capital of the Netherlands is Amsterdam.
----------
-CPU times: user 2.42 s, sys: 677 ms, total: 3.1 s
-Wall time: 11.7 s
-</pre>
 </div>
 </div>
 </div>

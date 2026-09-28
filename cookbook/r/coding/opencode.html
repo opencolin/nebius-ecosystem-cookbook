@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Using OpenCode with Token Factory · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../index.html">Ecosystem</a>
+      <a href="../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/opencode.md" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="using-opencode-with-token-factory">Using OpenCode with Token Factory</h1>
+<p><a href="https://opencode.ai/">OpenCode</a> is a coding agent that lives in your terminal, and Nebius Token Factory is one of the providers built into it. There is no gateway to configure and no base URL to paste: run <code>/connect</code>, pick <strong>Nebius Token Factory</strong>, paste an API key once, and every Token Factory model you have access to shows up in the model picker.</p>
+<ul>
+<li><a href="#what-you-need">What you need</a></li>
+<li><a href="#option-1-native-support">Option 1: Native support</a></li>
+<li><a href="#option-2-add-a-custom-provider">Option 2: Add Token Factory as a custom provider</a></li>
+<li><a href="#option-3-using-a-proxy">Option 3: Use a proxy</a></li>
+<li><a href="#pick-a-model">Pick a model</a></li>
+<li><a href="#give-it-real-work">Give it real work</a></li>
+<li><a href="#what-one-run-costs">What one run costs</a></li>
+<li><a href="#verify-the-setup">Verify the setup</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#keep-the-cost-down">Keep the cost down</a></li>
+<li><a href="#clean-up">Clean up</a></li>
+<li><a href="#guides--resources">Guides and resources</a></li>
+</ul>
+<h2 id="what-you-need">What you need</h2>
+<ul>
+<li><a href="https://opencode.ai/docs/">OpenCode</a> installed and on your <code>PATH</code></li>
+<li>A <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> account — see <a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/start-here/setup.md" target="_blank" rel="noopener">Getting Started</a></li>
+<li>About five minutes for setup, and roughly $0.76 if you run the <a href="#give-it-real-work">example prompt</a> on GLM-5.2</li>
+</ul>
+<h3 id="create-a-token-factory-api-key">Create a Token Factory API key</h3>
+<p>In <a href="https://tokenfactory.nebius.com/">Token Factory</a>, select the project you want to bill against, open <strong>API keys</strong>, and select <strong>Get API key</strong>. Copy the key — you will paste it into OpenCode in the next step, and Token Factory will not show it again.</p>
+<p><img alt="The API keys page in Nebius Token Factory" src="assets/opencode/00-api-keys.png" /></p>
+<p>Treat the key like a password. It authorizes paid inference against that project.</p>
+<h2 id="option-1-native-support">Option 1: Native support</h2>
+<p>Easiest. Start an interactive session from the directory you want to work in:</p>
+<div class="codehilite"><pre><span></span><code>opencode
+</code></pre></div>
+
+<ol>
+<li>Run <code>/connect</code>.</li>
+</ol>
+<p><img alt="The /connect command in OpenCode" src="assets/opencode/01-connect-command.png" /></p>
+<ol start="2">
+<li>Type <code>nebu</code> to filter the provider list, then select <strong>Nebius Token Factory</strong>.</li>
+</ol>
+<p><img alt="Selecting Nebius Token Factory in the OpenCode provider list" src="assets/opencode/02-nebius-provider.png" /></p>
+<ol start="3">
+<li>Paste the API key and press enter.</li>
+</ol>
+<p><img alt="Entering the Nebius Token Factory API key in OpenCode" src="assets/opencode/03-api-key.png" /></p>
+<ol start="4">
+<li>Use <code>/models</code> to select a model.</li>
+</ol>
+<p><img alt="Choosing a Nebius Token Factory model in OpenCode" src="assets/opencode/04-kimi-k3-model.png" /></p>
+<ol start="5">
+<li>That's it!</li>
+</ol>
+<p>OpenCode stores the credential locally — on macOS and Linux in <code>~/.local/share/opencode/auth.json</code> — so this is a one-time step per machine, not per project.</p>
+<p><a href="https://www.youtube.com/watch?v=216_T--JE0k">🎥 howto video</a> &nbsp;•&nbsp; <a href="https://github.com/amrrs/opencode-nebiustf-cookbook/blob/main/media/opencode-kimi-k3.mp4">full flow recording</a></p>
+<h2 id="option-2-add-a-custom-provider">Option 2: Add a custom provider</h2>
+<p>This is a handy option for newer models that don't appear in the catalog.</p>
+<ol>
+<li>Define a custom provider in <code>opencode.jsonc</code>.<br />
+   The file is usually at <code>~/.config/opencode/opencode.jsonc</code></li>
+<li>Use this example snippet. You can also find examples here: <a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/opencode.jsonc.example1" target="_blank" rel="noopener">example 1</a> and <a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/opencode.jsonc.example2" target="_blank" rel="noopener">example 2</a>
+   <code>json
+   {
+        "$schema": "https://opencode.ai/config.json",
+        "provider": {
+            "nebius-token-factory-custom": {
+                "npm": "@ai-sdk/openai-compatible",
+                "name": "Nebius Token Factory (Custom)",
+                "options": {
+                    "baseURL": "https://api.tokenfactory.nebius.com/v1"
+                },
+                "models": {
+                    "zai-org/GLM-5.3-Flash": {
+                        "name": "GLM-5.3-Flash",
+                        "tool_call": true,
+                        "reasoning": true,
+                        "limit": {
+                            "context": 1048576,
+                            "output": 1048576
+                        },
+                        "cost": {
+                            "input": 0.15,
+                            "output": 0.5
+                        }
+                    }
+                }
+            }
+        }
+   }</code></li>
+<li>Restart <code>opencode</code></li>
+<li>Use <code>/connect</code> to the custom provider we just defined, e.g. <code>Nebius Token Factory (Custom)</code></li>
+<li>Enter API key</li>
+<li>Use <code>/models</code> to select the models defined for this provider!</li>
+</ol>
+<h2 id="option-3-using-a-proxy">Option 3: Using a proxy</h2>
+<p>Use this proxy: <a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a></p>
+<h2 id="pick-a-model">Pick a model</h2>
+<p>OpenCode model identifiers are <code>nebius/&lt;vendor&gt;/&lt;model&gt;</code> — the Token Factory model ID with the provider prefix in front:</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>OpenCode identifier</th>
+<th style="text-align: right;">Context</th>
+<th style="text-align: right;">Input / output per 1M tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kimi K3</td>
+<td><code>nebius/moonshotai/Kimi-K3</code></td>
+<td style="text-align: right;">1M</td>
+<td style="text-align: right;">$3.00 / $15.00</td>
+</tr>
+<tr>
+<td>GLM-5.2</td>
+<td><code>nebius/zai-org/GLM-5.2</code></td>
+<td style="text-align: right;">1M</td>
+<td style="text-align: right;">$1.40 / $4.40</td>
+</tr>
+<tr>
+<td>MiniMax-M3</td>
+<td><code>nebius/MiniMaxAI/MiniMax-M3</code></td>
+<td style="text-align: right;">1M</td>
+<td style="text-align: right;">$0.30 / $1.20</td>
+</tr>
+<tr>
+<td>Llama 3.3 70B Instruct</td>
+<td><code>nebius/meta-llama/Llama-3.3-70B-Instruct</code></td>
+<td style="text-align: right;">128K</td>
+<td style="text-align: right;">$0.13 / $0.40</td>
+</tr>
+</tbody>
+</table>
+<p>Model IDs, context limits, and prices above were checked on August 28, 2026. They change, so confirm yours in the <a href="https://tokenfactory.nebius.com/models/catalog">Token Factory model catalog</a> and on the <a href="https://tokenfactory.nebius.com/pricing">pricing page</a>.</p>
+<p>Two things worth knowing before you spend anything:</p>
+<ul>
+<li><strong>The model list is per account.</strong> OpenCode shows what the provider publishes; whether a specific model answers depends on your account's access.</li>
+<li><strong>Pick for the job, not for the headline.</strong> An agent loop resends its accumulated context on every step, so input tokens dominate the bill. A mid-priced model that finishes in ten steps is often cheaper than a premium one that finishes in eight.</li>
+</ul>
+<p>If a brand-new model has not made it into the built-in catalog yet, you can still reach it with <a href="#option-2-add-a-custom-provider">Option 2</a>.</p>
+<h2 id="give-it-real-work">Give it real work</h2>
+<p>Setup means nothing until the model builds something. Paste the prompt below into the session and let the agent work.</p>
+<p><img alt="Entering a prompt in OpenCode with a Nebius Token Factory model selected" src="assets/opencode/05-kimi-k3-prompt.png" /></p>
+<p>The prompt asks for a single-page, dependency-free token cost calculator: one self-contained <code>index.html</code>, live results, real <code>&lt;label&gt;</code> elements, an <code>aria-live</code> results region, validation that never renders <code>NaN</code>, and a <code>README.md</code> documenting the formula. It is deliberately small and fully checkable by eye — the point is to watch a Token Factory model drive an agent loop end to end, not to build something large.</p>
+<details>
+<summary>The full prompt (also in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/assets/opencode/prompt.md" target="_blank" rel="noopener">assets/opencode/prompt.md</a>)</summary>
+
+
+<div class="codehilite"><pre><span></span><code>Build a single-page token cost calculator for Nebius Token Factory models as one
+self-contained `index.html` file. No build step, no frameworks, no bundler, and no
+network requests at runtime — opening the file with `file://` must be enough.
+
+Requirements:
+
+- Inputs for model ID, input price per 1M tokens, output price per 1M tokens, input
+  tokens per run, output tokens per run, and number of runs.
+- Live results that recompute on every input change: input cost per run, output cost
+  per run, total cost per run, and projected cost for all runs, each shown in USD with
+  four decimal places.
+- Seed the form with `moonshotai/Kimi-K3` at $3.00 input and $15.00 output per 1M tokens.
+- A preset list of at least three Token Factory models that fills the form when a preset
+  is chosen, with the pricing date stated in the page as an "as of" note.
+- Validation that rejects negative and non-numeric values with an inline message next to
+  the offending field, never rendering `NaN`.
+- Plain CSS only, readable at both 375px and 1280px widths, and accessible: every input
+  has a real `&lt;label&gt;`, and results update through an `aria-live` region.
+- Keep the page under 400 lines and add a top-of-file comment block explaining the cost
+  formula.
+
+Also write a `README.md` that states how to open the page, the exact cost formula used,
+that prices are user-supplied rather than fetched, and where to check current Token
+Factory pricing.
+</code></pre></div>
+
+
+
+</details>
+
+<p>You can also run it non-interactively, which is how the cost below was measured:</p>
+<div class="codehilite"><pre><span></span><code>opencode<span class="w"> </span>run<span class="w"> </span>--model<span class="w"> </span>nebius/zai-org/GLM-5.2<span class="w"> </span>--auto<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>cat<span class="w"> </span>prompt.md<span class="k">)</span><span class="s2">"</span>
+</code></pre></div>
+
+<p><code>--auto</code> approves file writes without prompting. Use it in a scratch directory, not in a repository you care about.</p>
+<h2 id="what-one-run-costs">What one run costs</h2>
+<p>One non-interactive run of that prompt on GLM-5.2, measured on August 28, 2026 with opencode 1.18.21:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Assistant turns</td>
+<td>21</td>
+</tr>
+<tr>
+<td>Input tokens</td>
+<td>483,125</td>
+</tr>
+<tr>
+<td>Output tokens</td>
+<td>9,830 (plus 9,576 reasoning tokens)</td>
+</tr>
+<tr>
+<td>Wall time</td>
+<td>128s</td>
+</tr>
+<tr>
+<td>Cost reported by OpenCode</td>
+<td>$0.7618</td>
+</tr>
+</tbody>
+</table>
+<p>The shape of that bill is the lesson. Output is tiny — a 200-line HTML file and a README — while input is nearly half a million tokens, because each of the 21 steps resent the whole conversation plus tool output. Reasoning tokens are reported as a detail inside output usage and are billed at the output rate, so count them once.</p>
+<p>Your number will differ. Agent runs are not deterministic, and anything that adds to the system prompt on your machine — installed skills, plugins, <code>AGENTS.md</code> files, MCP servers — is resent on every step and shows up as input tokens.</p>
+<p>The generated app and the full run notes are in the <a href="https://github.com/amrrs/opencode-nebiustf-cookbook">companion repository</a>.</p>
+<h2 id="verify-the-setup">Verify the setup</h2>
+<ul>
+<li><code>/models</code> lists models under <strong>Nebius Token Factory</strong>.</li>
+<li>A prompt gets a reply, and the footer shows the Token Factory model you selected.</li>
+<li>Token Factory's usage view for that project shows requests appearing as you work.</li>
+</ul>
+<p>To confirm which models your key can actually reach, ask the API directly:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>https://api.tokenfactory.nebius.com/v1/models<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$NEBIUS_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>Nebius Token Factory is missing from <code>/connect</code>.</strong> Update OpenCode and restart it. The provider list ships with the release.</p>
+<p><strong>A model is missing from <code>/models</code>.</strong> Compare the picker against the <code>curl</code> output above. If the API lists it and OpenCode does not, update OpenCode; if neither lists it, your account does not have access. A model that is too new for the built-in catalog can be added with <a href="#option-2-add-a-custom-provider">Option 2</a>.</p>
+<p><strong>A run hangs with no output at all.</strong> OpenCode waits on the first token, so a model that never sends one looks like a frozen agent. Test it outside OpenCode:</p>
+<div class="codehilite"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-m<span class="w"> </span><span class="m">60</span><span class="w"> </span>https://api.tokenfactory.nebius.com/v1/chat/completions<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$NEBIUS_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"model":"zai-org/GLM-5.2","messages":[{"role":"user","content":"Reply with exactly: PONG"}],"max_tokens":30}'</span>
+</code></pre></div>
+
+<p>A healthy Token Factory model answers this in about a second. If that call also returns nothing before the timeout, the problem is upstream of OpenCode — switch models with <code>/models</code> and carry on in the same session. That is exactly why the measured run above used GLM-5.2: on the day it was written, one model on the account returned no first token for over 90 seconds while others answered immediately.</p>
+<p><strong>401 or 403 on every request.</strong> The key is revoked, mistyped, or belongs to a different project. Run <code>/connect</code> again and paste a fresh key.</p>
+<h2 id="keep-the-cost-down">Keep the cost down</h2>
+<ul>
+<li>Start a new session for unrelated work. Context carried from a finished task is resent as input tokens on every step.</li>
+<li>Switch models mid-session with <code>/models</code> — plan on a stronger model, execute on a cheaper one.</li>
+<li>Prune what loads into every prompt: unused skills, plugins, and MCP servers are pure input-token overhead.</li>
+<li>Give the agent a narrow, checkable task. Fewer steps is the single biggest lever on cost.</li>
+</ul>
+<h2 id="clean-up">Clean up</h2>
+<p>The demo prompt only writes files in the working directory, so deleting that directory removes everything it produced. To disconnect the provider, remove the <code>nebius</code> entry from <code>~/.local/share/opencode/auth.json</code>, and delete the API key in Token Factory if you no longer need it.</p>
+<h2 id="guides-resources">Guides &amp; Resources</h2>
+<ul>
+<li>A <a href="https://github.com/m1burn/omo-nebius-token-factory">setup guide</a> for agentmemory + OpenCode + Token Factory</li>
+<li><a href="https://opencode.ai/docs/">OpenCode documentation</a> &nbsp;•&nbsp; <a href="https://opencode.ai/docs/providers">OpenCode providers</a></li>
+<li><a href="https://tokenfactory.nebius.com/models/catalog">Token Factory model catalog</a> &nbsp;•&nbsp; <a href="https://docs.tokenfactory.nebius.com/">Token Factory documentation</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/nav-logo.js"></script>
+</body>
+</html>

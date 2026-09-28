@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Deep PR Reviewer · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/langchain/pr-review-bot" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="deep-pr-reviewer">Deep PR Reviewer</h1>
+<p>A self-hosted GitHub pull-request reviewer built with <a href="https://docs.langchain.com/oss/python/deepagents/overview">LangChain Deep Agents</a> and <a href="https://docs.tokenfactory.nebius.com/api-reference/introduction">Nebius Token Factory</a>.</p>
+<p>It receives GitHub webhooks, fetches changed-file patches, asks a Deep Agents supervisor to use focused correctness and security subagents, validates every resulting finding against an added diff line, and posts a CodeRabbit-style walkthrough plus inline review comments. It intentionally reports only specific, evidence-backed defects—not style nits or generic advice.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Verifies GitHub webhook signatures with <code>X-Hub-Signature-256</code>.</li>
+<li>Reviews opened, reopened, synchronized, and ready-for-review PRs; drafts are opt-in.</li>
+<li>Uses a GitHub App installation token (recommended), or a fine-grained GitHub token.</li>
+<li>Uses Nebius's OpenAI-compatible endpoint through <code>langchain-openai</code>.</li>
+<li>Uses Deep Agents supervisor/subagent delegation for correctness and security review.</li>
+<li>Limits model input and finding count, then validates paths, right-side added lines, and duplicates before GitHub is called.</li>
+<li>Exposes <code>GET /health</code> for Railway.</li>
+</ul>
+<p>The model has no GitHub write tool. Review submission happens only after deterministic validation.</p>
+<h2 id="local-development">Local development</h2>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Fill in .env</span>
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[dev]'</span>
+uvicorn<span class="w"> </span>app.main:app<span class="w"> </span>--reload
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>ruff<span class="w"> </span>check<span class="w"> </span>.
+pytest
+</code></pre></div>
+
+<h2 id="environment-variables">Environment variables</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Required</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GITHUB_WEBHOOK_SECRET</code></td>
+<td>Yes</td>
+<td>Random value configured identically in the GitHub App webhook.</td>
+</tr>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>Yes</td>
+<td>Nebius Token Factory API key.</td>
+</tr>
+<tr>
+<td><code>GITHUB_APP_ID</code></td>
+<td>Recommended</td>
+<td>GitHub App ID; must be paired with <code>GITHUB_APP_PRIVATE_KEY</code>.</td>
+</tr>
+<tr>
+<td><code>GITHUB_APP_PRIVATE_KEY</code></td>
+<td>Recommended</td>
+<td>PEM private key generated for the GitHub App.</td>
+</tr>
+<tr>
+<td><code>GITHUB_TOKEN</code></td>
+<td>Alternative</td>
+<td>Fine-grained token when no App credentials are configured.</td>
+</tr>
+<tr>
+<td><code>NEBIUS_MODEL</code></td>
+<td>No</td>
+<td>Token Factory model supporting tool calling; default <code>moonshotai/Kimi-K2.5</code>.</td>
+</tr>
+<tr>
+<td><code>NEBIUS_BASE_URL</code></td>
+<td>No</td>
+<td>Default <code>https://api.tokenfactory.nebius.com/v1/</code>.</td>
+</tr>
+<tr>
+<td><code>REVIEW_DRAFTS</code></td>
+<td>No</td>
+<td>Set <code>true</code> to review drafts; default <code>false</code>.</td>
+</tr>
+<tr>
+<td><code>MAX_FILES</code></td>
+<td>No</td>
+<td>Files fetched per PR (1–100); default <code>40</code>.</td>
+</tr>
+<tr>
+<td><code>MAX_PATCH_CHARS</code></td>
+<td>No</td>
+<td>Patch characters sent to the agent (5,000–500,000); default <code>120000</code>.</td>
+</tr>
+<tr>
+<td><code>MAX_FINDINGS</code></td>
+<td>No</td>
+<td>Maximum inline findings (1–20); default <code>8</code>.</td>
+</tr>
+<tr>
+<td><code>LOG_LEVEL</code></td>
+<td>No</td>
+<td>Default <code>INFO</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>For a GitHub App, use <strong>Pull requests: Read &amp; write</strong>, <strong>Contents: Read-only</strong>, and <strong>Metadata: Read-only</strong> repository permissions. Subscribe to the <strong>Pull request</strong> webhook event and install only on repositories this service should review. For a fine-grained token, grant the same repository-level permissions.</p>
+<h2 id="railway-deployment">Railway deployment</h2>
+<ol>
+<li>Push this repository to GitHub, then create a Railway project from that repository. The included <code>Dockerfile</code> and <code>railway.toml</code> are detected automatically.</li>
+<li>In the service's <strong>Variables</strong> tab, add <code>GITHUB_WEBHOOK_SECRET</code>, <code>NEBIUS_API_KEY</code>, <code>GITHUB_APP_ID</code>, and <code>GITHUB_APP_PRIVATE_KEY</code>. Paste the full PEM private key, including its <code>BEGIN</code> and <code>END</code> lines. As an alternative, set <code>GITHUB_TOKEN</code> and leave both App variables empty.</li>
+<li>Optionally set <code>NEBIUS_MODEL</code> to a tool-calling model enabled in the Token Factory project. Nebius exposes the configured model through its OpenAI-compatible <code>/v1/</code> API.</li>
+<li>Deploy the service. In Railway <strong>Settings → Networking</strong>, generate a public domain and open <code>https://YOUR-DOMAIN/health</code>; it should return <code>{"status":"ok"}</code>.</li>
+<li>In GitHub <strong>Settings → Developer settings → GitHub Apps</strong>, create a GitHub App. Set its webhook URL to <code>https://YOUR-DOMAIN/webhooks/github</code>, use the same webhook secret, assign the permissions/events above, create the App, and generate a private key.</li>
+<li>Install the App on the target repository or organization. Open or update a non-draft PR. Railway logs will show the review result and GitHub will receive one inline review.</li>
+</ol>
+<p>Use GitHub's <strong>Redeliver</strong> control on the App's <code>ping</code> webhook to check connectivity; the service responds with <code>202 {"status":"pong"}</code>.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="codehilite"><pre><span></span><code>GitHub pull_request webhook
+  -&gt; signature verification and event filter
+  -&gt; GitHub API fetches PR metadata and patches
+  -&gt; Deep Agents supervisor
+       -&gt; correctness reviewer subagent
+       -&gt; security reviewer subagent
+  -&gt; JSON parsing, added-line validation, deduplication
+  -&gt; collapsible walkthrough with changed-file summary, effort estimate, and poem
+  -&gt; GitHub review with CodeRabbit-style inline comments
+</code></pre></div>
+
+<h2 id="operational-notes">Operational notes</h2>
+<ul>
+<li>The delivery cache is in memory, so it blocks immediate duplicates on one Railway instance. Use a durable queue/idempotency store before horizontally scaling.</li>
+<li>GitHub can omit patches for binary or very large files. Those files cannot receive model-generated inline comments.</li>
+<li>Start with a test repository and tune <code>MAX_PATCH_CHARS</code>, <code>MAX_FILES</code>, and <code>MAX_FINDINGS</code> to match your review-depth and cost target.</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nebius Token Factory : Start Here · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../index.html">Ecosystem</a>
+      <a href="../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/start-here" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="nebius-token-factory-start-here">Nebius Token Factory : Start Here</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#0-sign-up">0 - Sign up</a></li>
+<li><a href="#1---try-the-ui">1 - Try the UI</a></li>
+<li><a href="#2---your-first-api-call">2 - Your first API call</a></li>
+<li><a href="#3---building-your-first-agents">3 - Building Your First Agents</a></li>
+<li><a href="#4---understanding-agentic-operations-and-cost">4 - Understanding Agentic Operations and Cost</a></li>
+<li><a href="#5---deep-research-agents">5 - Deep Research Agents</a></li>
+<li><a href="#6---coding-with-token-factory-models">6 - Coding with Token Factory Models</a></li>
+<li><a href="#7---build-a-fun-app--demo-with-your-coding-agent">7 - Build a fun app / demo with your coding agent</a></li>
+<li><a href="#8---collect-production-logs-using-data-lab">8 - Collect Production logs using Data Lab</a></li>
+<li><a href="#9---post-training-your-models">9 - Post training your models</a></li>
+</ul>
+<h2 id="0-sign-up">0 - Sign up</h2>
+<ul>
+<li>Sign up at https://tokenfactory.nebius.com</li>
+<li>If you have credits, apply them. <a href="https://www.youtube.com/watch?v=YKY6k6kSDZY">how to video</a></li>
+<li>Get your API key</li>
+</ul>
+<h2 id="1-explore-models-in-playground">1 - Explore models in Playground</h2>
+<p>https://tokenfactory.nebius.com/</p>
+<ul>
+<li>Inspect model cards (pricing, context .etc)</li>
+<li>Take a model for a spin.</li>
+<li>Compare two models side by side</li>
+<li>Checkout <a href="https://artificialanalysis.ai/#intelligence">Artificial Analysis Index</a> page.  Compare open vs closed models.</li>
+</ul>
+<h2 id="2-your-first-api-call">2 - Your first API call</h2>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/api/README.md" target="_blank" rel="noopener">api call</a></p>
+<h2 id="3-building-your-first-agents">3 - Building Your First Agents</h2>
+<p><strong>Simple research agent</strong></p>
+<p>Try <a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/agents/langchain/deep-agent-example-1/research_agent_1.py" target="_blank" rel="noopener">simple research agent</a>.  This  agent will only use built in knowledge.</p>
+<p>Follow instructions from <a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/agents/langchain/deep-agent-example-1/README.md" target="_blank" rel="noopener">this project</a>.  </p>
+<p><strong>Tavily powered agent</strong></p>
+<p>In the same example, we have a <a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/agents/langchain/deep-agent-example-1/tavily_agent.py" target="_blank" rel="noopener">research agent powered by Tavily</a>.  It will use web search in real time to fetch results.</p>
+<p>Run them both and compare the resulting outputs.</p>
+<p>Note: Using Tavily Agent will require TAVILY_API_KEY.  You can get a free one here : https://app.tavily.com/</p>
+<h2 id="4-understanding-agentic-operations-and-cost">4 - Understanding Agentic Operations and Cost</h2>
+<p>How many turns does it take for an agent to accomplish a task?  How much does it cost?</p>
+<p>Try this <a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/agents/agent-cost-comparison-1/" target="_blank" rel="noopener">example</a></p>
+<h2 id="5-deep-research-agents">5 - Deep Research Agents</h2>
+<p>Here are couple of examples of <strong>deep research agents</strong> </p>
+<ul>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/agents/langchain/competitive-intelligence-agent/" target="_blank" rel="noopener">competitive research agent</a> - built with Tavily + Langchain + Token Factory</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/agents/langchain/pr-review-bot/" target="_blank" rel="noopener">pr review bot</a></li>
+</ul>
+<h2 id="6-coding-with-token-factory-models">6 - Coding with Token Factory Models</h2>
+<p>Connect your coding agent (claude, codex, opencode .etc) with models running on Token Factory.</p>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/coding/README.md" target="_blank" rel="noopener">Here is the guide</a></p>
+<h2 id="7-build-a-fun-app-demo-with-your-coding-agent">7 - Build a fun app / demo with your coding agent</h2>
+<p>Browse <a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/apps/README.md" target="_blank" rel="noopener">Cool Apps / Demos</a> for inspiration, then build your own.</p>
+<hr />
+<h2 id="advanced">Advanced</h2>
+<h2 id="8-collect-production-logs-using-data-lab">8 - Collect Production logs using Data Lab</h2>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/workshops/token-factory-workshop/collecting-production-logs.md" target="_blank" rel="noopener">Turn your production logs into training data</a></p>
+<h2 id="9-post-training-your-models">9 - Post training your models</h2>
+<ul>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/post-training/fine-tuning-1" target="_blank" rel="noopener">fine tuning example</a></li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/start-here/distillation/distillation-1" target="_blank" rel="noopener">distillation example</a></li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/nav-logo.js"></script>
+</body>
+</html>
