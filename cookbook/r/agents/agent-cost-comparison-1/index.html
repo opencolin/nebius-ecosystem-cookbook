@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Agent Cost Comparison 2 · Nebius Token Factory Cookbook</title>
+<title>Agent Cost Comparison 1 · Nebius Token Factory Cookbook</title>
 <link rel="stylesheet" href="../../../../assets/css/main.css" />
 <link rel="stylesheet" href="../../../../assets/cookbook.css" />
 </head>
@@ -27,7 +27,7 @@
   <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/agent-cost-comparison-1" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
   
   <article class="cb-content">
-<h1 id="agent-cost-comparison-2">Agent Cost Comparison 2</h1>
+<h1 id="agent-cost-comparison-1">Agent Cost Comparison 1</h1>
 <p>Benchmark Nebius-hosted LLMs on a small data-analysis task and compare their
 <strong>cost</strong>, <strong>latency</strong>, <strong>token usage</strong>, and <strong>correctness</strong>.</p>
 <p>Each model is run as a <a href="https://github.com/langchain-ai/deepagents">deepagents</a>
@@ -199,14 +199,10 @@ for each model run:</p>
 </code></pre></div>
 
 <h2 id="nemotron-3-ultra-compatibility">Nemotron-3-Ultra compatibility</h2>
-<p>Deep Agents' built-in Ultra profile can mistake this single-turn filesystem
-task for a task transition. The benchmark keeps the rest of that profile but
-disables <code>NemotronPolicyNudgeMiddleware</code>:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">register_harness_profile</span><span class="p">(</span>
-    <span class="s2">"nebius:nvidia/Nemotron-3-Ultra-550b-a55b"</span><span class="p">,</span>
-    <span class="n">HarnessProfile</span><span class="p">(</span><span class="n">excluded_middleware</span><span class="o">=</span><span class="p">{</span><span class="s2">"NemotronPolicyNudgeMiddleware"</span><span class="p">}),</span>
-<span class="p">)</span>
-</code></pre></div>
+<p>There was a bug in <code>deepagents v0.7.10</code>  that caused Ultra to fail the benchmark. </p>
+<p>Issue created : <a href="https://github.com/langchain-ai/deepagents/issues/5982">langchain-ai/deepagents/issues/5982</a> <br />
+Fix verified in v0.7.23 ✅</p>
+<p>The bug version is preserved in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/agent-cost-comparison-1/bug" target="_blank" rel="noopener">bug</a> folder.</p>
   </article>
 </div>
 <footer><div class="container"><div class="footer-bottom">

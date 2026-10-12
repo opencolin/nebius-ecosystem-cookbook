@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent Cost Comparison 1 - Bug production · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../../index.html">Ecosystem</a>
+      <a href="../../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/agent-cost-comparison-1/bug" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="agent-cost-comparison-1-bug-production">Agent Cost Comparison 1 - Bug production</h1>
+<p>See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/agent-cost-comparison-1/bug/README.md" target="_blank" rel="noopener">project readme</a> for benchmark</p>
+<h2 id="bug-production">Bug Production</h2>
+<p><code>deepagents == 0.7.10</code> has a bug that causes Nemotron Ultra to fail.</p>
+<p>how to reproduce</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>agent_cost_comparison_1_bug.py<span class="w"> </span>--data-dir<span class="w"> </span>../data-1
+</code></pre></div>
+
+<p>You will see <code>Nemotron-3-Ultra-550b-a55b</code> failing the test.</p>
+<h2 id="workaround">Workaround</h2>
+<p>The workaround is overriding the harness like this in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/agent-cost-comparison-1/bug/agent_cost_comparison_2_workaround.py" target="_blank" rel="noopener">agent_cost_comparison_2_workaround.py</a></p>
+<div class="codehilite"><pre><span></span><code>    <span class="c1"># Register the Nemotron-3-Ultra harness profile override at runtime rather</span>
+    <span class="c1"># than at import time, so importing the module does not mutate global state.</span>
+    <span class="n">register_harness_profile</span><span class="p">(</span>
+        <span class="n">HARNESS_PROFILE_MODEL</span><span class="p">,</span>
+        <span class="n">HarnessProfile</span><span class="p">(</span>
+            <span class="n">excluded_middleware</span><span class="o">=</span><span class="p">{</span><span class="s2">"NemotronPolicyNudgeMiddleware"</span><span class="p">},</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+</code></pre></div>
+
+<p>Run the fix</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>agent_cost_comparison_2_workaround.py<span class="w"> </span>--data-dir<span class="w"> </span>../data-1
+</code></pre></div>
+
+<p>All tests pass.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../../assets/js/main.js"></script>
+<script src="../../../../../assets/nav-logo.js"></script>
+</body>
+</html>
