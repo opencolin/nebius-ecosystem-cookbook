@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Build a Python AI agent with Reflection AI&#x27;s Beam · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/beam-python-ai-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="build-a-python-ai-agent-with-reflection-ais-beam">Build a Python AI agent with Reflection AI's Beam</h1>
+<p>Beam is Reflection AI's first open-weight model, a 501B-parameter mixture-of-experts with 23B active parameters, built for coding and agentic work and released under Apache 2.0. Nebius Token Factory serves it as <code>reflection/beam</code> through the same OpenAI-compatible API as every other model in the catalog.</p>
+<p>In this project you build a data analyst agent you can run on a laptop. You give Beam a sales dataset, three business questions, and three tools. Beam writes and runs pandas code to answer each question, and you measure what each run costs.</p>
+<p>Here are the data and the questions:</p>
+<p><img alt="The task for seed 7: orders.csv holds 3,000 orders with columns from order_id to status. Question 1 asks for the top region by Q2 net revenue, and Beam groups completed Q2 orders by region to get Asia Pacific. Question 2 asks how online net revenue changed from May to June, and Beam compares the two months to get minus 32.6 percent. Question 3 asks for the Q2 refund rate of the region from question 1, and Beam gets 2.8 percent. An arrow shows question 3 building on the answer to question 1" src="images/three-questions.png" /></p>
+<p>And here is Beam working through them on Token Factory, replayed from a real run and slowed down so you can read along. The strip at the top shows which answers are in:</p>
+<p><img alt="Animated replay of the seed 7 run: the progress strip moves from Top region to Online growth to Refund rate to Graded as Beam describes the data, runs pandas scripts, and submits each answer, while the terminal fills with each turn and Beam's reasoning" src="images/analyst-run-replay.gif" /></p>
+<p>New to Beam? <a href="https://dev.nebius.com/cookbook/beam-reflection-token-factory">Build with Beam on Token Factory</a> covers your first request and wiring Beam into a coding agent.</p>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>A command-line agent that:</p>
+<ul>
+<li>builds a seeded sales dataset and computes the right answers itself, so every run can be graded without a judge;</li>
+<li>gives Beam three tools: <code>describe_data</code> to read the schema, <code>run_python</code> to run pandas code next to the data in a child process, and <code>submit_answer</code> to record an answer;</li>
+<li>runs the full tool-call loop, sending Beam's <code>reasoning_content</code> back on every turn;</li>
+<li>reads the live list price from the Token Factory catalog and prints what each run cost;</li>
+<li>sweeps every reasoning-effort level across several seeds so you can choose one with data, not guesswork.</li>
+</ul>
+<h2 id="whats-in-this-folder">What's in this folder</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/beam-python-ai-agent/workspace.py" target="_blank" rel="noopener"><code>workspace.py</code></a></td>
+<td>The seeded dataset, the questions and their answers, the three tool definitions, and the <code>run_python</code> sandbox</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/beam-python-ai-agent/agent.py" target="_blank" rel="noopener"><code>agent.py</code></a></td>
+<td>The tool-call loop against Token Factory, plus the command-line runner</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/beam-python-ai-agent/sweep.py" target="_blank" rel="noopener"><code>sweep.py</code></a></td>
+<td>Runs the task across effort levels and seeds, then prints a comparison table</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/beam-python-ai-agent/tests/" target="_blank" rel="noopener"><code>tests/</code></a></td>
+<td>Offline tests with a fake client: no key, no network</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/beam-python-ai-agent/images/" target="_blank" rel="noopener"><code>images/</code></a></td>
+<td>The illustrations and run snapshots in this README</td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-the-loop-works">How the loop works</h2>
+<p><img alt="The data analyst tool loop: agent.py sends the history to reflection/beam on Token Factory, Beam returns tool calls with its reasoning, agent.py runs describe_data, run_python, or submit_answer against the seeded SalesWorkspace, and the results go back as tool messages" src="images/analyst-loop.png" /></p>
+<p>Every run asks the same three questions about a dataset built from the seed:</p>
+<ol>
+<li><strong>Top region.</strong> Which region had the highest net revenue in Q2 2026?</li>
+<li><strong>Online growth.</strong> By what percentage did online net revenue change from May to June 2026?</li>
+<li><strong>Refund rate.</strong> What was the Q2 refund rate for the region from question 1? Beam has to carry its first answer into the third question.</li>
+</ol>
+<p>Net revenue is quantity × unit price × (1 − discount) on completed orders. The workspace computes every answer from the same data, and a numeric answer counts as right when it matches to one decimal place. The workspace, not the model, decides how many answers are right.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python 3.10 or newer and <a href="https://docs.astral.sh/uv/">uv</a>.</li>
+<li>A Token Factory API key with access to <code>reflection/beam</code>. See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/beam-python-ai-agent/start-here/setup.md" target="_blank" rel="noopener">setup guide</a> if you don't have one yet.</li>
+<li>About $0.007 per run, or about $0.30 for the full effort sweep.</li>
+</ul>
+<p>Beam on Token Factory:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model ID</td>
+<td><code>reflection/beam</code></td>
+</tr>
+<tr>
+<td>Parameters</td>
+<td>501.3B total, 23.4B active</td>
+</tr>
+<tr>
+<td>Context length</td>
+<td>1,048,576 tokens</td>
+</tr>
+<tr>
+<td>Quantization</td>
+<td>FP8</td>
+</tr>
+<tr>
+<td>Features</td>
+<td>Tool calls, reasoning</td>
+</tr>
+<tr>
+<td>Price</td>
+<td>$0.25 per 1M input tokens, $1.00 per 1M output tokens</td>
+</tr>
+</tbody>
+</table>
+<p><code>agent.py</code> reads the price from the catalog on every run, so its cost line stays correct if the price changes.</p>
+<h2 id="set-up-and-test-offline">Set up and test offline</h2>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/token-factory-cookbook.git
+<span class="nb">cd</span><span class="w"> </span>token-factory-cookbook/agents/beam-python-ai-agent
+uv<span class="w"> </span>sync
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>-q<span class="w"> </span>-p<span class="w"> </span>no:cacheprovider
+</code></pre></div>
+
+<p>The tests use a fake client, so they pass without a key and make no network calls. They check that every answer matches an independent pandas calculation, that grading accepts answers like <code>-32.6%</code>, that the sandbox can read <code>orders.csv</code> but not <code>NEBIUS_API_KEY</code>, and that the loop sends <code>reasoning_content</code> and the matching <code>tool_call_id</code> back to the model.</p>
+<div class="codehilite"><pre><span></span><code>........                                                                 [100%]
+8 passed
+</code></pre></div>
+
+<h2 id="run-your-first-analysis">Run your first analysis</h2>
+<p>Put your key in <code>.env</code>, then run seed 7 with Beam's reasoning shown:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>env.example<span class="w"> </span>.env<span class="w">   </span><span class="c1"># then put your key after NEBIUS_API_KEY=</span>
+<span class="nb">set</span><span class="w"> </span>-a<span class="p">;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>.env<span class="p">;</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span>+a
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>agent.py<span class="w"> </span>--seed<span class="w"> </span><span class="m">7</span><span class="w"> </span>--show-reasoning
+</code></pre></div>
+
+<p><code>NEBIUS_BASE_URL</code> defaults to <code>https://api.tokenfactory.nebius.com/v1</code> and <code>NEBIUS_MODEL</code> to <code>reflection/beam</code>. Override either if you need to. Never commit <code>.env</code>; it is already in <code>.gitignore</code>.</p>
+<p>The output looks like this:</p>
+<p><img alt="A terminal run of agent.py on seed 7: Beam describes the data, runs two pandas scripts, submits Asia Pacific, minus 32.6, and 2.8, and all three answers are graded right in 7 turns for $0.0040" src="images/analyst-run-seed-7.png" /></p>
+<p>In this run, Beam read the schema, ran one script to look at the data and a second to compute all three answers, then submitted them one at a time. All three were right: 7 turns, 10,924 prompt tokens, 1,234 completion tokens (630 of them reasoning), $0.0040, and 10.7 seconds. The italic <code>thinking:</code> lines are the start of each turn's <code>reasoning_content</code>, and the last line is Beam's summary for a business reader.</p>
+<p>Change <code>--seed</code> for a different dataset, add <code>--effort minimal</code> (or any level up to <code>max</code>) to set the reasoning effort, and add <code>--save run.json</code> to keep the run record.</p>
+<h2 id="walk-through-the-code">Walk through the code</h2>
+<h3 id="the-sandbox">The sandbox</h3>
+<p><code>run_python</code> starts a fresh interpreter for every script, in a temporary folder that holds a copy of <code>orders.csv</code>. The child gets an empty environment and a 20-second timeout:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">workdir</span><span class="p">:</span>
+        <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">,</span> <span class="n">DATA_FILE</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">csv_text</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"-I"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">],</span>
+                <span class="nb">input</span><span class="o">=</span><span class="n">code</span><span class="p">,</span>
+                <span class="n">cwd</span><span class="o">=</span><span class="n">workdir</span><span class="p">,</span>
+                <span class="n">env</span><span class="o">=</span><span class="p">{},</span>
+                <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"exit_code"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"stdout"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"stderr"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Timed out after </span><span class="si">{</span><span class="n">timeout</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> seconds."</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"exit_code"</span><span class="p">:</span> <span class="n">done</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span> <span class="s2">"stdout"</span><span class="p">:</span> <span class="n">done</span><span class="o">.</span><span class="n">stdout</span><span class="p">[</span><span class="o">-</span><span class="n">OUTPUT_LIMIT</span><span class="p">:],</span> <span class="s2">"stderr"</span><span class="p">:</span> <span class="n">done</span><span class="o">.</span><span class="n">stderr</span><span class="p">[</span><span class="o">-</span><span class="n">OUTPUT_LIMIT</span><span class="p">:]}</span>
+</code></pre></div>
+
+<p>The empty environment keeps your API key out of the child's reach, and the timeout stops runaway loops. The child uses the same Python as the agent, so pandas is available. This is not a security boundary: the child can still reach the network and read your files. Before you point model-written code at anything you care about, run it in a container with networking off or in a disposable VM.</p>
+<p>Errors come back as data, not exceptions, so Beam can read a traceback in <code>stderr</code> and fix its script on the next turn.</p>
+<h3 id="the-loop">The loop</h3>
+<p>Every turn sends the full history with the three tools, records token usage, and appends Beam's answer, reasoning included:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">choice</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">message</span> <span class="o">=</span> <span class="n">choice</span><span class="o">.</span><span class="n">message</span>
+<span class="n">reasoning</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="s2">"reasoning_content"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="c1"># Beam needs its earlier reasoning back on later turns, so keep it in the history.</span>
+<span class="n">assistant</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"assistant"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">}</span>
+<span class="k">if</span> <span class="n">reasoning</span><span class="p">:</span>
+    <span class="n">assistant</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reasoning</span>
+<span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">:</span>
+    <span class="n">assistant</span><span class="p">[</span><span class="s2">"tool_calls"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"function"</span><span class="p">,</span> <span class="s2">"function"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"arguments"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">arguments</span><span class="p">}}</span>
+        <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span>
+    <span class="p">]</span>
+<span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">assistant</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">:</span>
+    <span class="n">final</span> <span class="o">=</span> <span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">finish</span> <span class="o">=</span> <span class="s2">"answered"</span> <span class="k">if</span> <span class="n">final</span> <span class="k">else</span> <span class="n">choice</span><span class="o">.</span><span class="n">finish_reason</span>
+    <span class="k">break</span>
+
+<span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">call_tool</span><span class="p">(</span><span class="n">workspace</span><span class="p">,</span> <span class="n">call</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">call</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">arguments</span><span class="p">)</span>
+    <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"tool"</span><span class="p">,</span> <span class="s2">"tool_call_id"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">result</span><span class="p">})</span>
+</code></pre></div>
+
+<p>The loop builds the assistant message by hand, so the history carries exactly <code>content</code>, <code>tool_calls</code>, and <code>reasoning_content</code>. <code>call_tool</code> turns a tool name Beam was never given, or arguments that are not valid JSON, into an error result instead of an exception, so a stray call costs a turn instead of crashing the run.</p>
+<p><code>play()</code> stops after 16 turns (<code>--max-turns</code>), which bounds what a single run can cost, and it grades the run from the workspace rather than from Beam's final summary.</p>
+<p>The reasoning effort goes in <code>extra_body</code>, which sends the field exactly as written whatever your installed <code>openai</code> version's type hints list. When you omit <code>--effort</code>, the request leaves the field out and Beam uses its default.</p>
+<h3 id="the-price">The price</h3>
+<p>The Token Factory models endpoint returns per-token pricing when you ask for the verbose listing:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">list_prices</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">OpenAI</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">extra_query</span><span class="o">=</span><span class="p">{</span><span class="s2">"verbose"</span><span class="p">:</span> <span class="s2">"true"</span><span class="p">}):</span>
+        <span class="n">pricing</span> <span class="o">=</span> <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">model_extra</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pricing"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">model</span> <span class="ow">and</span> <span class="n">pricing</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">pricing</span><span class="p">[</span><span class="s2">"prompt"</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">pricing</span><span class="p">[</span><span class="s2">"completion"</span><span class="p">])</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+
+<p>Cost is then prompt tokens times the input price plus completion tokens times the output price. Reasoning tokens are billed as output and are already inside <code>completion_tokens</code>.</p>
+<h2 id="choose-a-reasoning-effort-with-data">Choose a reasoning effort with data</h2>
+<p>Beam accepts <code>reasoning_effort</code> set to <code>minimal</code>, <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, or <code>max</code>. <code>sweep.py</code> runs the same seeds at every level you list, four runs at a time:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>sweep.py<span class="w"> </span>--efforts<span class="w"> </span>default<span class="w"> </span>minimal<span class="w"> </span>low<span class="w"> </span>medium<span class="w"> </span>high<span class="w"> </span>xhigh<span class="w"> </span>max<span class="w"> </span>--seeds<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">8</span>
+</code></pre></div>
+
+<p><code>default</code> means the request carries no <code>reasoning_effort</code>. Across those 56 runs:</p>
+<p><img alt="Small-multiple bar chart of mean cost, reasoning tokens, and seconds per run for each effort level: minimal was cheapest at $0.0023 and fastest at 5.9 seconds, the default cost $0.0067 and took 14.5 seconds, and xhigh cost the most at $0.0101" src="images/effort-sweep.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Effort</th>
+<th style="text-align: right;">All 3 correct</th>
+<th style="text-align: right;">Turns</th>
+<th style="text-align: right;">Completion tokens</th>
+<th style="text-align: right;">Reasoning tokens</th>
+<th style="text-align: right;">Seconds</th>
+<th style="text-align: right;">Cost per run</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>default</td>
+<td style="text-align: right;">8/8</td>
+<td style="text-align: right;">9.4</td>
+<td style="text-align: right;">1,858</td>
+<td style="text-align: right;">612</td>
+<td style="text-align: right;">14.5</td>
+<td style="text-align: right;">$0.0067</td>
+</tr>
+<tr>
+<td>minimal</td>
+<td style="text-align: right;">8/8</td>
+<td style="text-align: right;">5.0</td>
+<td style="text-align: right;">885</td>
+<td style="text-align: right;">103</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">$0.0023</td>
+</tr>
+<tr>
+<td>low</td>
+<td style="text-align: right;">8/8</td>
+<td style="text-align: right;">6.2</td>
+<td style="text-align: right;">1,229</td>
+<td style="text-align: right;">332</td>
+<td style="text-align: right;">8.9</td>
+<td style="text-align: right;">$0.0035</td>
+</tr>
+<tr>
+<td>medium</td>
+<td style="text-align: right;">8/8</td>
+<td style="text-align: right;">6.5</td>
+<td style="text-align: right;">1,078</td>
+<td style="text-align: right;">332</td>
+<td style="text-align: right;">8.5</td>
+<td style="text-align: right;">$0.0033</td>
+</tr>
+<tr>
+<td>high</td>
+<td style="text-align: right;">8/8</td>
+<td style="text-align: right;">9.0</td>
+<td style="text-align: right;">1,827</td>
+<td style="text-align: right;">730</td>
+<td style="text-align: right;">14.7</td>
+<td style="text-align: right;">$0.0061</td>
+</tr>
+<tr>
+<td>xhigh</td>
+<td style="text-align: right;">7/8</td>
+<td style="text-align: right;">8.4</td>
+<td style="text-align: right;">3,110</td>
+<td style="text-align: right;">727</td>
+<td style="text-align: right;">22.2</td>
+<td style="text-align: right;">$0.0101</td>
+</tr>
+<tr>
+<td>max</td>
+<td style="text-align: right;">8/8</td>
+<td style="text-align: right;">8.5</td>
+<td style="text-align: right;">1,928</td>
+<td style="text-align: right;">686</td>
+<td style="text-align: right;">17.0</td>
+<td style="text-align: right;">$0.0062</td>
+</tr>
+</tbody>
+</table>
+<p>Values are means per run. What the numbers say:</p>
+<ul>
+<li><strong><code>minimal</code> did this job for the least.</strong> It got all three answers right on every seed in 5 turns on average, at about a third of the default's cost and well under half its time. The analysis happens in pandas, so Beam's job is to write the right few lines, not to reason at length.</li>
+<li><strong>More effort bought more turns, not more accuracy.</strong> From <code>high</code> up, Beam spent about 700 reasoning tokens and made about 8 tool calls a run, for roughly three times the cost of <code>minimal</code>, and more at <code>xhigh</code>.</li>
+<li><strong>Input dominates the bill.</strong> A run averaged about 15,000 prompt tokens against 1,700 completion tokens. Because the loop resends the growing history every turn, input is about two thirds of the cost even at a quarter of the output price. Fewer turns save more than lower effort does.</li>
+</ul>
+<p>For questions where the hard part happens inside the model, such as choosing which analysis to run or explaining an anomaly, the higher levels have more to do. Point <code>sweep.py</code> at questions that look like your workload before you pick a default.</p>
+<h2 id="verify-the-result">Verify the result</h2>
+<p>You have a working setup when:</p>
+<ol>
+<li><code>uv run python -m pytest -q</code> reports <code>8 passed</code> without <code>NEBIUS_API_KEY</code> set.</li>
+<li><code>uv run python agent.py --seed 7</code> prints <code>Q1</code>, <code>Q2</code>, and <code>Q3</code> lines marked <code>(right)</code>, then <code>Graded: 3 of 3 correct</code>, a token count, and a cost line in dollars.</li>
+<li>Running it with <code>--save run.json</code> writes a record whose <code>correct</code> field is <code>3</code> and whose <code>model</code> field is <code>reflection/beam</code>.</li>
+<li>The requests show up under your project's usage in the Token Factory console.</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong><code>401</code>.</strong> The key is missing or wrong. Check that <code>.env</code> holds your key and that you ran <code>set -a; source .env; set +a</code> in the same shell.</li>
+<li><strong><code>404</code> or model not found.</strong> Check that <code>NEBIUS_MODEL</code> is unset or exactly <code>reflection/beam</code>, and that your key's project has access to it.</li>
+<li><strong><code>ModuleNotFoundError: pandas</code> in a <code>run_python</code> result.</strong> The sandbox uses the same Python as <code>agent.py</code>. Run <code>uv sync</code> in this folder and start the agent with <code>uv run</code>.</li>
+<li><strong>A question is marked wrong.</strong> The line shows the expected value next to Beam's answer. Rerun with <code>--show-reasoning</code> to see how Beam computed it.</li>
+<li><strong><code>Graded: ... in 16 turns</code>.</strong> The run hit the turn cap before Beam finished. Raise <code>--max-turns</code>, or set <code>--effort minimal</code> for a shorter run.</li>
+</ul>
+<h2 id="clean-up">Clean up</h2>
+<p>Nothing runs on Nebius after the script exits. Remove the local environment, the key file, and the variables from your shell:</p>
+<div class="codehilite"><pre><span></span><code>rm<span class="w"> </span>-rf<span class="w"> </span>.venv<span class="w"> </span>.env
+<span class="nb">unset</span><span class="w"> </span>NEBIUS_API_KEY<span class="w"> </span>NEBIUS_BASE_URL<span class="w"> </span>NEBIUS_MODEL
+</code></pre></div>
+
+<h2 id="going-further">Going further</h2>
+<ul>
+<li><strong>Ask your own questions.</strong> Add a question to <code>QUESTIONS</code> in <code>workspace.py</code>, compute its answer in <code>expected_answers</code>, and extend <code>grade()</code>. Questions that need judgement, not just arithmetic, are where the effort levels start to separate.</li>
+<li><strong>Point it at your own data.</strong> Replace <code>build_orders</code> with a loader for your CSV and keep the rest of the loop as it is. Without computed answers you lose automatic grading, so keep a few questions whose answers you already know.</li>
+<li><strong>Swap in a real sandbox.</strong> Replace the body of <code>run_python</code> with a call to a container or a hosted sandbox. Nothing else in the loop changes.</li>
+<li><strong>Try Reflection's harness.</strong> Beam was trained alongside Mirror, Reflection's open-source terminal coding agent. Its <a href="https://developers.reflection.ai/mirror-models">models and providers page</a> shows how to point it at any Chat Completions endpoint, which includes Token Factory.</li>
+<li><strong>Run the weights yourself.</strong> The <a href="https://huggingface.co/collections/reflection/beam-10">Beam collection on Hugging Face</a> has BF16, FP8, and NVFP4 checkpoints and a speculative-decoding drafter, if you want to serve Beam on your own Nebius AI Cloud GPUs.</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

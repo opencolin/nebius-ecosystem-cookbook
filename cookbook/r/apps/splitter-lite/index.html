@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Splitter Lite: split bills with Nemotron 3.5 Super VL and its own tool calls · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/apps/splitter-lite" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="splitter-lite-split-bills-with-nemotron-35-super-vl-and-its-own-tool-calls">Splitter Lite: split bills with Nemotron 3.5 Super VL and its own tool calls</h1>
+<p>Upload one bill, or two from the same night out, say who had what in plain English, and get each person's share.</p>
+<p><strong>NVIDIA Nemotron 3.5 Super VL</strong> on <a href="https://tokenfactory.nebius.com">Nebius Token Factory</a> reads every line of every bill into structured JSON with reasoning on. It then works out each share by <strong>calling calculator tools for every number</strong>. The app never computes the split for the model; it only checks the model's result.</p>
+<p><img alt="The split: two bills and three people, split by the model with 5 tool calls" src="screenshots/4-split.png" /></p>
+<h2 id="what-youll-build">What you'll build</h2>
+<p>A Next.js app with three steps:</p>
+<ol>
+<li><strong>Read.</strong> Each bill image goes to the model with a JSON schema, and the model returns structured JSON: every line, plus tax, tip, service charge, discount and the printed total. Two bills, such as dinner and the taxi home, are read in parallel and combined. Each line keeps a label showing which bill it came from.</li>
+<li><strong>Split.</strong> You add the people, then either tap who had each line or describe it ("Marco skipped the taxi"). The model assigns the lines and calls the tools:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>check_receipt(bill)</code></td>
+<td>Checks that the lines, tax, tip and fees add up to the printed total</td>
+</tr>
+<tr>
+<td><code>allocate_tax_tip(bill, lines)</code></td>
+<td>Splits one bill by who had which line, and spreads that bill's tax, tip and fees in integer cents</td>
+</tr>
+<tr>
+<td><code>calculate_split(amount, mode, participants)</code></td>
+<td>Splits an amount equally, by shares or by exact amounts</td>
+</tr>
+<tr>
+<td><code>validate_total(total, shares)</code></td>
+<td>Checks that the shares add up to the total</td>
+</tr>
+</tbody>
+</table>
+<ol start="3">
+<li><strong>Validate.</strong> The app runs <code>validate_total</code> again on the model's shares. If the model skips a tool or its shares don't add up, the split is flagged instead of being shown as the model's.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Both bills read in parallel</th>
+<th>Review what the model read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="Two bills being read with reasoning" src="screenshots/1-reading.png" /></td>
+<td><img alt="Two bills combined, each line labelled with its bill" src="screenshots/2-review.png" /></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Tell the AI who had what</th>
+<th>Every tool call, marked MODEL or APP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="The model assigns every line from a plain-English note" src="screenshots/3-assign.png" /></td>
+<td><img alt="The tool trace" src="screenshots/5-checks.png" /></td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Tokens, reasoning, time and cost for every AI call" src="screenshots/6-usage.png" /></p>
+<h2 id="how-it-works">How it works</h2>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    B[Bill images or PDF] --&gt; R["/api/extract&lt;br/&gt;Nemotron 3.5 Super VL&lt;br/&gt;json_schema"]
+    R --&gt; V[Review lines]
+    V --&gt; S["/api/split&lt;br/&gt;model + 4 calculator tools"]
+    N[Who had what, in plain English] --&gt; S
+    S --&gt; C{App re-runs&lt;br/&gt;validate_total}
+    C --&gt;|adds up| OK[Each person's share]
+    C --&gt;|doesn't add up| F[Flagged split]
+</code></pre></div>
+
+<p>The tools work in integer cents with largest-remainder rounding (<a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/src/lib/money/" target="_blank" rel="noopener"><code>src/lib/money/</code></a>), so shares always add up to the total exactly.</p>
+<h2 id="setup">Setup</h2>
+<p>Requirements: Node.js 22.13 or newer, and a <a href="https://tokenfactory.nebius.com">Nebius Token Factory</a> API key.</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>apps/splitter-lite
+npm<span class="w"> </span>install
+cp<span class="w"> </span>env.example<span class="w"> </span>.env<span class="w">          </span><span class="c1"># add NEBIUS_API_KEY</span>
+npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">                  </span><span class="c1"># http://localhost:3100</span>
+</code></pre></div>
+
+<p>Then try it with the sample bills in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/samples/" target="_blank" rel="noopener"><code>samples/</code></a>. Or run the same pipeline from the terminal:</p>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>agent<span class="w"> </span>--<span class="w"> </span>samples/groceries-21.png<span class="w"> </span><span class="s2">"Sophie had the Coffee beans 500g, Lukas had the Dish soap, everything else shared"</span><span class="w"> </span>Lukas,Sophie
+npm<span class="w"> </span>run<span class="w"> </span>agent<span class="w"> </span>--<span class="w"> </span>samples/dinner-01.png<span class="w"> </span>samples/taxi-01.png<span class="w"> </span><span class="s2">"Marco had the Grilled sea bass and skipped the taxi; Lukas and Sophie shared the House red; everything else is shared by everyone"</span><span class="w"> </span>Lukas,Sophie,Marco
+npm<span class="w"> </span>run<span class="w"> </span>check-samples<span class="w">        </span><span class="c1"># the sample bills against their answer keys (real calls, about $0.02)</span>
+npm<span class="w"> </span><span class="nb">test</span><span class="w">                     </span><span class="c1"># unit tests for the money math, tools and agent loop (no API calls)</span>
+</code></pre></div>
+
+<h2 id="exact-model-and-configuration">Exact model and configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>nvidia/Nemotron-3.5-Super-VL</code> (<a href="https://tokenfactory.nebius.com/?modals=endpoint-details&amp;model-id=nvidia/Nemotron-3.5-Super-VL">model page</a>)</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td><code>https://api.tokenfactory.us-north1.nebius.com/v1/</code>, through the OpenAI-compatible <code>openai</code> SDK</td>
+</tr>
+<tr>
+<td>Reasoning</td>
+<td><strong>On.</strong> This is Token Factory's default for this model, so no <code>reasoning_effort</code> or <code>chat_template_kwargs</code> is sent. The reasoning text comes back in <code>reasoning_content</code>.</td>
+</tr>
+<tr>
+<td>Sampling</td>
+<td>Nothing is sent: <code>temperature</code> and <code>top_p</code> stay at Token Factory's defaults</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>16,384 per call (reasoning tokens count toward this)</td>
+</tr>
+<tr>
+<td>Bill read</td>
+<td><code>response_format: json_schema</code> (strict), falling back to <code>json_object</code>; the result is validated with zod</td>
+</tr>
+<tr>
+<td>Split</td>
+<td>the four tools above, <code>tool_choice: "auto"</code>, plus one repair turn if the final JSON is malformed</td>
+</tr>
+<tr>
+<td>Uploads</td>
+<td>up to 2 bills per split and up to 4 pages per bill (JPEG, PNG or WebP, 4 MB per request in total). PDFs are converted to images in the browser.</td>
+</tr>
+<tr>
+<td>Price</td>
+<td>read live from <code>GET /v1/models?verbose=true</code>. At the time of writing: $0.30 per 1M input tokens and $0.90 per 1M output tokens, with reasoning tokens billed as output.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-layout">Project layout</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>What's in it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/src/server/ai/nebius.ts" target="_blank" rel="noopener"><code>src/server/ai/nebius.ts</code></a></td>
+<td>The Token Factory client: the only file to change to swap the model or provider</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/src/server/ai/receipt.ts" target="_blank" rel="noopener"><code>src/server/ai/receipt.ts</code></a></td>
+<td>The bill-reading prompt, JSON schema and zod validation</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/src/server/ai/split-agent.ts" target="_blank" rel="noopener"><code>src/server/ai/split-agent.ts</code></a></td>
+<td>The tool-calling loop and the app's final check</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/src/server/ai/tools.ts" target="_blank" rel="noopener"><code>src/server/ai/tools.ts</code></a></td>
+<td>The four calculator tools</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/src/app/api/" target="_blank" rel="noopener"><code>src/app/api/</code></a></td>
+<td>The <code>extract</code>, <code>split</code> and <code>model</code> routes</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/scripts/" target="_blank" rel="noopener"><code>scripts/</code></a></td>
+<td><code>agent.mts</code> (terminal version) and <code>check-samples.mts</code> (answer-key check)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/samples/" target="_blank" rel="noopener"><code>samples/</code></a></td>
+<td>Synthetic bills and their answer keys in <code>answers.json</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="a-real-run">A real run</h2>
+<p><code>npm run check-samples</code> with the sample bills in <code>samples/</code>. <strong>All 4 splits matched the answer keys to the cent</strong>, for $0.017 in total:</p>
+<div class="codehilite"><pre><span></span><code>✓ groceries-21         read ✓ · tool calls 3 · app check ✓   Lukas 14.82, Sophie 23.30
+✓ dinner-01            read ✓ · tool calls 3 · app check ✓   Lukas 27.94, Sophie 27.90, Marco 44.72
+✓ taxi-01              read ✓ · tool calls 3 · app check ✓   Lukas 12.03, Sophie 12.03
+✓ dinner-01 + taxi-01  read ✓ · tool calls 5 · app check ✓   Lukas 39.97, Sophie 39.93, Marco 44.72
+</code></pre></div>
+
+<p>Here are the two sample bills from one night out, from <code>npm run agent</code>. The answer key is Lukas €39.97, Sophie €39.93, Marco €44.72:</p>
+<div class="codehilite"><pre><span></span><code>1 · READ
+  samples/dinner-01.png: TRATTORIA DA LUCA · 5 lines · printed total 100.56 EUR
+  samples/taxi-01.png: Taxi Lisboa · 4 lines · printed total 24.06 EUR
+  Split together: 9 lines across 2 bills, total 124.62 EUR
+
+2 · SPLIT (6.0s, 4 model turns)
+  ✓ MODEL check_receipt({"bill":1})   → {"ok":true,"linesTotal":83.8,"printedTotal":100.56}
+  ✓ MODEL check_receipt({"bill":2})   → {"ok":true,"linesTotal":22.7,"printedTotal":24.06}
+  ✓ MODEL allocate_tax_tip({"bill":1, …"line":3,"members":["Marco"]…})
+          → {"bill":1,"total":100.56,"shares":{"Lukas":27.94,"Sophie":27.9,"Marco":44.72}}
+  ✓ MODEL allocate_tax_tip({"bill":2, …"members":["Lukas","Sophie"]…})
+          → {"bill":2,"total":24.06,"shares":{"Lukas":12.03,"Sophie":12.03}}
+  ✓ MODEL validate_total(…)  → {"ok":true,"total":124.62,"diff":0}
+  ✓ APP   validate_total(…)  → {"ok":true,"total":124.62,"diff":0}
+
+AI usage
+  read dinner-01.png    1831 in   1166 out (960 reasoning)    4.0s  $0.00160
+  read taxi-01.png      1763 in    827 out (659 reasoning)    3.8s  $0.00127
+  split with tools      7687 in   2142 out (1377 reasoning)   6.0s  $0.00423
+  total                11281 in   4135 out (2996 reasoning)  13.7s  $0.00711
+</code></pre></div>
+
+<p>The model calls <code>allocate_tax_tip</code> once per bill, so the dinner's VAT and service charge stay with the dinner, and Marco pays nothing towards the taxi. The full output is in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/output-example.md" target="_blank" rel="noopener"><code>output-example.md</code></a>.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li><strong>Speed.</strong> With reasoning on, a bill takes about 4–15 s to read, and the split takes another 4–10 s.</li>
+<li><strong>Photos.</strong> Creased, faded or rotated receipts are misread more often than the clean samples, so check the lines on the review step.</li>
+<li><strong>Intent.</strong> The tools check the sums, not who had what. Check the model's assignment before you look at the split.</li>
+<li><strong>Scope.</strong> Two bills per split. This is a local demo with no accounts and nothing saved, so don't expose it publicly with your own API key.</li>
+<li><strong>More features.</strong> Groups, running balances, invite links, payments, notifications and Settle with AI across many bills are in <a href="https://github.com/Studio1-OSS/Splitter">Splitter</a>. You can <a href="https://ten-splitter.vercel.app">try it live</a>.</li>
+</ul>
+<h2 id="credits">Credits</h2>
+<p>Built by <a href="https://github.com/Astrodevil">Amitesh Anand</a>, based on <a href="https://github.com/Studio1-OSS/Splitter">Splitter</a>.</p>
+<h2 id="license">License</h2>
+<p>MIT, under this cookbook's <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/splitter-lite/LICENSE" target="_blank" rel="noopener">LICENSE</a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

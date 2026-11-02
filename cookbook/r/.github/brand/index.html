@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Repository brand assets · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/.github/brand" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="repository-brand-assets">Repository brand assets</h1>
+<p>The cookbook cover follows the Nebius Token Factory communication design system supplied for this repository refresh (August 2026).</p>
+<ul>
+<li>Navy <code>#001A2B</code> is the cover surface; Deep Blue <code>#052B42</code> is the secondary surface.</li>
+<li>Lime <code>#DAFF33</code> and Lavender <code>#C1C1FF</code> provide accents.</li>
+<li>The full-color Token Factory lockup is copied unchanged in <a href="token-factory-logo.svg">token-factory-logo.svg</a>.</li>
+<li>The cover uses Gramatika Bold at 72px for its title and Inter at 14, 16, 18, and 24px for supporting text.</li>
+<li>Text is outlined in <a href="cookbook-banner.svg">cookbook-banner.svg</a> so the cover does not need downloadable fonts. Font files are not bundled here.</li>
+</ul>
+<p>To regenerate the cover from a local copy of the design system:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--no-project<span class="w"> </span>--with<span class="w"> </span>fonttools<span class="w"> </span>.github/scripts/build_brand_banner.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--design-system<span class="w"> </span>/path/to/design-system
+</code></pre></div>
+
+<p>Use sentence case, the supplied logo lockup, and the approved palette. Avoid emoji, italic type, and recreated logos in new communication assets. Markdown pages use GitHub's own typography and theme; the cover stays navy in both light and dark modes.</p>
+<p>These identity assets are used for this cookbook's presentation. Their inclusion does not grant rights to use Nebius trademarks for another product or imply endorsement of a community application.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

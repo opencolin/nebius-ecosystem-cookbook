@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Investigate and repair Kubernetes incidents with Beam · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/agents/kubetrace-ai" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<h1 id="investigate-and-repair-kubernetes-incidents-with-beam">Investigate and repair Kubernetes incidents with Beam</h1>
+<p>Use <a href="https://reflection.ai/blog/introducing-beam">Reflection Beam</a> on <a href="https://tokenfactory.nebius.com/?modals=endpoint-details&amp;model-id=reflection/beam">Nebius Token Factory</a> to investigate a failing application, edit its source, run regression tests, build an image and deploy a repair. This recipe uses <a href="https://github.com/Studio1-OSS/kubetrace-ai">KubeTrace AI</a>, an open-source application from the <a href="https://studio1hq.com">Studio1 team</a>.</p>
+<p>The exercise is a small storefront checkout service on a disposable Kubernetes cluster. An injected pricing bug makes orders of 30 or more items return HTTP 500. The agent gets the incident description and typed tools; independent hidden checks decide whether the repair worked.</p>
+<p>The complete application is included in this directory: Python API and agent, React UI, storefront, Kubernetes manifests, Dockerfiles, tests and sample reports. It is copied from upstream revision <code>6a111412eeaadd831f499aa6c72c55e3a99e7fef</code> under the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/LICENSE" target="_blank" rel="noopener">Apache-2.0 license</a>. See <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/UPSTREAM.md" target="_blank" rel="noopener">UPSTREAM.md</a> for provenance and cookbook-specific changes.</p>
+<h2 id="what-you-will-learn">What you will learn</h2>
+<ul>
+<li>Configure an OpenAI-compatible tool-calling agent with <code>reflection/beam</code> on Token Factory.</li>
+<li>Follow an investigation from cluster evidence into application code and tests.</li>
+<li>Separate model-proposed changes from deterministic execution policy and human approval.</li>
+<li>Verify a deployed repair independently and inspect failures as well as successes.</li>
+</ul>
+<h2 id="architecture">Architecture</h2>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    UI[Local web UI] --&gt; API[API and experiment harness]
+    API --&gt; A[Bounded agent loop]
+    A &lt;--&gt;|Messages and typed tool calls| TF[Beam on Nebius Token Factory]
+    A --&gt; R[Read logs, events and source]
+    A --&gt; E[Policy-checked executor]
+    E --&gt; S[Sandboxed regression tests]
+    S --&gt; B[Build and deploy image]
+    B --&gt; K[Demo Kubernetes namespace]
+    R --&gt; K
+    API --&gt; V[Independent hidden checks]
+    V --&gt; K
+    V --&gt; Report[Resolved, unresolved or escalated report]
+</code></pre></div>
+
+<p>The backend uses the official Python <code>openai</code> client with <code>base_url=https://api.tokenfactory.nebius.com/v1</code>. Pydantic argument models supply the tool schemas. The loop sends conversation history and tools with <code>tool_choice="auto"</code>, dispatches validated calls, and returns redacted, size-limited tool results to the model.</p>
+<p>There is no agent framework dependency. See the included <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/services/agent/kubetrace_agent/llm.py" target="_blank" rel="noopener">model client</a>, <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/services/agent/kubetrace_agent/loop.py" target="_blank" rel="noopener">agent loop</a> and <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/services/agent/kubetrace_agent/tools.py" target="_blank" rel="noopener">typed tools</a>.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>macOS or Linux with Git, Docker, <a href="https://kind.sigs.k8s.io/">kind</a> and <code>kubectl</code>. Start Docker before creating the cluster.</li>
+<li>Python 3.11+ and <a href="https://docs.astral.sh/uv/">uv</a>.</li>
+<li>Node.js 22 and pnpm to build the web UI.</li>
+<li>A Nebius Token Factory API key with access to <code>reflection/beam</code>. Follow the cookbook's <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/start-here/setup.md" target="_blank" rel="noopener">setup guide</a> to create a key.</li>
+</ul>
+<p>Use a disposable local cluster for this exercise. Setup and fault injection intentionally change demo workloads. Live inference spends credits on your Token Factory account; fixture mode is available for checking the pipeline without a model.</p>
+<h2 id="1-get-the-cookbook">1. Get the cookbook</h2>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nebius/token-factory-cookbook.git
+<span class="nb">cd</span><span class="w"> </span>token-factory-cookbook/agents/kubetrace-ai
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+uv<span class="w"> </span>sync
+</code></pre></div>
+
+<p>Run the remaining commands from <code>agents/kubetrace-ai</code>. No separate application clone is needed.</p>
+<h2 id="2-configure-beam-on-token-factory">2. Configure Beam on Token Factory</h2>
+<p>Edit the copied <code>.env</code> file. Fill in <code>NEBIUS_API_KEY</code> with your own key, and set these non-secret values:</p>
+<div class="codehilite"><pre><span></span><code>NEBIUS_MODEL=reflection/beam
+NEBIUS_BASE_URL=https://api.tokenfactory.nebius.com/v1
+CLUSTER_KIND=kind
+POLICY_MODE=review
+MODEL_TEMPERATURE=0.2
+MODEL_MAX_TOKENS=2048
+</code></pre></div>
+
+<p>Keep the key in the backend environment; do not paste it into a prompt or commit <code>.env</code>. Review mode makes each policy-allowed cluster mutation wait for approval in the UI. The deterministic policy still applies when you approve a change.</p>
+<p>Run the provider preflight before setting up the experiment:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>kubetrace<span class="w"> </span>preflight
+</code></pre></div>
+
+<p>It checks configuration, authentication, model access, a tool-calling round trip and usage reporting. Resolve failures before continuing. The model ID is case-sensitive. Check the <a href="https://tokenfactory.nebius.com/?modals=endpoint-details&amp;model-id=reflection/beam">Beam endpoint page</a> for access through your account; an unavailable model is an error, not a reason to silently substitute a different one.</p>
+<p>Leave <code>MODEL_REASONING_EFFORT</code> unset initially. Generation settings are passed to the provider, so only set options the selected model accepts.</p>
+<h2 id="3-create-a-local-cluster-and-start-the-ui">3. Create a local cluster and start the UI</h2>
+<p>The pinned kind configuration names the cluster <code>kubetrace</code>.</p>
+<div class="codehilite"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>.secrets
+kind<span class="w"> </span>create<span class="w"> </span>cluster<span class="w"> </span>--config<span class="w"> </span>deploy/kind/kind-config.yaml<span class="w"> </span>--kubeconfig<span class="w"> </span>.secrets/kind-kubeconfig
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"KUBECONFIG=</span><span class="nv">$PWD</span><span class="s2">/.secrets/kind-kubeconfig"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.env
+
+<span class="o">(</span><span class="nb">cd</span><span class="w"> </span>apps/web<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>build<span class="o">)</span>
+uv<span class="w"> </span>run<span class="w"> </span>kubetrace<span class="w"> </span>serve
+</code></pre></div>
+
+<p>Open <strong>http://127.0.0.1:8000</strong>. Keep this process running while using the UI. For kind on macOS, run the API on the host: a container cannot reach a kind API server bound to the host's <code>127.0.0.1</code>.</p>
+<h2 id="4-reproduce-the-checkout-failure">4. Reproduce the checkout failure</h2>
+<p>In <strong>Experiments</strong>:</p>
+<ol>
+<li>Select <strong>application-bug</strong>.</li>
+<li>Keep <strong>Live model</strong> enabled and <strong>Review each change</strong> enabled.</li>
+<li>Press <strong>Setup</strong>. The harness deploys the healthy storefront and checks the baseline. It also prepares the test runner image.</li>
+<li>Press <strong>Inject</strong>. The harness introduces the pricing bug and proves the large order fails.</li>
+<li>Press <strong>Investigate</strong> to start Beam's tool-calling loop.</li>
+</ol>
+<p>The incident concerns a wholesale checkout for 30 mugs. The agent must establish the cause from evidence rather than receiving the expected patch or hidden tests.</p>
+<p>For a pipeline-only check, turn off <strong>Live model</strong> before starting investigation. That run is labelled <strong>FIXTURE</strong>: a scripted test double produces the actions and no model is called. Do not use it as evidence of Beam's capability.</p>
+<h2 id="5-follow-the-code-repair-and-deployment">5. Follow the code repair and deployment</h2>
+<p>The timeline shows visible decision notes, tool calls, results, patches and test output. A successful investigation can include:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Tools or evidence</th>
+<th>What to inspect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reproduce</td>
+<td><code>http_check</code></td>
+<td>A request through the Service reproduces the failing checkout.</td>
+</tr>
+<tr>
+<td>Diagnose</td>
+<td><code>get_logs</code>, <code>read_file</code></td>
+<td>The exception and pricing rules support the proposed cause.</td>
+</tr>
+<tr>
+<td>Repair</td>
+<td><code>edit_file</code>, <code>write_file</code>, <code>show_diff</code></td>
+<td>Source changes fix the cause, and a new regression test covers the failing order.</td>
+</tr>
+<tr>
+<td>Test</td>
+<td><code>run_tests</code></td>
+<td>Tests run in the Docker sandbox without network access or credentials.</td>
+</tr>
+<tr>
+<td>Deploy</td>
+<td><code>build_image</code>, <code>deploy_image</code>, <code>wait_for_rollout</code></td>
+<td>A newly built image is deployed, and rollout completes.</td>
+</tr>
+<tr>
+<td>Verify</td>
+<td><code>http_check</code>, then harness verification</td>
+<td>The application serves correct responses; independent checks determine the final outcome.</td>
+</tr>
+</tbody>
+</table>
+<p>These are available tools and inspection points, not a promised sequence. Beam chooses its calls and may fail, reach a budget limit or need to escalate.</p>
+<p>When review mode pauses a cluster mutation, inspect the proposed change and policy result before approving it. Do not approve an unrelated change just to advance the run. A denial or failed check remains part of the report and can become feedback to the agent.</p>
+<p>The application bug is a tier lookup that indexes past the end of a discount table. Recovery requires more than catching the exception: the discount and checkout totals must match the documented rules, the original tests must remain, and the agent's regression test must fail against the buggy code.</p>
+<h2 id="6-inspect-the-outcome-and-export-the-evidence">6. Inspect the outcome and export the evidence</h2>
+<p>Open the run's <strong>Report</strong>. Check:</p>
+<ul>
+<li><strong>Provenance and settings:</strong> live versus fixture, provider, exact model ID, generation settings and repository commit.</li>
+<li><strong>Issue and baseline:</strong> healthy baseline and fault proof before investigation.</li>
+<li><strong>Changes and tests:</strong> diffs, rejected actions, test output and the deployed image.</li>
+<li><strong>Verification:</strong> hidden checks, first-attempt success and eventual success.</li>
+<li><strong>Usage:</strong> provider-reported tokens, tool and model calls, timings, and any available cost estimate.</li>
+</ul>
+<p>The agent calling <code>finish</code> with <code>outcome="resolved"</code> does not make the run successful. Hidden verification must pass. For this code-repair scenario it checks the run-built image, ready Pods, checkout totals, preserved tests and the regression test's ability to detect the original bug.</p>
+<p>Use <strong>Markdown</strong> or <strong>JSON export</strong> to retain a report, and <strong>Replay</strong> to inspect the recorded timeline. <strong>Presentation mode</strong> hides addresses, contexts, cluster IDs and registry hosts when sharing a report. Review the export before sharing it.</p>
+<p>The included <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/docs/RESULTS.md" target="_blank" rel="noopener">sample reports and result tables</a> describe earlier Muse Spark Open runs and separately labelled fixtures. This recipe configures Beam; inspect your own run's provenance before attributing an outcome to Beam. The scenarios are demo exercises, not a general coding or Kubernetes benchmark.</p>
+<h2 id="7-try-another-incident">7. Try another incident</h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Exercise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>selector-mismatch</code></td>
+<td>A Service selector matches no Pods; restore endpoints and real checkout traffic.</td>
+</tr>
+<tr>
+<td><code>broken-readiness</code></td>
+<td>A readiness path returns 404; fix the probe without removing it.</td>
+</tr>
+<tr>
+<td><code>invalid-config</code></td>
+<td>An invalid tax-rate value crashes startup; repair configuration and restart the workload.</td>
+</tr>
+<tr>
+<td><code>memory-pressure</code></td>
+<td>Cache size exceeds the memory limit; make a bounded resource or configuration change.</td>
+</tr>
+<tr>
+<td><code>partner-outage</code></td>
+<td>An external payment service is down; diagnose and escalate without changing another namespace.</td>
+</tr>
+</tbody>
+</table>
+<p>Use <strong>Setup → Inject → Investigate</strong> for the next exercise. The included <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/docs/COOKBOOK.md" target="_blank" rel="noopener">scenario cookbook</a> explains the faults, checks and recorded outcomes.</p>
+<p>For a headless run on this disposable cluster, you can explicitly select automatic execution of policy-allowed changes:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>kubetrace<span class="w"> </span>run<span class="w"> </span>application-bug<span class="w"> </span>--model-mode<span class="w"> </span>live<span class="w"> </span>--policy<span class="w"> </span>auto
+</code></pre></div>
+
+<p>This command performs setup, injection and investigation without the UI approval workflow. Use the UI with review mode when you want to approve each cluster change.</p>
+<h2 id="optional-connect-an-existing-civo-cluster">Optional: connect an existing Civo cluster</h2>
+<p>The local recipe needs no Civo account. To use an existing Civo demo cluster instead, follow the included <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/docs/CIVO.md" target="_blank" rel="noopener">Civo guide</a>.</p>
+<p>Set <code>CLUSTER_KIND=civo</code>, <code>CIVO_REGION</code>, <code>CIVO_CLUSTER_ID</code> and a <code>REGISTRY</code> the nodes can pull from; fill in <code>CIVO_API_KEY</code> server-side. The application fetches a kubeconfig but does not create Civo infrastructure. Civo nodes need pullable images; the local kind image-loading path does not apply. Cluster and registry costs are separate from Token Factory inference.</p>
+<h2 id="execution-boundaries">Execution boundaries</h2>
+<p>The harness uses admin access for experiment setup, injection, verification and token minting. The agent receives a separate namespace-scoped ServiceAccount, not admin credentials. Its RBAC excludes Secrets, nodes, RBAC changes, deletes and other namespaces.</p>
+<p>Cluster mutations pass an API-server dry run, an allowlist policy and a <code>resourceVersion</code> staleness check. Review approval does not bypass these controls. Logs, annotations, repository text and tool output are treated as untrusted data. Provider private reasoning fields are not stored.</p>
+<p>The Docker test runner has no network or credentials, mounts source read-only and uses resource limits. The subprocess fallback is not isolated; reports identify it if used. See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/docs/SECURITY.md" target="_blank" rel="noopener">security model</a> for exact boundaries.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Next check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preflight fails</td>
+<td>Verify the backend key, exact model ID, account access and accepted generation settings.</td>
+</tr>
+<tr>
+<td>UI does not load</td>
+<td>Build <code>apps/web</code> and confirm <code>uv run kubetrace serve</code> is running on port 8000.</td>
+</tr>
+<tr>
+<td>Setup fails</td>
+<td>Check Docker, kind, the kubeconfig path and cluster connectivity.</td>
+</tr>
+<tr>
+<td>Investigation pauses</td>
+<td>Inspect the review-mode approval prompt and policy decision.</td>
+</tr>
+<tr>
+<td>Agent claims success but run is unresolved</td>
+<td>Read the hidden verification results and the applied diff. Retain the failure as evidence.</td>
+</tr>
+<tr>
+<td>Cost is unavailable</td>
+<td>The pinned pricing file may not contain a verified rate for the model. Use provider-reported token counts and current account pricing; do not substitute another model's rate.</td>
+</tr>
+<tr>
+<td>Civo rollout cannot pull an image</td>
+<td>Check the registry configuration, node access and image digest.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cleanup">Cleanup</h2>
+<p>Stop <code>kubetrace serve</code> with Ctrl-C. If you created the disposable kind cluster for this recipe, remove it:</p>
+<div class="codehilite"><pre><span></span><code>kind<span class="w"> </span>delete<span class="w"> </span>cluster<span class="w"> </span>--name<span class="w"> </span>kubetrace
+</code></pre></div>
+
+<p>This deletes that cluster and its workloads. It does not delete local reports or Docker build images. For an existing Civo cluster, use the cleanup steps in the Civo guide; do not delete a shared cluster.</p>
+<h2 id="test-the-included-application">Test the included application</h2>
+<p>These checks require no cluster or live inference:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/unit
+<span class="o">(</span><span class="nb">cd</span><span class="w"> </span>apps/web<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>typecheck<span class="o">)</span>
+</code></pre></div>
+
+<p>Cluster integration and UI tests are opt-in; follow the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/docs/TESTING.md" target="_blank" rel="noopener">testing guide</a>. Run reports record the cookbook checkout commit. The copied application revision is documented separately in <a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/UPSTREAM.md" target="_blank" rel="noopener">UPSTREAM.md</a>.</p>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://github.com/Studio1-OSS/kubetrace-ai">KubeTrace AI source and current documentation</a> — Apache-2.0 licensed application.</li>
+<li><a href="https://reflection.ai/blog/introducing-beam">Introducing Beam</a>.</li>
+<li><a href="https://tokenfactory.nebius.com/?modals=endpoint-details&amp;model-id=reflection/beam">Beam on Nebius Token Factory</a>.</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/start-here/setup.md" target="_blank" rel="noopener">Token Factory setup</a>.</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/agents/kubetrace-ai/docs/TESTING.md" target="_blank" rel="noopener">Testing guide</a>.</li>
+</ul>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

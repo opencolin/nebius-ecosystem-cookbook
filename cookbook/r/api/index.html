@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Run Models on Nebius Token Factory using APIs · Nebius Token Factory Cookbook</title>
+<title>API and SDK examples · Nebius Token Factory Cookbook</title>
 <link rel="stylesheet" href="../../../assets/css/main.css" />
 <link rel="stylesheet" href="../../../assets/cookbook.css" />
 </head>
@@ -27,45 +27,64 @@
   <div class="cb-crumb"><a href="../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/api" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
   
   <article class="cb-content">
-<h1 id="run-models-on-nebius-token-factory-using-apis">Run Models on Nebius Token Factory using APIs</h1>
-<p>This guide shows how to run models using various python APIs.</p>
-<h2 id="references-and-acknowledgements">References and Acknowledgements</h2>
-<ul>
-<li><a href="https://docs.tokenfactory.nebius.com//inference/quickstart">API documentation</a></li>
-</ul>
-<h2 id="prerequisites">Prerequisites</h2>
-<ul>
-<li>NEBIUS_API_KEY</li>
-</ul>
-<h2 id="setup-python-env">Setup Python Env</h2>
-<ul>
-<li>Be sure to finish <a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/start-here/setup.md" target="_blank" rel="noopener">the setup</a></li>
-<li>And install the requirements</li>
-</ul>
-<div class="codehilite"><pre><span></span><code><span class="c1"># follow the seutp-dev-env.md guide above to set up your python env.</span>
-
-<span class="c1"># activate the python env</span>
-<span class="nb">source</span><span class="w">  </span>.venv/bin/activate
-pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w">  </span>requirements.txt
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/README.md" target="_blank" rel="noopener">Cookbook</a> / APIs</p>
+<h1 id="api-and-sdk-examples">API and SDK examples</h1>
+<p>Call open models on Nebius Token Factory through its OpenAI-compatible API, or connect a framework you already use.</p>
+<p>Start with <a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/start-here/setup.md" target="_blank" rel="noopener">environment setup</a>. Each notebook lists its dependencies and model configuration.</p>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Purpose</th>
+<th>Dependencies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="api_native.html">Native API</a></td>
+<td>Make a direct request with the OpenAI SDK</td>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/requirements.txt" target="_blank" rel="noopener">requirements.txt</a></td>
+</tr>
+<tr>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/comparing-models/README.md" target="_blank" rel="noopener">Comparing models</a></td>
+<td>Run the same text prompt across models and save answers, time, and token usage</td>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/comparing-models/requirements.txt" target="_blank" rel="noopener">requirements.txt</a></td>
+</tr>
+<tr>
+<td><a href="api_litellm.html">LiteLLM</a></td>
+<td>Use Token Factory through LiteLLM</td>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/requirements-litellm.txt" target="_blank" rel="noopener">requirements-litellm.txt</a></td>
+</tr>
+<tr>
+<td><a href="api_aisuite.html">aisuite</a></td>
+<td>Call Token Factory through a provider interface</td>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/requirements-aisuite.txt" target="_blank" rel="noopener">requirements-aisuite.txt</a></td>
+</tr>
+<tr>
+<td><a href="api_llamaindex.html">LlamaIndex</a></td>
+<td>Use chat and embeddings in a LlamaIndex workflow</td>
+<td><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/requirements-llamaindex.txt" target="_blank" rel="noopener">requirements-llamaindex.txt</a></td>
+</tr>
+</tbody>
+</table>
+<p>Also see <a href="../batch.html">batch inference</a> and <a href="../guided_json.html">guided JSON output</a>.</p>
+<h2 id="run-a-notebook">Run a notebook</h2>
+<p>From this directory, create a Python environment and install the requirements for the notebook you chose:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>jupyterlab
+python<span class="w"> </span>-m<span class="w"> </span>jupyter<span class="w"> </span>lab
 </code></pre></div>
 
-<h2 id="openai-compatible-api">OpenAI Compatible API</h2>
-<p>This is the default API. OpenAI API comptable.</p>
-<p>Example code: <a href="api_native.html">api_native.ipynb</a></p>
-<p><a href="https://tokenfactory.nebius.com/api-reference">API reference</a></p>
-<h2 id="thirdparty-apis">Thirdparty APIs</h2>
-<p>Nebius Token Factory also supports <a href="https://docs.tokenfactory.nebius.com//inference/integrations">third party APIs</a>.  Here are some examples</p>
-<h2 id="aisuite">AISuite</h2>
-<p><a href="https://github.com/andrewyng/aisuite">aisuite</a> is a simple, unified interface to multiple Generative AI providers.</p>
-<p>Example code: <a href="api_native.html">api_native.ipynb</a></p>
-<h2 id="litellm">LiteLLM</h2>
-<p><a href="https://docs.litellm.ai/">LiteLLM</a> is a popular API that provides consistent API for calling multiple providers.</p>
-<p>Example code: <a href="api_litellm.html">api_litellm.ipynb</a></p>
-<h2 id="llama-index">Llama-Index</h2>
-<p><a href="https://docs.llamaindex.ai/en/stable/">llama-index</a> is a library for building LLM / AI applications.</p>
-<p>Example code: <a href="api_llamaindex.html">api_llamaindex.ipynb</a></p>
-<h2 id="more-thirdparty-apis">More Thirdparty APIs</h2>
-<p>See <a href="https://docs.tokenfactory.nebius.com//inference/integrations">Nebius third party API documentation</a> for complete list.</p><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="api_aisuite.html">api_aisuite.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_aisuite.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="api_litellm.html">api_litellm.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_litellm.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="api_llamaindex.html">api_llamaindex.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_llamaindex.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="api_native.html">api_native.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_native.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
+<p>Use the corresponding requirements file for the other notebooks. Keep your API key in the environment or in the recipe's local <code>.env</code> file.</p>
+<h2 id="continue-building">Continue building</h2>
+<ul>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/tool-calling/README.md" target="_blank" rel="noopener">Tool calling</a></li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/agents/README.md" target="_blank" rel="noopener">Agent examples</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/">Official documentation</a></li>
+<li><a href="https://docs.tokenfactory.nebius.com/integrations/overview">Official integrations catalog</a></li>
+</ul><div class="callout"><strong>Notebooks in this recipe:</strong><ul><li><a href="api_aisuite.html">api_aisuite.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_aisuite.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="api_litellm.html">api_litellm.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_litellm.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="api_llamaindex.html">api_llamaindex.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_llamaindex.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li><li><a href="api_native.html">api_native.ipynb</a> · <a href="https://nbviewer.org/github/nebius/token-factory-cookbook/blob/main/api/api_native.ipynb" target="_blank" rel="noopener">nbviewer ↗</a></li></ul></div>
   </article>
 </div>
 <footer><div class="container"><div class="footer-bottom">

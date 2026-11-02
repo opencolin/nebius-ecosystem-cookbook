@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Comparing models on your own prompt · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/api/comparing-models" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/comparing-models/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/comparing-models/README.md" target="_blank" rel="noopener">APIs</a> / Comparing models</p>
+<h1 id="comparing-models-on-your-own-prompt">Comparing models on your own prompt</h1>
+<p>Send the same text task to several models on Nebius Token Factory, save their
+answers, and compare response time and token usage. Decide what a good answer
+looks like before running the comparison.</p>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>A small Python script using the OpenAI-compatible Chat Completions API at
+<code>https://api.tokenfactory.nebius.com/v1/</code>. It runs each model three times by
+default, saving answers, full response JSON, and metrics in a new local folder.
+Failed requests are recorded and the comparison continues with the next request.</p>
+<p>The default models are:</p>
+<ul>
+<li>Beam: <code>reflection/beam</code></li>
+<li>Muse Spark Open: <code>meta-models/muse-spark-open</code></li>
+<li>Nemotron 3.5 Super VL: <code>nvidia/Nemotron-3.5-Super-VL</code></li>
+</ul>
+<p>These IDs match the <a href="https://nebius.com/blog/posts/three-new-open-weight-models-from-us-companies-give-builders-more-choice">October 16, 2026 launch guide</a>.
+Check current availability, capabilities, and pricing in the
+<a href="https://tokenfactory.nebius.com/models">model catalog</a>. Use <code>--models</code> to choose
+other text-capable models or add your current model as a baseline.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Python 3.10 or newer.</li>
+<li>A Token Factory account and an API key with access to your chosen models.
+  Follow the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/comparing-models/start-here/setup.md" target="_blank" rel="noopener">environment setup guide</a>.</li>
+<li>API credit: the default command makes nine potentially billable requests.
+  Increasing repetitions or the output budget can increase cost.</li>
+</ul>
+<p>The script creates local files and sends your prompt to Token Factory. It does
+not provision infrastructure or execute the code in model responses.</p>
+<h2 id="setup">Setup</h2>
+<p>From this recipe's directory:</p>
+<div class="codehilite"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span><span class="s2">"your-api-key"</span>
+cp<span class="w"> </span>task.example.md<span class="w"> </span>task.md
+</code></pre></div>
+
+<p>Replace <code>task.md</code> with a representative task and explicit success criteria.
+Include the context the model needs in that file: the script sends its contents
+as one user message and does not read any other repository files.</p>
+<h2 id="run">Run</h2>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>compare_models.py
+</code></pre></div>
+
+<p>To choose models, include your baseline's current catalog ID in the list:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>compare_models.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--models<span class="w"> </span>reflection/beam<span class="w"> </span>meta-models/muse-spark-open<span class="w"> </span>nvidia/Nemotron-3.5-Super-VL<span class="w"> </span>YOUR_BASELINE_MODEL_ID<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--runs<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-tokens<span class="w"> </span><span class="m">8192</span>
+</code></pre></div>
+
+<p>Replace <code>YOUR_BASELINE_MODEL_ID</code> before running. <code>--models</code> replaces the whole
+default list. For a smaller first check, use <code>--runs 1</code>. Use <code>--prompt path/to/task.md</code>
+for another input, <code>--output-dir path/to/results</code> for another output root, or
+<code>--timeout 300</code> for a longer request timeout in seconds.</p>
+<p>Each request prints the model, repetition, elapsed time, input/output token
+counts, finish reason, and status. Under <code>outputs/&lt;run-id&gt;/</code>, you will find:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>task.md</code></td>
+<td>The exact prompt sent to each model</td>
+</tr>
+<tr>
+<td><code>config.json</code></td>
+<td>Requested models, repetitions, output budget, timeout, and retry settings</td>
+</tr>
+<tr>
+<td><code>01-reflection_beam-run-01.md</code></td>
+<td>The first model's first answer; each model/repetition has its own file</td>
+</tr>
+<tr>
+<td><code>01-reflection_beam-run-01.json</code></td>
+<td>The full API response, including usage details when returned</td>
+</tr>
+<tr>
+<td><code>metrics.csv</code>, <code>metrics.json</code></td>
+<td>One row per attempted request, including errors</td>
+</tr>
+</tbody>
+</table>
+<p>The metrics files are updated after each request. API errors record the exception
+type and HTTP status when available; failed requests have no answer file. Missing
+usage is left blank in CSV and <code>null</code> in JSON. The script exits with code 1 if any
+request fails or needs review, while preserving the other results.</p>
+<p>Compare answer files with your editor or <code>diff</code>, substituting your actual folder:</p>
+<div class="codehilite"><pre><span></span><code>diff<span class="w"> </span>-u<span class="w"> </span>outputs/RUN_ID/01-reflection_beam-run-01.md<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>outputs/RUN_ID/02-meta-models_muse-spark-open-run-01.md
+</code></pre></div>
+
+<p><code>diff</code> returns exit code 1 when the answers differ; that is expected.</p>
+<h2 id="interpret-the-results">Interpret the results</h2>
+<p><code>completed</code> means the API returned nonempty answer text with finish reason
+<code>stop</code>. It does not establish correctness. Run proposed tests yourself and score
+answers against the success criteria you wrote in advance.</p>
+<p><code>needs_review</code> flags empty answers, missing choices, truncation (<code>length</code>), or
+another finish reason. A reasoning model can spend its output budget thinking
+before producing an answer. Inspect the saved response and finish reason; if
+the budget was exhausted, consider increasing <code>--max-tokens</code>. An empty answer
+alone does not identify the cause.</p>
+<p>Elapsed time measures the full non-streaming SDK request, including network and
+server wait time. It is not time to first token or a throughput measurement.
+SDK retries are disabled so an automatic retry does not silently inflate a
+measurement. Requests are sequential, interleaved by repetition, and use provider
+defaults for sampling and reasoning. Defaults, caching, and service load can
+differ across models and runs; this is a practical starting comparison rather
+than a controlled benchmark.</p>
+<p>Token counts can differ because tokenizers and reasoning behavior differ. Use
+current pricing and returned usage details for cost calculations, including
+cached input or reasoning where applicable. The script does not calculate cost.
+Judge cost per successful task across repeated runs, including failed attempts
+and retries in your actual application.</p>
+<p>This loop compares text responses. Test images, video, tools, multi-turn agent
+behavior, and repository edits separately in your full workflow. For example:
+did the agent call the right tools, how many retries did it need, and would a
+reviewer merge the resulting change?</p>
+<h2 id="validate">Validate</h2>
+<p>These commands make no API calls:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>compare_models.py<span class="w"> </span>--help
+python<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>discover<span class="w"> </span>-s<span class="w"> </span>.<span class="w"> </span>-p<span class="w"> </span><span class="s1">'test_*.py'</span>
+</code></pre></div>
+
+<p>The tests use the OpenAI SDK with a mock HTTP transport to check saved answers,
+repeated requests, error continuation, empty/truncated replies, and missing usage.
+Live inference against the default models has not been validated for this recipe.</p>
+<h2 id="limitations-and-cleanup">Limitations and cleanup</h2>
+<p>Keep your API key in the environment. Outputs contain your prompt and full model
+responses, including any reasoning the API returns; keep them local unless you
+intend to share them. <code>task.md</code> and <code>outputs/</code> are ignored by Git in this recipe.</p>
+<p>Delete a generated run directory when you no longer need it. Remove <code>.venv/</code> to
+remove the local Python environment. The recipe creates no remote resources to
+clean up.</p>
+<h2 id="source-and-license">Source and license</h2>
+<p>Based on Dylan Bristot's three-model comparison example for the Nebius builder
+newsletter, with repeated runs, persisted metrics, and error handling added for
+the cookbook. Licensed under the repository's <a href="https://github.com/nebius/token-factory-cookbook/blob/main/api/comparing-models/LICENSE" target="_blank" rel="noopener">MIT license</a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>
