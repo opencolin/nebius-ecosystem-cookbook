@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Napkin to 3D print with Kimi K3.1 Pro · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/apps/napkin-to-3d-print" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/napkin-to-3d-print/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/napkin-to-3d-print/README.md" target="_blank" rel="noopener">Applications and demos</a> / Napkin to 3D print</p>
+<h1 id="napkin-to-3d-print-with-kimi-k31-pro">Napkin to 3D print with Kimi K3.1 Pro</h1>
+<p>Sketch a part on paper, snap a photo, and get a printable, parametric STL.</p>
+<p><strong>Kimi K3.1 Pro</strong> on <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> reads your hand-drawn sketch, including any dimensions you wrote on it, and writes a parametric <a href="https://github.com/CadQuery/cadquery">CadQuery</a> model. The app builds the solid, renders it from four angles, and shows Kimi its own render next to your sketch. Kimi then signs off or sends corrected code. Build errors go back to Kimi as tracebacks, so it debugs its own CAD code.</p>
+<table>
+<thead>
+<tr>
+<th>A bundled sample sketch: side and front views with written dimensions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="Hand-drawn phone stand: 100 mm base, 18 mm lip, 60 degree back, 80 mm wide with a 14 mm cable slot" src="samples/phone_stand.png" /></td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>A Streamlit app that turns one sketch into a part you can print:</p>
+<ol>
+<li><strong>Design.</strong> Kimi reads the sketch image and your optional notes and writes one Python module: a <code>PARAMS</code> dict of the dimensions worth tweaking and a <code>build(p)</code> function that returns a CadQuery solid.</li>
+<li><strong>Build.</strong> <code>cad_runner.py</code> checks the code against an import allowlist and an AST denylist, builds it in a separate process with a timeout and an empty environment (inside an OS sandbox on macOS), sits the part on the print bed, and exports STL and STEP. If the build fails, Kimi gets the traceback and up to three tries to fix it.</li>
+<li><strong>Review.</strong> <code>render.py</code> draws front, right, top and isometric views with the measured size printed on them. Kimi sees the sketch and the render side by side and answers <code>VERDICT: PASS</code> or <code>VERDICT: REVISE</code> with corrected code. This repeats for the number of self-review rounds you choose.</li>
+<li><strong>Use it.</strong> The part prints itself layer by layer in a Three.js viewer. Every <code>PARAMS</code> entry becomes a slider that rebuilds the part locally with no model call. A chat box applies edits such as "add a 10 mm cable hole through the back". Download the STL, the STEP, or the CadQuery source.</li>
+</ol>
+<p>The app also reports print-readiness checks (watertight mesh, single solid, valid B-rep, size, volume and an estimated PLA weight) and keeps a timeline of every version with Kimi's interpretation, review notes and the build errors it fixed.</p>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    A[Sketch photo + notes] --&gt; B[Kimi K3.1 Pro&lt;br/&gt;reads sketch, writes CadQuery]
+    B --&gt; C[Build in subprocess&lt;br/&gt;OpenCascade]
+    C -- traceback --&gt; B
+    C --&gt; D[Render 4 views]
+    D --&gt; E[Kimi compares render&lt;br/&gt;vs sketch]
+    E -- REVISE + new code --&gt; C
+    E -- PASS --&gt; F[3D viewer, sliders,&lt;br/&gt;STL / STEP / .py]
+    F -- "chat edit" --&gt; B
+</code></pre></div>
+
+<h3 id="model-and-configuration">Model and configuration</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Endpoint</td>
+<td><code>https://api.tokenfactory.nebius.com/v1/</code> (OpenAI-compatible)</td>
+</tr>
+<tr>
+<td>Preferred model</td>
+<td><code>moonshotai/Kimi-K3.1-Pro</code>, override with <code>KIMI_MODEL</code></td>
+</tr>
+<tr>
+<td>Fallbacks</td>
+<td><code>moonshotai/Kimi-K3</code>, then <code>moonshotai/Kimi-K2.6</code>, if the key can't use the preferred model. The sidebar says when a fallback is active.</td>
+</tr>
+<tr>
+<td>Reasoning effort</td>
+<td>Sidebar choice, <code>high</code> by default</td>
+</tr>
+<tr>
+<td>Self-review rounds</td>
+<td>Sidebar slider, 1 to 4, default 3</td>
+</tr>
+<tr>
+<td>Build limits</td>
+<td>120 s per build, up to 3 automatic repairs per version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="project-layout">Project layout</h3>
+<div class="codehilite"><pre><span></span><code>napkin-to-3d-print/
+├── app.py           # Streamlit UI: input, live progress, viewer, sliders, chat edits, timeline
+├── cad_agent.py     # Design, build, render and critique loop, plus all prompts
+├── cad_runner.py    # Subprocess that checks, builds and exports the CadQuery model
+├── render.py        # Headless four-view renders and mesh checks (Matplotlib, no OpenGL)
+├── viewer.py        # Three.js viewer with the layer-by-layer print animation
+├── kimi.py          # Token Factory client, model fallback and streaming
+├── samples/         # Hand-drawn sample sketches: phone stand, wall hook, pen cup
+├── tests/           # Credential-free unit tests
+├── .streamlit/      # Binds the server to localhost
+├── env.example
+├── pyproject.toml
+└── uv.lock
+</code></pre></div>
+
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Python 3.11 or newer (required by CadQuery 2.8)</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a> (or pip)</li>
+<li>A Token Factory API key from <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a></li>
+<li>About 1.6 GB of disk for the environment, mostly CadQuery and OpenCascade</li>
+</ul>
+<p><strong>Paid calls.</strong> Each design is one call with the sketch, plus one call per self-review round (sketch and render images) and one call per automatic build repair. Each chat edit is one more call, plus repairs if the edit doesn't build. Moving a slider makes no model call. The sidebar shows the tokens used in the session.</p>
+<h2 id="setup">Setup</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync
+cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Set <code>NEBIUS_API_KEY</code> in <code>.env</code>. The key stays in the Streamlit server process, and the CAD build subprocess never receives it.</p>
+<p>With pip instead of uv:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+
+<h2 id="run">Run</h2>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>streamlit<span class="w"> </span>run<span class="w"> </span>app.py
+</code></pre></div>
+
+<p>Open http://localhost:8501, then:</p>
+<ol>
+<li>Upload a photo of your sketch, take one in the <strong>Camera</strong> tab, or open <strong>Samples</strong> and pick the phone stand, wall hook or pen cup.</li>
+<li>Optionally add notes, such as "fits an iPhone 16 at 60°" or "M4 screws, 3 mm walls".</li>
+<li>Click <strong>Model it</strong> and watch Kimi read, build, review and revise.</li>
+<li>Move the sliders, ask for changes, then download the STL and print it.</li>
+</ol>
+<p>Tips:</p>
+<ul>
+<li>Write the important dimensions on the sketch. Kimi reads them and keeps them exact.</li>
+<li>Two views (side and front) work much better than one perspective doodle.</li>
+<li>Use <code>low</code> effort for faster chat edits and <code>max</code> for tricky parts.</li>
+</ul>
+<h2 id="validate">Validate</h2>
+<p>Credential-free tests cover the code guard (allowed imports, blocked builtins, dunder and private access, frame introspection, <code>match</code> and <code>str.format</code> attribute reads, CadQuery and NumPy file I/O, the runtime import hook and module proxies), the macOS build sandbox (skipped on other systems), parameter clamping, reply parsing, and a real CadQuery build of a small bracket through the same guarded subprocess the app uses, including STL and STEP export, mesh checks and the four-view render. They make no network or Token Factory calls:</p>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>sync<span class="w"> </span>--frozen
+uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>discover<span class="w"> </span>-s<span class="w"> </span>tests
+</code></pre></div>
+
+<p>What was verified for this recipe:</p>
+<ul>
+<li>The 13 offline tests pass with Python 3.12 on macOS (12 run on Linux, where the sandbox test is skipped), using the committed <code>uv.lock</code>. The first run after a fresh install can take a few minutes while the OS loads the OpenCascade libraries for the first time; later runs take a few seconds.</li>
+<li>Live Token Factory calls were not re-run for this cookbook copy. Run a design yourself to confirm your key's model access and cost.</li>
+</ul>
+<h2 id="limitations-and-cleanup">Limitations and cleanup</h2>
+<ul>
+<li><strong>Generated code runs on your machine.</strong> The build step runs model-written Python in a separate process with a 120 s timeout and an empty environment. Before running it, a static check refuses:</li>
+<li>imports other than the top-level <code>cadquery</code>, <code>math</code> and <code>numpy</code> modules</li>
+<li>builtins such as <code>open</code>, <code>exec</code>, <code>eval</code> and <code>getattr</code>, called or not, and as attribute names</li>
+<li>dunder names, private (<code>_</code>-prefixed) attributes, and frame, generator, coroutine, traceback and code introspection (<code>gi_frame</code>, <code>f_back</code>, <code>f_globals</code>, <code>tb_frame</code>...)</li>
+<li><code>match</code> statements and <code>.format</code>/<code>.format_map</code>, which read attributes by name where the check can't see them</li>
+<li>names and attributes starting with <code>export</code>, <code>import</code>, <code>save</code>, <code>load</code>, <code>read</code>, <code>write</code> or <code>dump</code> (the CadQuery and NumPy file I/O methods), and the <code>cqgi</code>, <code>occ_impl</code>, <code>OCP</code> and <code>ctypeslib</code> modules</li>
+</ul>
+<p>At run time the code gets reduced builtins whose <code>__import__</code> enforces the same rules, and it sees <code>cadquery</code>, <code>math</code> and <code>numpy</code> through proxies that refuse to hand out submodules other than <code>numpy.linalg</code>, <code>numpy.random</code>, <code>numpy.fft</code>, <code>numpy.polynomial</code> and <code>cadquery.selectors</code>. A breadth-first scan of the module and class attributes reachable from those objects found no path to <code>os</code>, <code>sys</code>, <code>builtins</code>, <code>inspect</code>, <code>pathlib</code> or file objects. Python can't be fully sandboxed from inside Python, though, so that check is a guardrail, not a sandbox.</p>
+<p><strong>On macOS the build also runs under <code>sandbox-exec</code></strong>, an OS-level boundary with a deny-by-default profile: no network, no IPC to other apps or system services (mach, Apple Events, shared memory), no new processes, writes only inside the build's temporary directory, and no reading file contents under your home directory apart from the Python installation and <code>cad_runner.py</code>, so model code can't read <code>.env</code> or <code>~/.ssh</code>. Set <code>NAPKIN_OS_SANDBOX=0</code> to turn it off. <strong>On Linux and Windows the static check is the only layer.</strong> Run the app in a container there, and don't expose the app to other people on any system. For a shared deployment, run <code>cad_runner.py</code> inside a real isolation boundary, such as a container or remote sandbox with no network and a read-only filesystem.
+- <strong>Localhost only.</strong> <code>.streamlit/config.toml</code> binds the server to <code>localhost</code>, and the app has no authentication.
+- <strong>Sketch quality matters.</strong> Kimi infers sizes it can't read from the object's purpose. Check the measured size and wall thickness before printing.
+- <strong>Fillets and complex lofts can fail</strong> in OpenCascade. The helpers <code>safe_fillet</code> and <code>safe_chamfer</code> return the part unchanged rather than failing the build, so a rounded edge may be missing.
+- <strong>The 3D viewer loads three.js</strong> from the jsDelivr CDN, so it needs the internet.</p>
+<p>The app creates no cloud resources. Builds run in temporary directories that are deleted automatically. To clean up:</p>
+<div class="codehilite"><pre><span></span><code>rm<span class="w"> </span>-rf<span class="w"> </span>.venv<span class="w"> </span>.env
+</code></pre></div>
+
+<h2 id="source-and-license">Source and license</h2>
+<p>Built by <a href="https://github.com/Arindam200">Arindam Majumder</a>. Kimi K3.1 Pro is by <a href="https://www.kimi.ai/blog/kimi-k3-1-pro">Moonshot AI</a>. Uses <a href="https://github.com/CadQuery/cadquery">CadQuery</a>, <a href="https://github.com/mikedh/trimesh">trimesh</a> and <a href="https://threejs.org/">three.js</a>.</p>
+<p>Released under this repository's <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/napkin-to-3d-print/LICENSE" target="_blank" rel="noopener">MIT license</a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

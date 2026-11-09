@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Turn a photo into a 3D scene with Kimi · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/apps/image-to-3d" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/image-to-3d/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/image-to-3d/README.md" target="_blank" rel="noopener">Applications</a> / Image to 3D</p>
+<h1 id="turn-a-photo-into-a-3d-scene-with-kimi">Turn a photo into a 3D scene with Kimi</h1>
+<p>Image to 3D sends a photo to Kimi K3.1 Pro on Nebius Token Factory. Kimi studies its shape, light and depth, then writes a real-time Three.js scene you can orbit, refine with plain-language instructions, and download as a single HTML file. The app is a zero-dependency Node.js server and a static front end, and it supports bring-your-own-key (BYOK).</p>
+<h2 id="what-you-will-build">What you will build</h2>
+<table>
+<thead>
+<tr>
+<th>Kimi reasons about the photo</th>
+<th>The finished diorama</th>
+<th>Refined: "make it night time and switch on the lighthouse beam"</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="Kimi reading a lighthouse photo while a point-cloud relief of it is scanned" src="screenshots/1-generating.jpg" /></td>
+<td><img alt="The Chania lighthouse rebuilt as a 3D miniature diorama" src="screenshots/2-scene.jpg" /></td>
+<td><img alt="The same diorama at night with the lighthouse lit and a moon in the sky" src="screenshots/3-refined-night.jpg" /></td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li><strong>Image intake.</strong> The browser downscales the image to 1024 px, samples a six-colour palette and shows an animated point-cloud relief while Kimi works.</li>
+<li><strong>Generation.</strong> <code>server.js</code> proxies a streaming <code>chat/completions</code> request (image plus a style brief) to Token Factory. Kimi's reasoning and code stream into the <strong>Reasoning</strong> and <strong>Code</strong> tabs.</li>
+<li><strong>Rendering.</strong> The generated HTML runs in a sandboxed iframe (<code>sandbox="allow-scripts"</code>). A small injected harness reports runtime errors and the first rendered frame, and takes a thumbnail for history.</li>
+<li><strong>Self-repair.</strong> If the scene throws or the output is cut off, <strong>Ask Kimi to fix it</strong> sends the code and the error back to Kimi.</li>
+<li><strong>Refine.</strong> Follow-up instructions, such as "add snow" or "closer camera", edit the current scene.</li>
+<li><strong>History.</strong> Scenes that render successfully are kept in the browser's IndexedDB (last 24).</li>
+</ol>
+<p>Styles: Faithful, Diorama, Low-poly, Voxel, Toy and Neon.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Node.js 20.12 or later. There are no npm dependencies.</li>
+<li>A WebGL-capable browser with internet access. Generated scenes load Three.js r160 from jsDelivr.</li>
+<li>For new generations, a Token Factory API key with access to <code>moonshotai/Kimi-K3.1-Pro</code>. Each generation or refinement is one paid request; check current pricing in the <a href="https://tokenfactory.nebius.com/models">model catalog</a>. Opening the saved examples makes no inference requests.</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Set <code>NEBIUS_API_KEY</code> in <code>.env</code>, or leave it blank so that every user brings their own key in the UI. Keep <code>.env</code> out of source control.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>Blank: users must bring their own key</td>
+</tr>
+<tr>
+<td><code>NEBIUS_MODEL</code></td>
+<td><code>moonshotai/Kimi-K3.1-Pro</code></td>
+</tr>
+<tr>
+<td><code>NEBIUS_BASE_URL</code></td>
+<td><code>https://api.tokenfactory.nebius.com/v1</code></td>
+</tr>
+<tr>
+<td><code>PORT</code></td>
+<td><code>5173</code></td>
+</tr>
+</tbody>
+</table>
+<p>See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/image-to-3d/models/kimi-k3.1-pro.md" target="_blank" rel="noopener">Kimi K3.1 Pro guide</a> for model details.</p>
+<h2 id="run">Run</h2>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span>start
+<span class="c1"># Open http://localhost:5173</span>
+</code></pre></div>
+
+<p>Drop in a photo, pick a style and select <strong>Generate new scene</strong>. Kimi reasons before it writes code, so expect a generation to take around 5 to 10 minutes; the progress panel shows the phase, elapsed time, tokens and throughput. When the scene appears, drag to orbit, scroll to zoom, and type a refinement in the bar under the stage.</p>
+<p>To see results without a key, open either saved example directly in a browser. Both were generated by Kimi K3.1 Pro through this app from <a href="https://commons.wikimedia.org/wiki/File:Lighthouse_Chania_evening_sun.jpg">a photo of the Chania lighthouse</a> (CC0):</p>
+<ul>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/image-to-3d/examples/chania-lighthouse-diorama.html" target="_blank" rel="noopener"><code>examples/chania-lighthouse-diorama.html</code></a>: Diorama style, 516 lines, generated in about 10 minutes.</li>
+<li><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/image-to-3d/examples/chania-lighthouse-night.html" target="_blank" rel="noopener"><code>examples/chania-lighthouse-night.html</code></a>: the refinement "make it night time and switch on the lighthouse beam", 545 lines, about 7 minutes.</li>
+</ul>
+<h3 id="bring-your-own-key">Bring your own key</h3>
+<p>Select <strong>Bring your own key</strong> in the top bar to use your own Token Factory key. You can also override the model and base URL there, and <strong>Test key</strong> checks the key against <code>/v1/models</code>.</p>
+<ul>
+<li>The key stays in the browser: in <code>localStorage</code>, or in <code>sessionStorage</code> if <strong>Remember on this device</strong> is cleared.</li>
+<li>It is sent in an <code>x-nebius-key</code> header with that user's requests only, forwarded to Token Factory, and never stored or logged by the server.</li>
+<li>A user's key takes priority over the server's <code>NEBIUS_API_KEY</code>.</li>
+<li>Base URL overrides must be <code>https://*.nebius.com</code>, so the proxy cannot be used as an open relay.</li>
+</ul>
+<h2 id="validate">Validate</h2>
+<p>Credential-free checks, which make no requests to Token Factory:</p>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span><span class="nb">test</span>
+</code></pre></div>
+
+<p>The tests start the server without a key and check that it serves the app, reports its configuration without exposing a key, requires a key, rejects base URLs outside <code>https://*.nebius.com</code>, validates the request body and refuses paths outside <code>public/</code>.</p>
+<p>Live generation and refinement were verified with <code>moonshotai/Kimi-K3.1-Pro</code> on <code>https://api.tokenfactory.nebius.com/v1</code>. The saved examples are unedited output from those runs.</p>
+<h2 id="limitations-and-cleanup">Limitations and cleanup</h2>
+<ul>
+<li>Generated code runs in a sandboxed iframe, but it is still model-written JavaScript. Review a scene before you host it elsewhere.</li>
+<li>The server is meant for local use or a trusted deployment. It has no authentication or rate limiting, so if it holds a server key, anyone who can reach it spends that key.</li>
+<li>Long generations can occasionally be cut off at the token limit; use <strong>Ask Kimi to fix it</strong> to complete them.</li>
+<li>History lives in the browser. Select <strong>Clear</strong> under <strong>Recent scenes</strong> to remove it. The app creates no external resources.</li>
+</ul>
+<h2 id="source-and-license">Source and license</h2>
+<p>Built by <a href="https://github.com/amrrs">Amrrs</a> for this cookbook. Released under the repository <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/image-to-3d/LICENSE" target="_blank" rel="noopener">license</a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

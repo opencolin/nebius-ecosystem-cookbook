@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Explore an interactive camera assembly · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/apps/explode-anything" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/explode-anything/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/explode-anything/README.md" target="_blank" rel="noopener">Applications</a> / Explode Anything</p>
+<h1 id="explore-an-interactive-camera-assembly">Explore an interactive camera assembly</h1>
+<p>A runnable Three.js camera exhibit adapted for Nebius Token Factory. Inspect 36 procedural components, reverse a staged disassembly, and operate a schematic aperture and shutter. The finished exhibit uses no API key or model calls.</p>
+<p><img alt="TF-branded interactive camera exhibit" src="images/showcase.png" /></p>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>A static Vite/TypeScript application with an interactive camera, selectable parts, view presets, material/technical/X-ray modes and a 20-second showcase. This is an application source example: its repository does not establish which model produced the original build.</p>
+<p>To use it as a coding task with Token Factory, connect a coding agent using the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/explode-anything/coding/opencode.md#kimi-k31-pro" target="_blank" rel="noopener">OpenCode guide</a>, then review the included <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/explode-anything/PROMPT.md" target="_blank" rel="noopener">original build brief</a>. Treat another generation as a separate experiment with its own outputs and inference cost.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Node.js 20.19+ or 22.12+ and npm.</li>
+<li>WebGL-capable browser.</li>
+<li>No backend, account, model download or API key to run the exhibit.</li>
+</ul>
+<h2 id="setup-and-run">Setup and run</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span>ci
+npm<span class="w"> </span>run<span class="w"> </span>dev
+<span class="c1"># Open the URL printed by Vite, usually http://localhost:5173</span>
+</code></pre></div>
+
+<p>Drag to orbit. Use <strong>Explode</strong>, <strong>Assemble</strong>, the <strong>Assembly</strong> slider or <strong>Play showcase</strong>. Select a part to inspect it. <strong>Sensor detail</strong> and <strong>Release shutter</strong> demonstrate the simplified mechanism.</p>
+<h2 id="validate">Validate</h2>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>build
+npm<span class="w"> </span>audit
+npx<span class="w"> </span>playwright<span class="w"> </span>install<span class="w"> </span>chromium
+<span class="c1"># With the dev server on port 5173:</span>
+npm<span class="w"> </span>run<span class="w"> </span>test:browser
+</code></pre></div>
+
+<p>The TF edition passed all 45 browser checks on 5 November 2026, including a rerun against the production bundle after the Vite update. Checks covered all 36 parts, zero measured reassembly transform error, selection, presets, aperture/shutter, showcase completion/cancellation, WebGL fallback and 390px mobile layout. No page or browser-console errors were reported. The build and dependency audit passed. This was a correctness check in software-rendered Chromium, not a hardware FPS benchmark.</p>
+<h2 id="deployment-and-cleanup">Deployment and cleanup</h2>
+<p>Build with <code>npm run build</code> and serve <code>dist/</code> on a static host. No server secrets are required. Stop the local server with Ctrl+C; generated captures are in the ignored <code>screenshots/</code> directory.</p>
+<p>The assembly and optical behaviour are educational approximations. They are not a manufacturer-specific teardown, validated optical design or CAD model. See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/explode-anything/UPSTREAM.md" target="_blank" rel="noopener">application guide</a> for architecture, controls and limitations.</p>
+<h2 id="source-and-permissions">Source and permissions</h2>
+<p>Original build: <a href="https://github.com/shivaylamba">Shivay Lamba</a>, <a href="https://github.com/shivaylamba/explode-anything">Explode Anything</a>, revision <code>8ba1dbe4ded1e413760839cfdf204c945a973eb9</code>.</p>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/explode-anything/" target="_blank" rel="noopener">TF edition</a>, imported adaptation revision <code>336732b</code>, adds official branding, self-hosted typography, visible credits and a patched Vite dependency. The original repository lists no general open-source license. This Nebius adaptation and publication are made with permission confirmed by Dylan Bristot on 5 November 2026. No blanket MIT license is added to the original work, and the cookbook repository license does not replace the original work's permissions. See <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/explode-anything/BRAND-EDITION.md" target="_blank" rel="noopener">edition provenance</a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

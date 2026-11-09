@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sketch to Walkthrough with Kimi K3.1 Pro · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/apps/sketch-to-walkthrough" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/sketch-to-walkthrough/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/sketch-to-walkthrough/README.md" target="_blank" rel="noopener">Applications and demos</a> / Sketch to Walkthrough</p>
+<h1 id="sketch-to-walkthrough-with-kimi-k31-pro">Sketch to Walkthrough with Kimi K3.1 Pro</h1>
+<p>Upload a photo of a hand-drawn floor plan and walk through it in 3D in your browser.</p>
+<p><strong>Kimi K3.1 Pro</strong> on <a href="https://tokenfactory.nebius.com/">Nebius Token Factory</a> reads the sketch, including every dimension written on it, and writes a small JavaScript layout generator. The app runs that generator in a sandbox, checks the result with deterministic engineering checks, renders a plan, and shows Kimi its own render next to your sketch. Kimi then signs off or sends a corrected generator. Kimi controls the layout; the renderer, the checks and the furniture library are fixed, tested code.</p>
+<table>
+<thead>
+<tr>
+<th>Dollhouse view with labelled rooms and furniture</th>
+<th>The same plan, top-down</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="Two-bedroom sample in the dollhouse view" src="screenshots/02-dollhouse.png" /></td>
+<td><img alt="Two-bedroom sample as a dimensioned plan" src="screenshots/03-plan.png" /></td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>A Vite + React + Three.js app with a small Hono server that keeps the API key:</p>
+<ol>
+<li><strong>Generate.</strong> The sketch goes to Kimi with <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/sketch-to-walkthrough/prompts/generate.md" target="_blank" rel="noopener"><code>prompts/generate.md</code></a>. Kimi lists every written dimension and room schedule entry, converts units exactly, and returns a module that exports <code>PARAMS</code> (every dimension, with min and max), <code>ASSUMPTIONS</code> (what it filled in where the sketch was silent) and <code>buildPlan(P)</code>. <code>buildPlan</code> returns a <code>PlanSpec</code>: walls, rooms, openings, furniture, written room sizes and room neighbours, all in millimetres.</li>
+<li><strong>Build in a sandbox.</strong> The source is parsed with Acorn and every name is resolved in its lexical scope with eslint-scope; it is rejected if it uses imports, globals, dynamic code or prototype access. It then runs in a disposable Web Worker with a 500 ms limit, no reachable function constructor and no network APIs, and the result is validated with zod in the worker and again on the page. Small slips, such as a parameter outside its range, are repaired locally and listed in the UI.</li>
+<li><strong>Check.</strong> Deterministic checks run on every version: a closed exterior, valid non-overlapping rooms, room sizes within ±10% of the written sizes, rooms touching the neighbours the sketch shows, no leftover space inside the house, openings that fit their walls, every room reachable from the entry, and furniture that stays inside its room and clear of door swings with a 600 mm path.</li>
+<li><strong>Review.</strong> The plan is rendered to PNG. Kimi gets the sketch, the render, the check results and the source with <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/sketch-to-walkthrough/prompts/review.md" target="_blank" rel="noopener"><code>prompts/review.md</code></a>, and answers <code>PASS</code> or <code>REVISE</code> with a corrected module. The app keeps up to three versions.</li>
+<li><strong>Use it.</strong> The first version that passes the checks opens straight away while review continues in the background. Explore it as a plan, a dollhouse or a first-person walkthrough with collision. Every <code>PARAMS</code> entry becomes a slider that rebuilds the plan locally with no model call. Download <code>.glb</code>, <code>plan.json</code>, <code>plan.js</code> or <code>plan.svg</code>.</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>flowchart LR
+    A[Sketch photo] --&gt; B[Kimi K3.1 Pro&lt;br/&gt;writes the generator]
+    B --&gt; C[Acorn check + Web Worker&lt;br/&gt;+ zod PlanSpec]
+    C --&gt; D{Deterministic checks}
+    D -- valid --&gt; W[Walkable 3D opens]
+    D --&gt; R[Render plan to PNG]
+    R --&gt; E[Kimi compares render&lt;br/&gt;with the sketch]
+    D -- results as text --&gt; E
+    E -- REVISE + new module --&gt; C
+    E -- PASS --&gt; F[Plan / dollhouse / walkthrough,&lt;br/&gt;sliders, exports]
+</code></pre></div>
+
+<p>It also handles detailed plans. <a href="samples/courtyard-house.png"><code>samples/courtyard-house.png</code></a> is a 32 m × 21 m house with about 21 dimensioned rooms, an open courtyard, a terrace and a pool:</p>
+<p><img alt="Generated plan for the courtyard house sketch" src="screenshots/courtyard-plan.png" /></p>
+<h3 id="model-and-configuration">Model and configuration</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Endpoint</td>
+<td><code>https://api.tokenfactory.nebius.com/v1</code> (OpenAI-compatible), override with <code>NEBIUS_BASE_URL</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>moonshotai/Kimi-K3.1-Pro</code>, override with <code>MODEL</code> (any vision model that accepts <code>image_url</code> parts)</td>
+</tr>
+<tr>
+<td>Reasoning effort</td>
+<td><code>low</code> for generation, <code>medium</code> for review (<code>GENERATE_REASONING_EFFORT</code>, <code>REVIEW_REASONING_EFFORT</code>)</td>
+</tr>
+<tr>
+<td>Output budget</td>
+<td>64,000 tokens for generation, 96,000 for review (<code>GENERATE_MAX_TOKENS</code>, <code>REVIEW_MAX_TOKENS</code>)</td>
+</tr>
+<tr>
+<td>Timeout</td>
+<td>20 minutes per streamed request (<code>MODEL_REQUEST_TIMEOUT_MS</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Responses are streamed. If a stream drops, the server resumes from the last complete line and joins the parts.</p>
+<h3 id="project-layout">Project layout</h3>
+<div class="codehilite"><pre><span></span><code>sketch-to-walkthrough/
+├── server/
+│   ├── index.js           # Hono API: key handling and streamed model calls
+│   └── stitch.js          # Joins a resumed stream
+├── prompts/               # generate.md and review.md
+├── src/
+│   ├── App.tsx            # Upload, versions, model loop, inspector
+│   ├── lib/plan.ts        # zod PlanSpec schema
+│   ├── lib/module.ts      # Source validation, sandboxed evaluation, local repairs
+│   ├── lib/sandbox.ts     # Worker lockdown of function constructors
+│   ├── lib/checks.ts      # Deterministic checks
+│   ├── lib/furniture*.ts  # 25-type furniture catalogue, auto-furnish, 3D and SVG symbols
+│   ├── lib/world.ts       # Three.js scene from a PlanSpec
+│   └── three/PlanViewer.tsx  # Plan, dollhouse and walkthrough modes
+├── public/samples/        # Sample sketches shown in the app
+├── samples/               # A detailed courtyard house sketch
+├── scripts/               # Browser checks and sample generation
+├── screenshots/           # Images used in this README
+├── env.example
+├── package.json
+└── package-lock.json
+</code></pre></div>
+
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Node.js 20.19+ or 22.12+</li>
+<li>A Token Factory API key from <a href="https://tokenfactory.nebius.com/">tokenfactory.nebius.com</a> with access to <code>moonshotai/Kimi-K3.1-Pro</code></li>
+<li>A browser with WebGL</li>
+</ul>
+<p><strong>Paid calls.</strong> Each sketch is one generation call plus up to three review calls, each with the sketch image. Moving a slider makes no model call, and the built-in local sample needs no key. At Kimi K3.1 Pro's list price ($2 per million input and $10 per million output tokens), a small two-bedroom sketch used about 80,000 tokens, roughly $0.60, and the detailed courtyard house about $2.</p>
+<h2 id="setup">Setup</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span>ci
+cp<span class="w"> </span>env.example<span class="w"> </span>.env
+</code></pre></div>
+
+<p>Set <code>NEBIUS_API_KEY</code> in <code>.env</code>. Only <code>server/index.js</code> reads it; it is never sent to the browser.</p>
+<h2 id="run">Run</h2>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>dev
+</code></pre></div>
+
+<p>Open http://127.0.0.1:5180. The API server runs on 127.0.0.1:8787, and Vite proxies <code>/api</code> to it.</p>
+<ol>
+<li>Click the round arrow on the two-bedroom sample for an instant local example with no model call, or click a sample image to run the full Kimi loop.</li>
+<li>Or click <strong>New sketch</strong> and upload a photo of your own plan. Write the dimensions on it; Kimi reads them and keeps them exact.</li>
+<li>Switch between <strong>Plan</strong>, <strong>Dollhouse</strong> and <strong>Walkthrough</strong> (WASD and mouse, or a joystick on mobile). Use the sliders and the <strong>Assumptions</strong> tab to adjust what Kimi inferred, and the <strong>Checks</strong> tab to see every check.</li>
+</ol>
+<p>A small sketch takes a few minutes to the first walkable version; a large, detailed plan can take much longer.</p>
+<h2 id="validate">Validate</h2>
+<p>These checks need no credentials:</p>
+<div class="codehilite"><pre><span></span><code>npm<span class="w"> </span><span class="nb">test</span><span class="w">          </span><span class="c1"># Unit tests: schema, sandbox rules, every check, furniture, stream joining</span>
+npm<span class="w"> </span>run<span class="w"> </span>build<span class="w">     </span><span class="c1"># TypeScript and production build</span>
+npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w"> </span><span class="p">&amp;</span><span class="w">     </span><span class="c1"># then, with the dev server running:</span>
+npm<span class="w"> </span>run<span class="w"> </span>qa<span class="w">        </span><span class="c1"># Browser checks with mocked model responses; writes screenshots/</span>
+</code></pre></div>
+
+<p><code>npm run qa</code> needs a Chromium that renders WebGL headless (<code>npx playwright install chromium</code>). If the canvas is black, set <code>CHROME_PATH</code> to a full Chromium or Chrome for Testing binary.</p>
+<p>What was verified for this recipe:</p>
+<ul>
+<li><code>npm ci</code>, <code>npm test</code> (122 tests), <code>npm run build</code> and <code>npm audit --omit=dev --audit-level=high</code> pass on Node.js 24.</li>
+<li><code>npm run qa</code> passed all 51 browser checks in full headless Chromium on macOS, with no runtime or WebGL errors.</li>
+<li>The full loop was run against <code>moonshotai/Kimi-K3.1-Pro</code> on Token Factory with the bundled two-bedroom sample and the courtyard house sketch.</li>
+</ul>
+<h2 id="limitations-and-cleanup">Limitations and cleanup</h2>
+<ul>
+<li><strong>Large plans are slower and less exact.</strong> Room sizes follow the written dimensions, but on big plans Kimi may add circulation space or need more than one review.</li>
+<li><strong>The checks are for exploration,</strong> not structural, building-code, fire-safety or accessibility certification. The output is not a construction document.</li>
+<li><strong>Not supported:</strong> curved walls, multiple storeys, stairs or roofs.</li>
+<li><strong>Generated code runs in your browser.</strong> It is source-checked and run in a disposable worker with a time limit. That is a guardrail for a local demo, not a hardened sandbox for untrusted code.</li>
+<li><strong>Localhost only.</strong> Both servers bind to 127.0.0.1. The API has no authentication; it sends no CORS headers and accepts only JSON requests from a local origin. Don't expose it to other people as is, because it spends your key.</li>
+<li>Plans are limited to 100 m in each direction.</li>
+<li>Sessions are not saved; reloading the page loses the current plan.</li>
+</ul>
+<p>The app creates no cloud resources and stores no sketches on disk. To clean up:</p>
+<div class="codehilite"><pre><span></span><code>rm<span class="w"> </span>-rf<span class="w"> </span>node_modules<span class="w"> </span>dist<span class="w"> </span>screenshots/*.json<span class="w"> </span>.env
+</code></pre></div>
+
+<h2 id="source-and-license">Source and license</h2>
+<p>Built by <a href="https://github.com/shivaylamba">Shivay Lamba</a> with Kimi K3.1 Pro by <a href="https://www.kimi.ai/blog/kimi-k3-1-pro">Moonshot AI</a>. Upstream: <a href="https://github.com/Studio1-OSS/sketch-to-walkthrough">Studio1-OSS/sketch-to-walkthrough</a>, MIT licensed (<a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/sketch-to-walkthrough/LICENSE" target="_blank" rel="noopener">LICENSE</a>). Uses <a href="https://threejs.org/">three.js</a>, <a href="https://react.dev/">React</a>, <a href="https://hono.dev/">Hono</a>, <a href="https://zod.dev/">zod</a> and <a href="https://github.com/acornjs/acorn">Acorn</a>.</p>
+<p>Cookbook-specific changes: <code>.env.example</code> is now <code>env.example</code>, because the root <code>.gitignore</code> ignores <code>.env*</code>; the README follows the recipe template; and development-only evaluation scripts were left out.</p>
+<p>Released under this repository's <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/sketch-to-walkthrough/LICENSE" target="_blank" rel="noopener">MIT license</a>.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

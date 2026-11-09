@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Turn a repository into a code tour · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/apps/codetrail" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/codetrail/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/codetrail/README.md" target="_blank" rel="noopener">Applications</a> / Codetrail</p>
+<h1 id="turn-a-repository-into-a-code-tour">Turn a repository into a code tour</h1>
+<p>Codetrail reads repository source with an open model on Nebius Token Factory and produces architecture maps, documentation, guided tours and answers with references checked against the code. This recipe includes the full application and a key-free, curated sample tour.</p>
+<p><img alt="TF-branded Codetrail sample with a request lifecycle and source code" src="images/showcase.png" /></p>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>The full Next.js application supports GitHub repositories, pull requests and local folders. A server stores source snapshots and generated artifacts in SQLite. The static companion lets visitors follow five stages of Polka's HTTP request lifecycle, with anchors checked against a pinned source revision.</p>
+<p>The static sample is curated; it does not run a model, analyse new repositories or represent a fresh Kimi output.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Node.js 22.15+ and pnpm 11 for the full app.</li>
+<li>A Token Factory project, API key, model access and billing for new analysis. These requests spend your project's balance and send the selected code to the configured model endpoint.</li>
+<li>Python 3 only if using the simple static preview command below.</li>
+<li>Optional GitHub token for higher API limits or access to selected private repositories. Keep it server-side.</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>pnpm<span class="w"> </span>install<span class="w"> </span>--frozen-lockfile
+</code></pre></div>
+
+<p>To explore the sample without credentials:</p>
+<div class="codehilite"><pre><span></span><code>pnpm<span class="w"> </span>showcase:build
+python3<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span><span class="m">5177</span><span class="w"> </span>--bind<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--directory<span class="w"> </span>showcase-dist
+<span class="c1"># Open http://127.0.0.1:5177</span>
+</code></pre></div>
+
+<p>To run model-backed analysis:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Set NEBIUS_API_KEY in .env.</span>
+<span class="c1"># For Kimi, also set NEBIUS_MODEL=moonshotai/Kimi-K3.1-Pro.</span>
+pnpm<span class="w"> </span>dev
+<span class="c1"># Open http://localhost:3000</span>
+</code></pre></div>
+
+<p>The upstream default model is <code>deepseek-ai/DeepSeek-V4.1-Flash-1017</code>. Choose the exact model available in your Token Factory project. The default API endpoint is <code>https://api.tokenfactory.us-north1.nebius.com/v1/</code>; <code>NEBIUS_BASE_URL</code> can override it. See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/codetrail/models/kimi-k3.1-pro.md" target="_blank" rel="noopener">Kimi quickstart</a>.</p>
+<h2 id="run">Run</h2>
+<p>In the static sample, select a flow step or use the previous/next buttons. The source panel highlights the matching lines. <strong>Play tour</strong> advances the five steps. <strong>View source</strong> opens the exact upstream commit and line.</p>
+<p>In the full app, paste a public repository URL such as <code>https://github.com/lukeed/polka</code>, review the source scope and estimated cost, then start the read. New model-backed analysis requires the configured key. See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/codetrail/UPSTREAM.md" target="_blank" rel="noopener">application guide</a> for Q&amp;A, docs, PR tours, exports and MCP integration.</p>
+<h2 id="validate">Validate</h2>
+<div class="codehilite"><pre><span></span><code>pnpm<span class="w"> </span>typecheck
+pnpm<span class="w"> </span><span class="nb">test</span>
+pnpm<span class="w"> </span>lint:dead
+pnpm<span class="w"> </span>build
+pnpm<span class="w"> </span>showcase:build
+pnpm<span class="w"> </span>audit<span class="w"> </span>--prod
+<span class="c1"># Optional browser checks, with a Chromium installation:</span>
+pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>playwright-core<span class="w"> </span>install<span class="w"> </span>chromium
+pnpm<span class="w"> </span>showcase:test
+</code></pre></div>
+
+<p>The browser check defaults to <code>http://127.0.0.1:5177</code>; <code>BASE_URL</code> and <code>CHROME_PATH</code> can override the URL and browser binary.</p>
+<p>On 5 November 2026, 135 unit tests, TypeScript, dead-code checks, the full Webpack production build and static build passed. Browser checks exercised all five source anchors, navigation, playback, credits, the 390px mobile layout and zero external requests. No new live inference was run. The production audit reports one moderate transitive esbuild development-server advisory; the static preview has no esbuild server.</p>
+<h2 id="deployment-and-cleanup">Deployment and cleanup</h2>
+<p>Serve <code>showcase-dist/</code> on a static host for the sample. The full application needs a Node server and persistent SQLite storage. Its default <code>AUTH_MODE=none</code> is intended for self-hosting: configure authentication and spend limits before exposing model-backed actions publicly.</p>
+<p>Code-reference checks establish that the quoted source exists; they do not prove that an explanation is correct. Review generated documentation. Recorded upstream costs are examples, not current prices or guarantees.</p>
+<p>Stop the local server with Ctrl+C. Local state is stored in <code>codetrail.db</code> and related SQLite files unless <code>DATABASE_URL</code> is overridden. Remove those only when you no longer need the stored source and results; keep private repository snapshots out of published artifacts.</p>
+<h2 id="source-and-license">Source and license</h2>
+<p>Original build: <a href="https://studio1hq.com">Studio1HQ</a>, <a href="https://github.com/Studio1-OSS/Codetrail">Codetrail</a>, revision <code>6ee13736c7e6636e65d9ef2a4741c0323965af5a</code>.</p>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/codetrail/" target="_blank" rel="noopener">TF edition</a>, imported adaptation revision <code>b7bcdcb</code>, adds official branding, self-hosted fonts, visible attribution, a patched Next.js version and the curated sample. The original <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/codetrail/LICENSE" target="_blank" rel="noopener">MIT license</a> is retained. The Polka source is pinned to <code>c36cf8b5d1a57164e64fdd7d4e0d0f80ab262dc0</code> and retains <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/codetrail/showcase/POLKA-LICENSE.txt" target="_blank" rel="noopener">Luke Edwards' MIT notice</a>. Nebius brand assets are not covered by a general grant to reuse the brand.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

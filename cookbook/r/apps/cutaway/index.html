@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Explore a machine in 3D with Cutaway · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/apps/cutaway" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/cutaway/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/cutaway/README.md" target="_blank" rel="noopener">Applications</a> / Cutaway</p>
+<h1 id="explore-a-machine-in-3d-with-cutaway">Explore a machine in 3D with Cutaway</h1>
+<p>Cutaway sends a machine name or image to Kimi K3.1 Pro on Nebius Token Factory, builds the returned Three.js geometry in a sandbox, and asks the model to review four rendered views. This recipe includes the runnable generator and a key-free showcase of two saved examples.</p>
+<h2 id="what-you-will-build">What you will build</h2>
+<p>A machine explorer with part selection, reversible disassembly, slicing and see-through controls. The included turbofan engine has 47 parts; the electric toothbrush has 34. The full application also includes a guided teardown, diagrams and study questions.</p>
+<p><img alt="TF-branded Cutaway with its generated turbofan engine disassembled" src="images/showcase.png" /></p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Node.js 22.15 or later and pnpm 11.</li>
+<li>WebGL-capable browser.</li>
+<li>For <strong>new generation</strong>, a Token Factory project with model access, billing and an API key. API calls spend your project balance. Exploring saved examples makes no inference requests.</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<p>From this directory:</p>
+<div class="codehilite"><pre><span></span><code>pnpm<span class="w"> </span>install<span class="w"> </span>--frozen-lockfile
+</code></pre></div>
+
+<p>The workspace file permits build scripts only for the named SQLite, bundler and image dependencies. Keep secrets in the full application's <code>.env</code>; never put a key in the static showcase.</p>
+<h2 id="run">Run</h2>
+<p>To explore the stored examples:</p>
+<div class="codehilite"><pre><span></span><code>pnpm<span class="w"> </span>showcase:dev
+<span class="c1"># Open http://127.0.0.1:5174</span>
+</code></pre></div>
+
+<p>Select a machine, drag to orbit, move <strong>Together → Apart</strong>, or select a part to read its explanation. <strong>How it was built</strong> explains the generation workflow.</p>
+<p>To generate a new machine:</p>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Set NEBIUS_API_KEY in .env; leave the real key out of source control.</span>
+pnpm<span class="w"> </span>dev
+<span class="c1"># Open http://localhost:3000 and enter: oscillating desk fan</span>
+</code></pre></div>
+
+<p>The configured model is <code>moonshotai/Kimi-K3.1-Pro</code>. The fork defaults to <code>https://api.tokenfactory.us-north1.nebius.com/v1/</code>; set <code>KIMI_BASE_URL</code> if your project requires a different Token Factory endpoint. See the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/cutaway/models/kimi-k3.1-pro.md" target="_blank" rel="noopener">model quickstart</a> and check current availability in your project.</p>
+<h2 id="validate">Validate</h2>
+<div class="codehilite"><pre><span></span><code>pnpm<span class="w"> </span><span class="nb">test</span>
+pnpm<span class="w"> </span>typecheck
+pnpm<span class="w"> </span>build
+pnpm<span class="w"> </span>showcase:build
+pnpm<span class="w"> </span>audit<span class="w"> </span>--prod
+<span class="c1"># With the showcase running:</span>
+pnpm<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>playwright<span class="w"> </span>install<span class="w"> </span>chromium
+pnpm<span class="w"> </span>showcase:test
+</code></pre></div>
+
+<p>On 5 November 2026, the TF edition passed 48 unit tests, TypeScript, the full production build and the static build. Production-showcase browser checks built all 81 saved parts successfully, exercised selection, disassembly/reassembly, slice/reset, X-ray and machine switching, and checked the 390px mobile layout. No runtime errors or external requests were observed in that pass. No fresh live Kimi generation was run.</p>
+<h2 id="deployment-and-cleanup">Deployment and cleanup</h2>
+<p><code>pnpm showcase:build</code> produces <code>showcase-dist/</code>, which can be served on a static host without a backend or API key. It explores saved output; it cannot generate new machines.</p>
+<p>The full application needs a Node server and persistent SQLite storage. It has no user accounts: run locally or behind an access boundary. Do not expose an uncapped, shared inference key through a public generator. Stop the local server with Ctrl+C. The full app stores photos, generated code and notes in <code>data/</code>; remove that directory only when you no longer need those local records.</p>
+<p>The geometry is an educational interpretation, not manufacturer-accurate CAD. The upstream time/cost table is one recorded example, not a current quote or performance guarantee.</p>
+<h2 id="source-and-license">Source and license</h2>
+<p>Original build: <a href="https://github.com/Astrodevil">Amitesh Anand</a> / <a href="https://studio1hq.com">Studio1HQ</a>, <a href="https://github.com/Studio1-OSS/Cutaway">Cutaway</a>, revision <code>5e8763d30e03e08606de81b031596c3625bbd3a4</code>.</p>
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/cutaway/" target="_blank" rel="noopener">TF edition</a>, imported adaptation revision <code>41da4b0</code>, adds the official design, self-hosted fonts, visible credits, dependency fixes and the static showcase. The original <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/cutaway/LICENSE" target="_blank" rel="noopener">MIT license</a> is retained. Nebius brand assets are not covered by a general grant to reuse the brand. The <a href="https://github.com/nebius/token-factory-cookbook/blob/main/apps/cutaway/UPSTREAM.md" target="_blank" rel="noopener">upstream application guide</a> documents the full architecture.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>

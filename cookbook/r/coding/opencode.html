@@ -35,6 +35,7 @@
 <li><a href="#option-2-add-a-custom-provider">Option 2: Add Token Factory as a custom provider</a></li>
 <li><a href="#option-3-using-a-proxy">Option 3: Use a proxy</a></li>
 <li><a href="#pick-a-model">Pick a model</a></li>
+<li><a href="#kimi-k31-pro">Kimi K3.1 Pro</a></li>
 <li><a href="#give-it-real-work">Give it real work</a></li>
 <li><a href="#what-one-run-costs">What one run costs</a></li>
 <li><a href="#verify-the-setup">Verify the setup</a></li>
@@ -121,6 +122,11 @@
 <h2 id="option-3-using-a-proxy">Option 3: Using a proxy</h2>
 <p>Use this proxy: <a href="https://nebius-tf-relay.vercel.app/">Nebius TF Relay</a></p>
 <h2 id="pick-a-model">Pick a model</h2>
+<h3 id="kimi-k31-pro">Kimi K3.1 Pro</h3>
+<p>Use the exact Token Factory API model ID <code>moonshotai/Kimi-K3.1-Pro</code>. Select Kimi K3.1 Pro under <strong>Nebius Token Factory</strong> in <code>/models</code> when it is available in your provider catalog.</p>
+<p>If the built-in catalog has not added the model yet, use <a href="#option-2-add-a-custom-provider">Option 2</a> with the same API model ID and the current capabilities shown on the <a href="https://tokenfactory.nebius.com/?modals=endpoint-details&amp;model-id=moonshotai/Kimi-K3.1-Pro">model details page</a>. Do not copy the GLM context, output limits or prices into a Kimi entry.</p>
+<p>For a direct API call, use the <a href="https://github.com/nebius/token-factory-cookbook/blob/main/coding/models/kimi-k3.1-pro.md" target="_blank" rel="noopener">K3.1 Pro quickstart and notebook</a>. The screenshots, dated table and GLM-5.2 cost example below document older runs, not K3.1 Pro measurements.</p>
+<h3 id="earlier-model-examples">Earlier model examples</h3>
 <p>OpenCode model identifiers are <code>nebius/&lt;vendor&gt;/&lt;model&gt;</code> — the Token Factory model ID with the provider prefix in front:</p>
 <table>
 <thead>

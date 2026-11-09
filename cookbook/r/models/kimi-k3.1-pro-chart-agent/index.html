@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Read a chart with Kimi K3.1 Pro and record it through a tool · Nebius Token Factory Cookbook</title>
+<link rel="stylesheet" href="../../../../assets/css/main.css" />
+<link rel="stylesheet" href="../../../../assets/cookbook.css" />
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../../../../index.html" aria-label="Nebius — home"><span class="brand-logo" id="nav-logo"></span></a>
+    <div class="nav-links" id="nav-menu">
+      <a href="../../../../index.html">Ecosystem</a>
+      <a href="../../../../cookbook/index.html">Cookbook</a>
+      <a href="../../../../blueprints/index.html">Agent Blueprints</a>
+      <a href="../../../../devsite/index.html">Builder devsite</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-cta" href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">Cookbook repo ↗</a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="cb-recipe container">
+  <div class="cb-crumb"><a href="../../../../cookbook/index.html">← Cookbook</a><a class="btn secondary" href="https://github.com/nebius/token-factory-cookbook/tree/main/models/kimi-k3.1-pro-chart-agent" target="_blank" rel="noopener">View source on GitHub ↗</a></div>
+  
+  <article class="cb-content">
+<p><a href="https://github.com/nebius/token-factory-cookbook/blob/main/models/kimi-k3.1-pro-chart-agent/README.md" target="_blank" rel="noopener">Cookbook</a> / <a href="https://github.com/nebius/token-factory-cookbook/blob/main/models/kimi-k3.1-pro-chart-agent/README.md" target="_blank" rel="noopener">Model guides</a> / Kimi K3.1 Pro chart agent</p>
+<h1 id="read-a-chart-with-kimi-k31-pro-and-record-it-through-a-tool">Read a chart with Kimi K3.1 Pro and record it through a tool</h1>
+<p>Kimi K3.1 Pro accepts images. This example sends it a bar chart, declares one tool, <code>record_metric</code>,
+and runs the tool-call loop until the model has recorded every bar and summarised the chart.
+The full walkthrough, including the request settings that matter for an always-thinking model, is on
+<a href="https://dev.nebius.com/cookbook/kimi-k3-1-pro-token-factory">dev.nebius.com</a>.</p>
+<h2 id="run-it">Run it</h2>
+<p>Python 3.10 or newer is required (<code>app.py</code> uses <code>str | None</code>).</p>
+<div class="codehilite"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>.venv/bin/pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<span class="nb">export</span><span class="w"> </span><span class="nv">NEBIUS_API_KEY</span><span class="o">=</span><span class="s2">"your-key"</span>
+.venv/bin/python<span class="w"> </span>app.py
+</code></pre></div>
+
+<p>With uv instead: <code>uv venv --python 3.12 .venv &amp;&amp; uv pip install -r requirements.txt</code>.</p>
+<p>Environment variables:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEBIUS_API_KEY</code></td>
+<td>required</td>
+<td>Token Factory API key</td>
+</tr>
+<tr>
+<td><code>NEBIUS_BASE_URL</code></td>
+<td><code>https://api.tokenfactory.nebius.com/v1</code></td>
+<td>API base URL</td>
+</tr>
+<tr>
+<td><code>NEBIUS_MODEL</code></td>
+<td><code>moonshotai/Kimi-K3.1-Pro</code></td>
+<td>Model ID</td>
+</tr>
+<tr>
+<td><code>KIMI_REASONING_EFFORT</code></td>
+<td>unset (model default)</td>
+<td><code>low</code>, <code>medium</code>, <code>high</code>, <code>max</code> or <code>none</code></td>
+</tr>
+<tr>
+<td><code>CHART_IMAGE</code></td>
+<td><code>chart.png</code> next to the script</td>
+<td>Local PNG path or a public image URL</td>
+</tr>
+</tbody>
+</table>
+<p>Measured on November 4, 2026 at the default reasoning effort:</p>
+<div class="codehilite"><pre><span></span><code>recorded Jan: 12 thousands
+recorded Feb: 15 thousands
+recorded Mar: 21 thousands
+recorded Apr: 18 thousands
+recorded May: 26 thousands
+recorded Jun: 24 thousands
+Kimi response: May has the largest bar at 26 thousand, while Jan has the smallest at 12 thousand.
+usage: prompt=2635 completion=576 reasoning=158 metrics=6
+</code></pre></div>
+
+<p>Wording varies between runs. The six recorded values and the <code>metrics=6</code> count are the check.</p>
+<h2 id="tests">Tests</h2>
+<p><code>.venv/bin/python -m pytest -q</code> runs the loop against a fake client. No network, no key needed.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><code>401</code>: the key is missing or the Authorization header is malformed; check that NEBIUS_API_KEY is exported in the shell you run from.</li>
+<li><code>404</code> model not found: the ID is <code>moonshotai/Kimi-K3.1-Pro</code>, case matters.</li>
+<li><code>429</code> tokens quota: request more quota for the model on the Token Factory console.</li>
+<li>Empty answer with <code>finish_reason: length</code>: raise <code>max_tokens</code>; reasoning tokens count against it.</li>
+<li><code>422</code> on an image URL: the host refused Token Factory's fetcher. Download the file and pass a local path.</li>
+<li>Slow first token: the model reasons before it answers; use <code>KIMI_REASONING_EFFORT=low</code> for interactive work.</li>
+</ul>
+<p>The script creates no cloud resources. <code>unset NEBIUS_API_KEY</code> and delete <code>.venv</code> when done.</p>
+  </article>
+</div>
+<footer><div class="container"><div class="footer-bottom">
+  <span>Recipes © Nebius · <a href="https://github.com/nebius/token-factory-cookbook" target="_blank" rel="noopener">nebius/token-factory-cookbook</a> (MIT). Rendered for an ecosystem demo.</span>
+  <span><a href="../../../../index.html">Ecosystem &amp; Partners</a></span>
+</div></div></footer>
+<script src="../../../../assets/js/main.js"></script>
+<script src="../../../../assets/nav-logo.js"></script>
+</body>
+</html>
